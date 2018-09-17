@@ -1,0 +1,33 @@
+StepA_prepare_input_data (new script)
+| File name | Details | Depends on  |
+| --------- | ------- | ----------- |
+| step1_check_genotype.R        | Combine all the genotype array data and generate plink ped/map file | input |
+| step2_sep_chr.sh    | Seperate the PLINK ped and map files to each chromoson | step1 |
+
+StepB_phasing_and_imputaion 
+| File name | Details | Depends on  |
+| --------- | ------- | ----------- |
+| step1_check_ref1.R    | Check the missings and mismatches of the PLINK as compared to 1000G reference. | step1 in StepA |
+| step2_check_ref2.R    | Check if flipping the problematic SNPs could resolve the missings and mismatches. | step1 |
+| step3_summarize_ref.R | Summarize the number of missings and mismatches before flipping. | step 1 |
+| step4_flip.R          | Flip the problematic SNPs. | step3 |
+| step5_shapeit.R       | Run shapeit. | step4 |
+| step6_impute.R        | Run impute2. | step5 |
+| step7_check_het_probes_genotype_calls_vs_shapeit.R      |  Check how the shapeit result corresponds to genotype array. The heterozygous sites should remain heterozygous. | step5 | 
+| step8_check_het_probes_genotype_calls_vs_flipped.R      | Check how the flipped result corresponds to genotype array.   | step4 | 
+| step9_check_het_probes_genotype_calls_vs_unflipped.R    | Check how the unflipped result corresponds to genotype array. | step1 in stepA |
+| step10_get_most_likely_genotype.R       | (new script) Get the most likely genotype. If the most likely genotype having probability > 80%, set it as the genotype to be the most likely one, otherwise, set it as NA   | step6 | optional 
+| step11_get_snps.R         | Get SNP list for stepB pipeline. | step8 |
+| step12_check_het_probes_genotype_calls_vs_imputed_snps.R | (new script) Check how the SNPs in step11 corresponds to genotype array. | step1 in stepA | 
+| step13_liftover_hg19_to_hg38.R | (new script) lift to builder 38 | step11 | 
+
+
+stepC_collect_read_count
+| File name | Details | Depends on  |
+| --------- | ------- | ----------- |
+|step1_build_TxDb_local.R	| make sqlite file | input |
+|step2_sort_bam.R	| sort bam file | downloaded bamfiles | move to GCG platform 
+|step3_extract_asReads_filterIt.R	| extract allele specific reads | step11 in stepB & step2 | move to GCG platform 
+|step4a_ASReC_per_gene_hap1_filterIt.R	|Count allele-specific reads | step3|
+|step5_TReC_per_gene_filterIt.R	| Count total reads| step2 | move to GCG platform 
+|check_pipeline.R | check the distribution of ASE1/(ASE1 + ASE2) to make sure the pipeline is correct | step4 |
