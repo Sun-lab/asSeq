@@ -28,10 +28,10 @@ options("scipen"=999,"digits"=4)
 # So, at SNP3 the two alleles are C and T so the set of 3 probabilities for each indvidual correspond to the genotypes CC, CT and TT respectively.
 
 root.folder = "."
-phased = "/fh/fast/sun_w/licai/eQTL_KIRC/data/phased"
-outdir = "/fh/fast/sun_w/licai/eQTL_KIRC/data_genotype"
+phased = "../../data/phased"
+outdir = "../../data/data_genotype"
 if(!dir.exists(outdir)) dir.create(outdir, recursive=TRUE)
-inputdir = "/fh/fast/sun_w/licai/eQTL_KIRC/data/imputed"
+inputdir = "../../data/imputed"
 setwd(inputdir)
 
 #the list of samples for which we will get snps
@@ -103,10 +103,6 @@ for(j in 1:length(fls)){
   
   message(flj)
 }
-
-#summary of 
-#outfile = sprintf("%s/chr_%s_num_snps_1.txt",outdir,chri)
-#write.table(cbind(summ_het,tot),outfile,row.names=T,col.names=T,quote=F)
 
 sessionInfo()
 q("no")

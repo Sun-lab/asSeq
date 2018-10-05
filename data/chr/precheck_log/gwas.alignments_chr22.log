@@ -1,0 +1,33 @@
+Mode    : Summarizer
+Options : --input-ped ../../data/chr/geno.chr22 --input-map /fh/fast/sun_w/licai/_tumor_eQTL/1000GP_Phase3/genetic_map_chr22_combined_b37.txt --input-ref /fh/fast/sun_w/licai/_tumor_eQTL/1000GP_Phase3/1000GP_Phase3_chr22.hap.gz /fh/fast/sun_w/licai/_tumor_eQTL/1000GP_Phase3/1000GP_Phase3_chr22.legend.gz /fh/fast/sun_w/licai/_tumor_eQTL/1000GP_Phase3/1000GP_Phase3.sample --output-log ../../data/chr/precheck_log/gwas.alignments_chr22
+Version : v2.r904
+Date    : 04/10/2018 15:13:10
+
+MODE -summarise : GENERATING SUMMARY STATISTICS OF THE INPUT DATA
+  * Autosome (chr1 ... chr22)
+  * Reference panel of haplotypes used
+
+
+Parameters :
+  * Seed : 1538691190
+  * Parallelisation: 1 threads
+  * Ref allele is NOT aligned on the reference genome
+
+Reading site list in [../../data/chr/geno.chr22.map]
+  * 11440 sites included
+
+Reading sample list and genotypes in [../../data/chr/geno.chr22.ped] where missing-code = [0]
+  * 100 samples included
+  * 100 unrelateds / 0 duos / 0 trios in 100 different families
+
+Reading sample list [/fh/fast/sun_w/licai/_tumor_eQTL/1000GP_Phase3/1000GP_Phase3.sample]
+  * 5008 reference haplotypes included
+
+Reading SNPs in [/fh/fast/sun_w/licai/_tumor_eQTL/1000GP_Phase3/1000GP_Phase3_chr22.legend.gz]
+  * 5989 reference panel sites included
+  * 1104228 reference panel sites excluded
+
+ERROR: Reference and Main panels are not well aligned:
+  * #Missing sites in reference panel = 15
+  * #Misaligned sites between panels = 5436
+  * #Multiple alignments between panels = 0

@@ -1,7 +1,8 @@
-# check genotype call 0: AA, 1:AB, 2:BB
-# Format input file
-
 rm(list = ls())
+proj = "/fh/fast/sun_w/licai/eQTL_LUAD/"
+setwd(proj)
+system('mkdir -p ./data')
+json_file = "./metadata.cart.2018-09-26.json"
 
 # ----------------------------------------------------------------------
 # check samples
@@ -9,6 +10,7 @@ rm(list = ls())
 library(jsonlite)
 library(XML)
 
+# list2df and df2df are two functions to process the JSON file to data.frame
 list2df <- function(clinic){
   nms = NULL
   for(i in 1:length(clinic)){
@@ -63,7 +65,7 @@ df2df <- function(meta){
   
 }
 
-meta = fromJSON('/fh/fast/sun_w/licai/eQTL_KIRC/metadata.cart.2018-08-01.json')
+meta = fromJSON(json_file)
 meta[1:2,]
 
 meta1 = df2df(meta)
@@ -81,13 +83,9 @@ table(barcode[, 'plate'])
 meta1 = cbind.data.frame(meta1, barcode, stringsAsFactors = F)
 
 # only take normal tissue 
-w2kp = which(meta1$sample %in% c('10A', '10B', '11A'))
+w2kp = which(meta1$sample %in% c(paste0(10, LETTERS), paste0(11, LETTERS)))
 meta2 = meta1[w2kp, ]
 dim(meta2)
-
-# keep one sample for each patient 
-# ('11A' first, if avaliable)
-# (choose the one with larger file size)
 
 tp = table(meta2$participant)
 table(tp)
@@ -102,7 +100,7 @@ if(any(tp != 1)){
   
   for(sam1 in sams){
     ww1 = which(meta2check$participant == sam1)
-    ww2 = ww1[which(meta2check$sample[ww1] == '10A')]
+    ww2 = ww1[which(meta2check$sample[ww1] %in% paste0(11, LETTERS))]
     if(length(ww2) > 1L){
       ww2 = ww2[which.max(meta2check$archive.file_size[ww2])]
     }
@@ -110,10 +108,9 @@ if(any(tp != 1)){
       ww2 = ww1[which.max(meta2check$archive.file_size[ww1])]
     }
     w2kp = c(w2kp, ww2)
-    
   }
-meta3 = rbind(meta2check[w2kp, ], meta2[-ww2check,])
-
+  meta3 = rbind(meta2check[w2kp, ], meta2[-ww2check,])
+  
 }else{
   meta3 = meta2
 }
@@ -122,7 +119,7 @@ tp = table(meta3$participant)
 table(tp)
 table(meta3$sample)
 
-write.table(meta3, file = '/fh/fast/sun_w/licai/eQTL_KIRC/data/KIRC_clinical_meta.txt',
+write.table(meta3, file = './data/LUAD_clinical_meta.txt',
             sep = '\t', quote = F, row.names = F)
 
 barcode = substr(as.character(meta3$associated_entities.entity_submitter_id), 1, 12)
@@ -132,9 +129,9 @@ length(unique(barcode))
 # ----------------------------------------------------------------------
 # -1 = NN, 0 = AA, 1 = AB, 2 = BB
 
-setwd('/fh/fast/sun_w/licai/eQTL_KIRC/data_raw')
+setwd('./data_raw')
 files = list.files(pattern = 'birdseed.data.txt$',
-                  recursive = T)
+                   recursive = T)
 files[1:5]
 
 samples = sapply(strsplit(files, "/", fixed = T), '[[', 2)
@@ -143,7 +140,7 @@ sam2kp = which(samples %in% meta3$file_name)
 SNPs_all = system(paste0('cut -f1 ', files[sam2kp]), intern = T)
 SNPs_all = SNPs_all[-c(1:2)]
 
-genotype_calls = matrix(NA, nrow = 906600, ncol = length(sam2kp))
+genotype_calls = matrix(NA, nrow =length(SNPs_all), ncol = length(sam2kp))
 colnames(genotype_calls) = gsub('.birdseed.data.txt', '', samples[sam2kp])
 rownames(genotype_calls) = SNPs_all
 
@@ -164,7 +161,7 @@ colnames(genotype_calls) = clnm
 dim(genotype_calls)
 genotype_calls[1:5,1:5]
 
-write.table(genotype_calls, file = '/fh/fast/sun_w/licai/eQTL_KIRC/data/KIRC_genotype_calls.txt',
+write.table(genotype_calls, file = '../data/genotype_calls.txt',
             sep ='\t', quote = F)
 
 genotype_calls[1:5,1:5]
@@ -176,7 +173,8 @@ genotype_calls[1:5,1:5]
 # removed them in the ped/map file 
 # MAP file 
 
-anno = read.table('/fh/fast/sun_w/licai/_tumor_eQTL/GenomeWideSNP_6-na35-annot-csv/GenomeWideSNP_6.na35.annot.csv',
+anno_file = "/fh/fast/sun_w/licai/_tumor_eQTL/GenomeWideSNP_6-na35-annot-csv/"
+anno = read.table(paste0(anno_file, 'GenomeWideSNP_6.na35.annot.csv'),
                   sep = ',', header = T, as.is = T)
 
 dim(anno)
@@ -195,6 +193,7 @@ map_anno$Physical.Position = as.numeric(map_anno$Physical.Position)
 map_anno = map_anno[with(map_anno, order(Chromosome, Physical.Position)),]
 map_anno[1:20,]  
 table(map_anno$Chromosome)
+
 # remove duplicated cases
 dup.cases = duplicated(map_anno[,1:4])
 map_anno[dup.cases,]
@@ -203,7 +202,7 @@ if(any(dup.cases))
   map_anno = map_anno[!dup.cases,]
 
 
-write.table(map_anno[,1:4], file ='/fh/fast/sun_w/licai/eQTL_KIRC/data/KIRC.map', row.names = F, col.names = F, quote = F)
+write.table(map_anno[,1:4], file ='../data/geno.map', row.names = F, col.names = F, quote = F)
 
 # PED file format 
 # Family ID [string]
@@ -233,20 +232,19 @@ for(i in 1:nrow(genotype_calls)){
   ref = as.character(map_anno[i, 'Allele.A'])
   alt = as.character(map_anno[i, 'Allele.B'])
   genotype.tcga[i,] = sapply(genotype_calls[i, ], function(x){if(x == 0)
-                                                      return(paste0(ref, ' ' ,ref))
-                                                              if(x == 1)
-                                                      return(paste0(ref, ' ' ,alt))
-                                                              if(x == 2)
-                                                      return(paste0(alt, ' ' , alt))
-                                                              if(x == -1)
-                                                      return('0 0')})
+    return(paste0(ref, ' ' ,ref))
+    if(x == 1)
+      return(paste0(ref, ' ' ,alt))
+    if(x == 2)
+      return(paste0(alt, ' ' , alt))
+    if(x == -1)
+      return('0 0')})
 }
 
-KIRC.ped = cbind(FamID, IndID, FID,MID, Sex, Phenotype, t(genotype.tcga))
-KIRC.ped[1:5,1:10]
-table(KIRC.ped[,'IndID'] == colnames(genotype.tcga))
+geno.ped = cbind(FamID, IndID, FID,MID, Sex, Phenotype, t(genotype.tcga))
+geno.ped[1:5,1:10]
+table(geno.ped[,'IndID'] == colnames(genotype.tcga))
 
-write.table(KIRC.ped, file ='/fh/fast/sun_w/licai/eQTL_KIRC/data/KIRC.ped',
+write.table(geno.ped, file ='../data/geno.ped',
             row.names = F, col.names = F, quote = F, sep ='\t')
-
 q('no')

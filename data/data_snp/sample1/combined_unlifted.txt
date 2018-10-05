@@ -1,0 +1,4 @@
+#Deleted in new
+chr22	17965842	17965843	A	G
+#Deleted in new
+chr22	18047027	18047028	G	A

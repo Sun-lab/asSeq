@@ -12,10 +12,10 @@ options("scipen"=999,"digits"=4)
 #library(SNPlocs.Hsapiens.dbSNP141.GRCh38)
 
 root.folder = "."
-phased = "/fh/fast/sun_w/licai/eQTL_KIRC/data/phased"
-outdir = "/fh/fast/sun_w/licai/eQTL_KIRC/data_snp"
+phased = "../../data/phased"
+outdir = "../../data/data_snp"
 if(!dir.exists(outdir)) dir.create(outdir, recursive=TRUE)
-inputdir ="/fh/fast/sun_w/licai/eQTL_KIRC/data/imputed"
+inputdir ="../../data/imputed"
 setwd(inputdir)
 
 #the list of samples for which we will get snps
@@ -71,7 +71,9 @@ for(j in 1:length(fls)){
   dim(alj)
   dim(snpj)
   
-  # remove R2 < 0.3  "'info' is similar to the r-squared metrics reported by other programs like MaCH and Beagle"
+  # remove R2 < 0.3  "'info' is similar to the r-squared 
+  # metrics reported by other programs like MaCH and Beagle"
+  
   R2kp = which(infoj$info > 0.3)
   snpj = snpj[R2kp,]
   alj = alj[R2kp,]

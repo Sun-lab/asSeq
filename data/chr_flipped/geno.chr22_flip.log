@@ -1,0 +1,25 @@
+PLINK v1.90b1g 64-bit (10 Jun 2014)
+7 arguments: --file tmp --flip tmp_strand.txt --out ../../data/chr_flipped/geno.chr22_flip --recode
+Hostname: rhino3
+Working directory: /fh/fast/sun_w/licai/_tumor_eQTL/GitHub/asSeq/code/stepB_phasing_and_imputation
+Start time: Thu Oct  4 15:41:11 2018
+
+Random number seed: 1538692871
+386593 MB RAM detected; reserving 193296 MB for main workspace.
+Scanning .ped file... done.
+Performing single-pass .bed write (11440 variants, 100 people).
+--file: ../../data/chr_flipped/geno.chr22_flip-temporary.bed +
+../../data/chr_flipped/geno.chr22_flip-temporary.bim +
+../../data/chr_flipped/geno.chr22_flip-temporary.fam written.
+11440 variants loaded from .bim file.
+100 people (0 males, 0 females, 100 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to ../../data/chr_flipped/geno.chr22_flip.nosex .
+--flip: 5436 SNPs flipped.
+Using 1 thread (no multithreaded calculations invoked).
+Calculating allele frequencies... done.
+11440 variants and 100 people pass filters and QC.
+Note: No phenotypes present.
+--recode to ../../data/chr_flipped/geno.chr22_flip.ped +
+../../data/chr_flipped/geno.chr22_flip.map ... done.
+
+End time: Thu Oct  4 15:41:11 2018

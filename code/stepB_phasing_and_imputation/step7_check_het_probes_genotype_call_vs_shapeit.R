@@ -1,25 +1,23 @@
-# Checking the pipeline input birdseed-v2.calls.txt vs. the phased output
+# Checking the pipeline input genotype calls vs. the phased output
 
-sample_id = "TCGA-B0-5099-01A"
+sample_id = "sample1"  # usually the format is "TCGA-B0-5099-01A"
+genotype_file = '../../data/sample_geno_call_22.txt'
+anno_file = '/fh/fast/sun_w/licai/_tumor_eQTL/GenomeWideSNP_6-na35-annot-csv/GenomeWideSNP_6.na35.annot.csv'
+
 # 1.1 Load the SNP 6 csv file
-anno = read.table('/fh/fast/sun_w/licai/_tumor_eQTL/GenomeWideSNP_6-na35-annot-csv/GenomeWideSNP_6.na35.annot.csv',
-                    sep = ',', header = T, as.is = T)
+anno = read.table(anno_file, sep = ',', header = T, as.is = T)
 snpcsv = anno[,c(1:4, 9:10)]
 rm(anno)
 head(snpcsv)
 
-# 2. Query using COAD_genotype_calls.txt
-genotype_calls = read.table('/fh/fast/sun_w/licai/eQTL_KIRC/data/KIRC_genotype_calls.txt', 
+# 2. Query using genotype_calls.txt
+genotype_calls = read.table(genotype_file, 
                             sep = '\t',header = T, as.is = T, check.names = F)
 dim(genotype_calls)
 genotype_calls[1:5,1:5]
 
-# 2.1. Get the column corresponding to TCGA-G4-6320-10A-01D-1718-01
-# dict = read.table(file = '/fh/fast/sun_w/licai/_tumor_eQTL/data/COAD_clinical_meta.txt',
-#             sep = '\t', as.is = T, header = T)
-# sample_cel_file = dict$file_name[dict$associated_entities.entity_submitter_id == sample_id]
-# sample_cel_file = gsub('.birdseed.data.txt','', sample_cel_file)
-sample_cel_file = substr(sample_id, 1, 12)
+# 2.1. Get the column corresponding to sample_id
+sample_cel_file = substr(sample_id, 1, 12) 
 sample_cel_file 
 sample_birdseed_call = genotype_calls[,c(which(sample_cel_file == colnames(genotype_calls))), drop = F]
 head(sample_birdseed_call)
@@ -34,17 +32,14 @@ nrow(genotype_before_phasing)
 genotype_before_phasing$Chromosome = factor(genotype_before_phasing$Chromosome, levels=c(as.character(1:22), "X", "Y"))
 head(genotype_before_phasing)
 nrow(genotype_before_phasing)
+
 # 2.3 Sort
 genotype_before_phasing = genotype_before_phasing[order(genotype_before_phasing$Chromosome, genotype_before_phasing$Physical.Position), ]
 head(genotype_before_phasing)
-# output="/lustre/scr/c/h/chongjin/COAD/stepA_phasing_and_imputation/output/step9_check_het_probes_genotype_calls_vs_shapeit"
-# system(sprintf("mkdir %s", output))
-# setwd(output)
-# write.table(genotype_before_phasing, file="genotype_calls.txt", row.names=FALSE, quote=FALSE, sep="\t")
 
 # 3. Load the genotype after phasing using shapeit
-phased = "/fh/fast/sun_w/licai/eQTL_KIRC/data/phased"
-sample_table = read.table(sprintf("%s/phasing_chr1.sample", phased), as.is=TRUE)
+phased = "../../data/phased"
+sample_table = read.table(sprintf("%s/phasing_chr22.sample", phased), as.is=TRUE)
 sample_index = which(sample_table[,2] == gsub('.CEL','', sample_cel_file))
 
 #for (i in 1:22) {
