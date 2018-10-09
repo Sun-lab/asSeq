@@ -12,7 +12,6 @@ barcode = meta1$Sample.ID
 
 library("GenomicAlignments")
 library("GenomicFeatures")
-library("Rsamtools")
 
 setwd("/fh/fast/sun_w/licai/_tumor_eQTL/R_batch1/stepC_collect_read_count/pipeline")
 pipeline_dir = getwd()

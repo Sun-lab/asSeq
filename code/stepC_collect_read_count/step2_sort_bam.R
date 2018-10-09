@@ -35,7 +35,7 @@ sortBam(ffi, fsi, byQname=TRUE, maxMemory=16384)
 maxMemory = "16384M"
 # fsi = gsub("_hg38_sorted_RG_dedup_realigned.bam", "_filtered_sorted_byQname.bam", ffi)
 # fsi = sprintf("%s/%s", proj_output, fsi)
-# system(sprintf("samtools sort -m %s -n -o %s %s", maxMemory, fsi, ffi))
+# system(sprintf("samtools sort -m %s -n %s -o %s", maxMemory, fsi, ffi))
 
 cat('OK Sort \n')
 

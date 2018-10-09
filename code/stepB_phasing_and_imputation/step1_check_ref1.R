@@ -1,3 +1,6 @@
+# ----------------------------------------------------------------------
+#  Run shapeit in check model to check the missingness and mismatches
+# ----------------------------------------------------------------------
 # the location of shapeit and reference panel
 shapeloc = "/fh/fast/sun_w/licai/_tumor_eQTL/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit"
 refinfo = "/fh/fast/sun_w/licai/_tumor_eQTL/1000GP_Phase3"
@@ -13,6 +16,7 @@ system(sprintf("mkdir -p %s", proj_log))
 
 all1000G="1000GP_Phase3" #common reference prefix
 
+# change seq(22) to 22 to run the example data
 for(i in seq(22)){
   pref = sprintf("time %s -check", shapeloc)
   pedi = sprintf("--input-ped %s/geno.chr%i", proj, i) 

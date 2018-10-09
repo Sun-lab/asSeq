@@ -5,28 +5,6 @@ chri = args[1]
 #ensure that when we write positions to a file R doesn't switch them to scientific
 options("scipen"=999,"digits"=4)
 
-# For dosage, I mean AA = 0, AB=1 and BB =2. The genotype output from IMPUTE2 has posterior prob of the three genotypes and I just calculate the expectation.
-# For file format, see http://www.stats.ox.ac.uk/~marchini/software/gwas/file_format.html
-# File location example:
-# /lustre/scr/c/h/chongjin/COAD/stepA_phasing_and_imputation/output/step8_submit_impute_kill/imputed/phased_imputed_chr1_10e6_15e6
-# Example:  Suppose you want to create a genotype for 2 individuals at 5 SNPs whose genotypes are
-# 
-# SNP 1 : AA AA
-# SNP 2 : GG GT
-# SNP 3 : CC CT
-# SNP 4 : CT CT
-# SNP 5 : AG GG
-# 
-# The correct genotype file would be
-# 
-# SNP1 rs1 1000 A C 1 0 0 1 0 0
-# SNP2 rs2 2000 G T 1 0 0 0 1 0
-# SNP3 rs3 3000 C T 1 0 0 0 1 0
-# SNP4 rs4 4000 C T 0 1 0 0 1 0
-# SNP5 rs5 5000 A G 0 1 0 0 0 1
-# 
-# So, at SNP3 the two alleles are C and T so the set of 3 probabilities for each indvidual correspond to the genotypes CC, CT and TT respectively.
-
 root.folder = "."
 phased = "../../data/phased"
 outdir = "../../data/data_genotype"

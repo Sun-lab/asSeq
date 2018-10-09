@@ -4,7 +4,6 @@
 
 library("GenomicAlignments")
 library("GenomicFeatures")
-library("Rsamtools")
 
 pipeline_dir = getwd()
 
@@ -39,11 +38,9 @@ for(i in 1:length(bamfiles)){
 
 se = summarizeOverlaps(features=genes, reads=bamfiles, mode="Union",
                        singleEnd=TRUE, ignore.strand=FALSE, fragments=FALSE )
-#             singleEnd=FALSE, ignore.strand=FALSE, fragments=TRUE )
 
 se
 colData(se)
-#rowData(se)  # old version of Bioconductor
 rowRanges(se)
 str(metadata(rowRanges(se)))
 

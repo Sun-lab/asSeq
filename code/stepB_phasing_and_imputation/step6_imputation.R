@@ -34,8 +34,9 @@ ncpu = 1
 get_block = function(str,split=" ",block=2){
   unlist(strsplit(str,split=split))[block]
 }
-# mem = 32000
-for(i in 1:22){
+
+# change seq(22) to 22 to run the example data 
+for(i in seq(22)){
   #i = 22
   #using the appropriate positions from both data and 1000G we find the range in which we will do imputation
   khf = sprintf("%s/phasing_chr%s.haps",phased,i)
@@ -53,8 +54,10 @@ for(i in 1:22){
   message(paste(rng2-rng,collapse=" "))
   
   mb = 1e6
-  indj = sprintf("%se6",c(seq(floor(rng[1]/1e6),floor(rng2[2]/mb),by=5),ceiling(rng[2]/mb)))
-  write.table(data.frame(i,paste(indj,collapse=";")),sprintf("%s/indicies.txt",proj_log),
+  indj = sprintf("%se6",c(seq(floor(rng[1]/1e6),floor(rng2[2]/mb),by=5),
+                          ceiling(rng[2]/mb)))
+  write.table(data.frame(i,paste(indj,collapse=";")),
+              sprintf("%s/indicies.txt",proj_log),
               append=T,quote=F,row.names=F,col.names=F,sep="\t")
   
   #since we prephased using shapeit we need to use -use_prephased_g and -known_haps_g
@@ -68,13 +71,18 @@ for(i in 1:22){
   #here we will run by the 5MB increment from the rng[1] until we exaust the chromosome
   for(j in 2:length(indj)){
     #j = length(indj)
-    out = sprintf("-phase -o %s/phased_imputed_chr%s_%s_%s",outdir,i,indj[j-1],indj[j])    
+    out = sprintf("-phase -o %s/phased_imputed_chr%s_%s_%s",
+                  outdir,i,indj[j-1],indj[j])    
     pos = sprintf("-int %s %s",indj[j-1],indj[j])
     
     log_output = sprintf("> %s/impute_chr%s.o 2> %s/impute_chr%s.e",
                          proj_log, i, proj_log, i)
-    com = sprintf("time %s %s %s %s %s %s %s %s %s",pref,m,h,l,khg,oth,pos,out, log_output)
-     com2 = sprintf("sbatch --exclusive -t 0-5 --wrap='%s'",com)
+    com = sprintf("time %s %s %s %s %s %s %s %s %s",
+                  pref,m,h,l,khg,oth,pos,out, log_output)
+    # --exclusive allocate nodes in exclusive mode when cpu consumable resource is enabled
+    # -t time limit
+    com2 = sprintf("sbatch --exclusive -t 0-5 --wrap='%s'",com)
+     
     message(com2)
     system(com2)
   }

@@ -1,11 +1,13 @@
+# ----------------------------------------------------------------------
 # getting a chromosome level summary of how many snps are to be removed
 # due to missing values or to strand issue
+# ----------------------------------------------------------------------
 
 geno =  "../../data/chr"
 gwas_alignments = "../../data/chr/precheck_log"
 
 for (suff in c("")) {
-  chrs = seq(22)
+  chrs = seq(22) # change to 22 to run the example data 
   summ = matrix(NA, nrow = 22, ncol = 4)
   colnames(summ) = c("total", "not.comp", "strand", "missing")
   rownames(summ) = paste("chr", 1:22, sep = "")

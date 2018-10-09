@@ -1,18 +1,24 @@
 ---
 title: "A workflow for Allele-specific read counts"
-output: html_document
+output:
+  html_document:
+    theme: united
+    toc: true
+    toc_float: 
+      collapsed: true
+      smooth_scroll: true
 ---
 
-### Download SNP genotype array data from NCI GDC legacy archive
+## Download SNP genotype array data from NCI GDC legacy archive
 Download data files from NCI GDC legacy archive https://portal.gdc.cancer.gov/legacy-archive/search/f
   
-  + choose a project(s)  
+  + choose a project  
   + Experimental Strategy is genotyping arrary, data category is simple nucleotide variation, data type is genotypes 
   + The TXT files end with birdseed.txt 
   + Download Manifest and Metadata, after adding all the files to the cart
   + option:
-    * -t location of the token required to download controlled data 
-    * -m path to the manifest file
+    * `-t` location of the token required to download controlled data 
+    * `-m` path to the manifest file
 
 ```{bash, eval =F}
 #!/bin/bash
@@ -20,15 +26,16 @@ Download data files from NCI GDC legacy archive https://portal.gdc.cancer.gov/le
 /fh/fast/sun_w/bin/gdc-client download -n 4 \
 -t gdc-user-token.2018-08-02T10_39_10-07_00.txt \
 -m gdc_manifest_20180801_215718.txt
+
 ```
 
 The Manifest file looks like:
 ```{r, echo=FALSE}
-genotype_call = read.table('../data/sample_geno_call_22.txt', 
+genotype_calls = read.table('../data/sample_geno_call_22.txt', 
                            header = T, as.is = T, sep ='\t')
-sample.chr22.map = read.table('../data/chr/geno.chr22.map', 
+geno.chr22.map = read.table('../data/chr/geno.chr22.map', 
                            header = F, as.is = T, sep ='\t')
-sample.chr22.ped = read.table('../data/chr/geno.chr22.ped', 
+geno.chr22.ped = read.table('../data/chr/geno.chr22.ped', 
                            header = F, sep ='\t')
 
 manifest = read.table('/fh/fast/sun_w/licai/_tumor_eQTL/gdc_manifest_20180529_223406.txt',
@@ -41,8 +48,8 @@ head(manifest)
 ```
 
 
-### StepA: Prepare input data
-#### step1: prepare genotype calls and convert them to ped and map format 
+## Step A: Prepare input data
+### step 1: prepare genotype calls and convert them to ped and map format 
   + file required
     * genotype file from NCI GDC legacy 
     * JSON file (Metadata downloaded in the previous steps)
@@ -50,7 +57,7 @@ head(manifest)
   + Ped format: http://zzz.bwh.harvard.edu/plink/data.shtml#ped
   + Map format: http://zzz.bwh.harvard.edu/plink/data.shtml#map 
 
-#### step2: separate file by chromosome
+### step 2: separate file by chromosome
 ```{bash, eval =F}
 #!/bin/bash
 
@@ -69,28 +76,50 @@ done
 
 After previous steps, the data should be the following format. 
 ```{r}
-genotype_call[1:5,1:5]
-head(sample.chr22.map)
-sample.chr22.ped[1:5, 1:15]
+genotype_calls[1:5,1:5]
+head(geno.chr22.map)
+geno.chr22.ped[1:5, 1:15]
 
 ```
 
 
-### Step B: phasing and imputation
-#### step1: Run shapeit in check model to check the missingness and mismatches of the PLINK as compared to 1000G reference. 
+## Step B: phasing and imputation
+
+After step A, we will have following file structure. Due to limited storage, we showed part of them in the example data. 
+
+```
+project
+└─── README.md
+└─── data
+    └─── chr
+        └─── geno.chr22.map
+        └─── geno.chr22.ped
+        └─── ...
+    └─── genotype_calls.txt
+    └─── geno.map
+    └─── geno.ped
+    └─── clinical_meta.txt
+└───code
+    └─── stepA_prepare_input_data
+    └─── stepB_phasing_and_imputation
+    └─── stepC_collect_read_count
+    └─── flow.txt
+```
+
+### step 1: Run shapeit in check model to check the missingness and mismatches of the PLINK as compared to 1000G reference. 
   + Download reference panel 1000G reference
   +	Option:
-    * --Check – turn on check mode
-    * --input-ped – chromosome level data in PED/MAP format
-    * --input-map – recombination map for each chromosome from 1000G, see the folder below
-    * --input-ref – requires chromosome level files with haplotypes, legends and sample info from 1000G, located in the same reference folder
-    * --output-log – path to output log file
+    * `--Check` – turn on check mode
+    * `--input-ped` – chromosome level data in PED/MAP format
+    * `--input-map` – recombination map for each chromosome from 1000G, see the folder below
+    * `--input-ref` – requires chromosome level files with haplotypes, legends and sample info from 1000G, located in the same reference folder
+    * `--output-log` – path to output log file
 
 When filling in the required path to shapeit location, reference panel and input and output, R will generate bash script and automaticaly submit them The example for chromoson bash script should look like:
 
 ```{bash, eval =F}
 #!/bin/bash
-path_input = '/fh/fast/sun_w/licai/_tumor_eQTL'
+path_input='/fh/fast/sun_w/licai/_tumor_eQTL'
 
 path_input/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit -check \
 --input-ped ../../data/chr/geno.chr22 \
@@ -102,7 +131,7 @@ path_input/1000GP_Phase3/1000GP_Phase3.sample \
 
 ```
 
-#### step2-4: flip the mismathed SNPs and check whether strand issue can be fixed
+### step 2-4: flip the mismathed SNPs and check whether strand issue can be fixed
 These steps essentially repeats what we did in step1. 
 
 - step2: repeating step1, only with flipped SNPs that were declared inconsistent and compares whether the resulting lists of inconsistent SNPs differ 
@@ -113,19 +142,19 @@ These steps essentially repeats what we did in step1.
   + plink: Flip strand: http://zzz.bwh.harvard.edu/plink/dataman.shtml#flip 
 
 
-#### Step5: Run Shapeit (Phasing)
+### Step 5: Run Shapeit (Phasing)
   + option: 
-    *	--exclude-snp – this list was produced in step1 and we saw that it is not fixed by flipping the strand in step2
-    *	--O – now we save phased data to the separate phasedR (phased with reference) folder giving a prefix for a file name that includes chromosome that is to be processed
-    *	--effective-size 20000 – since we use 1000G  data, we don’t need to choose a smaller number for European population as it was described for HapMap, we will use the same value they recommend during imputation step
-    *	--seed 1234567 – some random seed for reproducibility of the run
-    *	--thread 6 – will speed calculations (number depends on how many cpu per core)
+    *	`--exclude-snp` – this list was produced in step1 and we saw that it is not fixed by flipping the strand in step2
+    *	`--O` – now we save phased data to the separate phasedR (phased with reference) folder giving a prefix for a file name that includes chromosome that is to be processed
+    *	`--effective-size` 20000 – since we use 1000G  data, we don’t need to choose a smaller number for European population as it was described for HapMap, we will use the same value they recommend during imputation step
+    *	`--seed 1234567` – some random seed for reproducibility of the run
+    *	`--thread 6` – will speed calculations (number depends on how many cpu per core)
 
 When filling in the required path to shapeit location, reference panel and input and output, R will generate bash script and automatically submit them and the example bash script should look like:
 
 ```{bash, eval =F}
 #!/bin/bash
-path_input = '/fh/fast/sun_w/licai/_tumor_eQTL'
+path_input='/fh/fast/sun_w/licai/_tumor_eQTL'
 
 path_input/shapeit.v2.904.3.10.0-693.11.6.el7.x86_64/bin/shapeit \
 --input-ped ../data/chr_flipped/KIRC.chr22_flip \
@@ -140,22 +169,22 @@ path_input/1000GP_Phase3/1000GP_Phase3.sample \
 
 ```
 
-#### Step6: Run impute2 (Imputation) 
+### Step 6: Run impute2 (Imputation) 
   + option:
-    *	-use_prephased_g – since we did phasing in step5
-    * -known_haps_g – here we supply the output of the step5 phasing_chr1.log.haps
-    *	-m – recombination map, the same as the one that was used in step1 from 1000G reference panel
-    *	-h – haplotypes from the reference panel, the same as were used in step1
-    *	-l – legends from the reference panel, the same as were used in step1
-    *	-align_by_maf_g - activates the program's internal strand alignment procedure for our data
-    *	-Ne 20000 – controls the effective population size in the population-genetic model used by IMPUTE2 (When using these combined panels, you should set the -Ne argument of IMPUTE2 to 20000, https://mathgen.stats.ox.ac.uk/impute/data_download_1000G_phase1_integrated.html)
-    *	-seed 12345 – random seed set
-
+    *	`-use_prephased_g` – since we did phasing in step5
+    * `-known_haps_g` – here we supply the output of the step5 phasing_chr1.log.haps
+    *	`-m` – recombination map, the same as the one that was used in step1 from 1000G reference panel
+    *	`-h` – haplotypes from the reference panel, the same as were used in step1
+    *	`-l` – legends from the reference panel, the same as were used in step1
+    *	`-align_by_maf_g` - activates the program's internal strand alignment procedure for our data
+    *	`-Ne 20000` – controls the effective population size in the population-genetic model used by IMPUTE2 (When using these combined panels, you should set the -Ne argument of IMPUTE2 to 20000, https://mathgen.stats.ox.ac.uk/impute/data_download_1000G_phase1_integrated.html)
+    *	`-seed 12345` – random seed set
+    
 The example bash script should look like:
 ```{bash, eval =F}
 #!/bin/bash
 
-path_input = '/fh/fast/sun_w/licai/_tumor_eQTL'
+path_input='/fh/fast/sun_w/licai/_tumor_eQTL'
 
 path_input/impute_v2.3.2_x86_64_dynamic/impute2 \
 -use_prephased_g -m path_input/1000GP_Phase3/genetic_map_chr22_combined_b37.txt \
@@ -169,17 +198,86 @@ path_input/impute_v2.3.2_x86_64_dynamic/impute2 \
 ```
 
 
-#### Step7 – 9: Check shapeit/flipped/unflipped results corresponds to genotype array. 
+### Step 7 – 9 and step 12: Check shapeit/flipped/unflipped/imputed results corresponds to genotype array. 
 In these steps, we check the results from step 6 and make sure the heterozygous SNPs remain heterozygous. 
 
-#### Step10: get the most likely genotype. 
-If the most likely genotype having probability > 80%, set it as the genotype to be the most likely one, otherwise, set it as NA. 
+  + step 7: shapeit versus genotype array
+  + step 8: flipped versus genotype array
+  + step 9: unflipped versus genotype array
+  + step 12: imputed versus genotype array
+  
+### Step 10: get the most likely genotype. 
+For each SNP, the genotype is set to be the most lilely one, if the most likely genotype having probability > 80%, otherwise it is set to be NA. 
 
-#### Step11: Get heterozygous SNP list. 
+For each chunk of a chromosome, we have 7 output files. 
+```{r}
+phased = "../data/phased"
+inputdir = "../data/imputed"
+list.files(inputdir)
+```
 
-#### Step12: Check how the SNPs in step11 corresponds to genotype array. The heterozygous sites should remain heterozygous. 
+For file format, see http://www.stats.ox.ac.uk/~marchini/software/gwas/file_format.html 
 
-#### Step13: lift to builder HG38
+Example:  Suppose you want to create a genotype for 2 individuals at 5 SNPs whose genotypes are
+```
+        SNP 1:     AA    AA
+        SNP 2:     GG    GT
+        SNP 3:     CC    CT
+        SNP 4:     CT    CT
+        SNP 5:     AG    GG
+```
+
+The correct genotype file would be
+
+```
+        SNP1 rs1 1000 A C 1 0 0 1 0 0
+        SNP2 rs2 2000 G T 1 0 0 0 1 0
+        SNP3 rs3 3000 C T 1 0 0 0 1 0
+        SNP4 rs4 4000 C T 0 1 0 0 1 0
+        SNP5 rs5 5000 A G 0 1 0 0 0 1
+```
+So, at SNP3 the two alleles are C and T so the set of 3 probabilities for each indvidual correspond to the genotypes CC, CT and TT respectively. 
+
+```{r, warning = F}
+setwd(inputdir)
+chri = 22
+fls = list.files(pattern=sprintf("chr%s_",chri))
+to.rm = union(union(union(grep(".txt",fls),grep("info_by_sample",fls)),grep("warnings",fls)),grep("summary",fls))
+fls = fls[-to.rm]
+hps = fls[grep("_haps",fls)]
+alp = fls[grep("_allele_probs",fls)]
+info = fls[grep("info$",fls)]
+fls = setdiff(fls,union(union(hps,alp), info))
+
+fls
+snpj = read.table(fls,as.is=T)
+snpj[1:5,1:8]
+
+hps
+hpj = read.table(hps,as.is=T)
+hpj[1:5,1:7]
+
+alp
+alpj = read.table(alp,as.is=T)
+alpj[1:5,1:8]
+
+```
+
+### Step 11: Get heterozygous SNP list. 
+  We filter out SNP with R2 < 0.3  
+  'info' is similar to the r-squared metrics reported by other programs like MaCH and Beagle
+
+```{r}
+setwd(inputdir)
+info
+infoj = read.table(info,as.is=T, header =T)
+infoj[1:5,1:8]
+
+```
+
+
+
+### Step 13: lift to builder HG38
 The snpfiles have to be lifted from HG19 to HG38 in order to be in line with bamfiles in Step C: collect read counts.
 
 ```{bash, eval =F}
@@ -191,21 +289,116 @@ path_to_liftOver/hg19ToHg38.over.chain combined_hg38.txt combined_unlifted.txt
 ```
 
 
-### StepC: Collect read counts
-####	Step1: make sqlite file 
+## Step C: Collect read counts
+
+Download data from 
+  
+  + Choose a project
+  + Data Format is BAM, Experimental Strategy is RNA-Seq, and Data Category is Raw Sequencing Data
+
+###	Step 1: make sqlite file 
+  
   + Download most recent GENCODE from https://www.gencodegenes.org/releases/current.html 
 
-#### Step2: sort bam file
+```{r, eval = F}
+library("GenomicFeatures")
 
-#### Step3: extract allele specific Read count	
+proj_input = "/fh/fast/sun_w/licai/_tumor_eQTL"
+gtfIn   = sprintf("%s/gencode.v28.annotation.gtf", proj_input)  # from GENCODE
 
-#### Step4: Count allele-specific reads 
+txdb2 = makeTxDbFromGFF(file=gtfIn, format="gtf",
+                        # dataSource=paste(path, file, sep=""),
+                        organism="Homo sapiens")
 
-#### Step5: Count total reads
+saveDb(txdb2, file=sprintf("%s/Homo_sapiens_gencode_v28_GRCh38.sqlite", proj_input))
+
+```
+
+### Step 2: sort bam file
+Sort the bam file by qname. This is because we want the paired-end reads to be next to each other, so that we can extract them together when we extract allele-specific reads.
+
+One way to sort the bam file is using `Rsamtools` package.
+
+Download `Rsamtools` package.
+
+```{r, eval = F}
+source("https://bioconductor.org/biocLite.R")
+biocLite("Rsamtools")
+```
 
 
+```{r, eval = F}
+library(Rsamtools)
+ffi = input_file
+ffs = destination_of_sorted_file
+sortBam(ffi, fsi, byQname=TRUE, maxMemory=16384)
+```
+Alternatively, we can directly call samtools.
 
-#### Reference: The general scheme for phasing and imputation was generally along the line stated in
+  + `-n`: by read name
+  + `-m`: Maximum memory
+  + `-o`: output file
+```{bash, eval = F}
+Maximum=16384
+ffi=input_file
+ffs=destination_of_sorted_file
+
+samtools sort -m $maxMemory -n $ffi -o $ffs 
+
+```
+
+### Step 3: extract allele-specific bam file
+In phasing and imputation, we created a list of heterozygous SNPs and lift them over to builder hg38. In this step, we will reformat it totab-delimited file with four columns, chromosome, position, allele 1 and allele 2, without header. 
+
+```{bash}
+folder_of_sam1='../data/data_snp/sample1'
+cd $folder_of_sam1 ;  
+cat combined_hg38.txt | cut -f1,3,4,5 | head 
+```
+Downlad `asSeq` package https://research.fhcrc.org/sun/en/software/asSeq.html
+
+We can get the allele-specific bam file in the following two steps
+  
+  + `prepareBAM` - Three steps are involved in the preparation. Sorting the bam file by read name, delete those reads that are mapped to multiple places in the genome, and filter out those reads of low quality.
+  + `extractAsReads` - A sequence read is counted as allele specific only if it harbors one or more heterozygous genetic markers, and their genotypes are consistent with one and only one of the two haplotypes specified in file snpList.
+
+```{r, eval = F}
+library(asSeq)
+
+prepareBAM(input, output_prepareBAM, sortIt=FALSE, filterIt=TRUE, 
+           min.avgQ=20, min.mapQ=20, getUniqMapping=TRUE)
+           
+extractAsReads(paste0(output_prepareBAM, "_uniq_filtered.bam"), tmpSnpFile, outputTag)
+
+```
+
+
+### Step 4-5: Count allele-specific/total reads 
+
+Count allele-specific reads or total reads using function `summarizeOverlaps` from R package `GenomicAlignments`.
+
+```{r, eval = F}
+library("GenomicFeatures")
+library("GenomicAlignments")
+
+txdb  = loadDb("Homo_sapiens_gencode_v28_GRCh38.sqlite")
+genes = exonsBy(txdb, by="gene")
+
+filenames = list.files(pattern=".bam$")
+bamfiles  = BamFileList(filenames, yieldSize=1000000)
+
+se = summarizeOverlaps(features=genes, reads=bamfiles, mode="Union",
+             singleEnd=FALSE, ignore.strand=FALSE, fragments=TRUE )
+
+as1 = assay(se)
+
+write.table(as1, file = "gene_level_counts.txt", append = FALSE,
+  quote = FALSE, sep = "\t", eol = "\n", row.names = TRUE,
+  col.names = TRUE)
+```
+
+
+## Reference: 
   + Shapeit link http://www.shapeit.fr/pages/m03_phasing/imputation.html
   + impute2 link https://mathgen.stats.ox.ac.uk/impute/impute_v2.html
   + liftover link https://genome.ucsc.edu/util.html

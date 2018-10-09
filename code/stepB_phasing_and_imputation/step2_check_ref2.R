@@ -16,26 +16,22 @@ rownames(checki) = sprintf("chr%s", 1:22)
 
 #as with each shapeit we do it on chromosome level
 all1000G = "1000GP_Phase3" #common reference prefix
-for (i in seq(22)) {
+# change seq(22) to seq to run the example data 
+for (i in seq(22)) { 
   #i = 22;
   #flip the snps of interest
   con = file(sprintf("%s/gwas.alignments_chr%d.snp.strand", gwas_alignments, i))
   lns = readLines(con)
-  lns = lns[substr(lns, 1, 6) == "Strand"]
-  strand = matrix(unlist(strsplit(lns, split = "\t")), nrow = 11)[4, ]
+  lns = lns[substr(lns, 1, 6) == "Strand"] # extract SNP with strand issue 
+  strand = matrix(unlist(strsplit(lns, split = "\t")), nrow = 11)[4,]
   close(con)
-  write.table(
-    unique(strand),
-    "tmp_strand.txt",
-    row.names = F,
-    col.names = F,
-    quote = F
-  )
+  write.table(unique(strand), "tmp_strand.txt", row.names = F,col.names = F,
+    quote = F) # write misstrand SNP to a tmp file
   file.copy(from = sprintf("%s/geno.chr%s.map", proj, i),
             to = "tmp.map")
   file.copy(from = sprintf("%s/geno.chr%s.ped", proj, i),
             to = "tmp.ped")
-  system(sprintf("%s --file tmp --flip tmp_strand.txt  --recode", plinkloc))
+  system(sprintf("%s --file tmp --flip tmp_strand.txt  --recode", plinkloc)) # Plink to flip the strand
   cat("plink done ")
   
   con = file(sprintf("tmp.ped", proj, i))
@@ -63,13 +59,13 @@ for (i in seq(22)) {
   com = sprintf("%s %s %s %s %s %s %s",
                 pref, pedi, mapr, inpr, legr, samr, out)
   message(com)
-  system(com)
+  system(com) # run shapeit check model agian
   
   
   con = file(sprintf("tmp.snp.strand", proj, i))
   lns2 = readLines(con)
   lns2 = lns2[substr(lns2, 1, 6) == "Strand"]
-  strand2 = matrix(unlist(strsplit(lns2, split = "\t")), nrow = 11)[4, ]
+  strand2 = matrix(unlist(strsplit(lns2, split = "\t")), nrow = 11)[4,]
   close(con)
   
   #count how many snps are in the one exclusion set, but not in the other

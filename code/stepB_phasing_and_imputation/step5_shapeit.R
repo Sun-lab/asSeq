@@ -20,9 +20,11 @@ system(sprintf("mkdir -p %s", proj_log))
 
 all1000G = "1000GP_Phase3" #common reference prefix
 mem=32000
-ncpu = 6
-for(i in c(1:22)){
-  #i = 16;
+ncpu = 6 #number depends on how many cpu per core
+
+# change seq(22) to 22 to run the example data
+for(i in seq(22)){
+  #i = 22;
   pref = shapeloc
   pedi = sprintf("--input-ped %s/geno.chr%s_flip",geno,i)
   mapr = sprintf("--input-map %s/genetic_map_chr%s_combined_b37.txt",refinfo,i)

@@ -83,6 +83,8 @@ table(barcode[, 'plate'])
 meta1 = cbind.data.frame(meta1, barcode, stringsAsFactors = F)
 
 # only take normal tissue 
+# 10	Blood Derived Normal
+# 11	Solid Tissue Normal
 w2kp = which(meta1$sample %in% c(paste0(10, LETTERS), paste0(11, LETTERS)))
 meta2 = meta1[w2kp, ]
 dim(meta2)
@@ -100,7 +102,7 @@ if(any(tp != 1)){
   
   for(sam1 in sams){
     ww1 = which(meta2check$participant == sam1)
-    ww2 = ww1[which(meta2check$sample[ww1] %in% paste0(11, LETTERS))]
+    ww2 = ww1[which(meta2check$sample[ww1] %in% paste0(10, LETTERS))]
     if(length(ww2) > 1L){
       ww2 = ww2[which.max(meta2check$archive.file_size[ww2])]
     }

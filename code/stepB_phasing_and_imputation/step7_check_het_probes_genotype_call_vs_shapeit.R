@@ -1,7 +1,7 @@
 # Checking the pipeline input genotype calls vs. the phased output
 
 sample_id = "sample1"  # usually the format is "TCGA-B0-5099-01A"
-genotype_file = '../../data/sample_geno_call_22.txt'
+genotype_file = '../../data/sample_geno_call_22.txt' # change to the name of genotype files 
 anno_file = '/fh/fast/sun_w/licai/_tumor_eQTL/GenomeWideSNP_6-na35-annot-csv/GenomeWideSNP_6.na35.annot.csv'
 
 # 1.1 Load the SNP 6 csv file
