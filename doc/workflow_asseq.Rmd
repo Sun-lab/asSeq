@@ -32,23 +32,35 @@ Download data files from NCI GDC legacy archive https://portal.gdc.cancer.gov/le
 ```
 
 The Manifest file looks like:
-```{r, echo=FALSE}
-genotype_calls = read.table('../data/sample_geno_call_22.txt', 
-                           header = T, as.is = T, sep ='\t')
-geno.chr22.map = read.table('../data/chr/geno.chr22.map', 
-                           header = F, as.is = T, sep ='\t')
-geno.chr22.ped = read.table('../data/chr/geno.chr22.ped', 
-                           header = F, sep ='\t')
-
+```{r, eval =F}
 manifest = read.table('/fh/fast/sun_w/licai/_tumor_eQTL/gdc_manifest_20180529_223406.txt',
                      sep = '\t', header = T)
-# setwd('/fh/fast/sun_w/licai/_tumor_eQTL/GitHub/asSeq/code')
-```
-
-```{r}
 head(manifest)
 ```
 
+```
+                                   id
+1 000264e1-ef7e-4df8-9b3f-3d20af778417
+2 000476b3-3aa4-4857-ad74-ab13eaea468b
+3 0027d158-eab4-4590-9cd0-0d5a7f4af60e
+4 002824cc-1cbe-4be0-ab88-176fcff56a63
+5 00330f63-dc1a-447d-9a4d-c0b7df806ed5
+6 00a2a84c-71bf-4433-913b-918d9ccceca4
+                                                                      filename
+1      BUBBY_p_TCGA_b89_105_SNP_N_GenomeWideSNP_6_B05_777516.birdseed.data.txt
+2           KEYED_p_TCGAb41_SNP_N_GenomeWideSNP_6_D04_598754.birdseed.data.txt
+3 HELVE_p_TCGA_b139_154_155_SNP_N_GenomeWideSNP_6_G09_808646.birdseed.data.txt
+4           SONGS_p_TCGAb36_SNP_N_GenomeWideSNP_6_A07_585392.birdseed.data.txt
+5       RARER_p_TCGA_MixedRedos_N_GenomeWideSNP_6_C05_747790.birdseed.data.txt
+6         BAIZE_p_TCGA_b138_SNP_N_GenomeWideSNP_6_D12_808776.birdseed.data.txt
+                               md5     size state
+1 510c15b759e6fecb1711ae98f272c4f6 20850936  live
+2 7363e3597a9c723d61370edd01daefbf 20850921  live
+3 d4f5df3dddf5a77691bf4e34251e0774 20851974  live
+4 14b3d959035d2dc5218424aaf89b0a8b 20850926  live
+5 43a026908f0b66558339844b677d8647 20850929  live
+6 78379b1eb28e7f691bdca34ffbffc2ca 20850930  live
+```
 
 ## Step A: Prepare input data
 ### step 1: prepare genotype calls and convert them to ped and map format 
@@ -60,6 +72,7 @@ head(manifest)
   + Map format: http://zzz.bwh.harvard.edu/plink/data.shtml#map 
 
 ### step 2: separate file by chromosome
+Step 1 has prepared the genotype data files geno.map and geno.ped for all samples. We can using the following shell command to splilt it into each chromosome. 
 ```{bash, eval =F}
 #!/bin/bash
 
@@ -76,8 +89,17 @@ done
 
 ```
 
-After previous steps, the data should be the following format. 
+After previous steps, the data should be the following format. The following data were simulated data for demonstration. 
 ```{r}
+genotype_calls = read.table('../data/sample_geno_call_22.txt', 
+                           header = T, as.is = T, sep ='\t')
+
+geno.chr22.map = read.table('../data/chr/geno.chr22.map', 
+                           header = F, as.is = T, sep ='\t')
+
+geno.chr22.ped = read.table('../data/chr/geno.chr22.ped', 
+                           header = F, sep ='\t')
+
 genotype_calls[1:5,1:5]
 head(geno.chr22.map)
 geno.chr22.ped[1:5, 1:15]
