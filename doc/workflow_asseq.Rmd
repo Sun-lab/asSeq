@@ -2,11 +2,13 @@
 title: "A workflow for Allele-specific read counts"
 output:
   html_document:
-    theme: united
+    theme: journal
+    highlight: tango
     toc: true
+    toc_depth: 3
     toc_float: 
       collapsed: true
-      smooth_scroll: true
+      smooth_scroll: false
 ---
 
 ## Download SNP genotype array data from NCI GDC legacy archive
@@ -291,7 +293,7 @@ path_to_liftOver/hg19ToHg38.over.chain combined_hg38.txt combined_unlifted.txt
 
 ## Step C: Collect read counts
 
-Download data from 
+Download data from https://portal.gdc.cancer.gov/
   
   + Choose a project
   + Data Format is BAM, Experimental Strategy is RNA-Seq, and Data Category is Raw Sequencing Data
