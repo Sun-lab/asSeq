@@ -315,7 +315,7 @@ path_to_liftOver/hg19ToHg38.over.chain combined_hg38.txt combined_unlifted.txt
 
 ## Step C: Collect read counts
 
-Download data from https://portal.gdc.cancer.gov/
+Download bam file from https://portal.gdc.cancer.gov/
   
   + Choose a project
   + Data Format is BAM, Experimental Strategy is RNA-Seq, and Data Category is Raw Sequencing Data
