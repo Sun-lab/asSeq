@@ -2,7 +2,7 @@
 allele-specific sequencing data analysis. 
 
 the pipeline to obtain allele-specific sequencing reads. Including genotype imputation and phasing, extration of allele-specific reads and counting the allele-speciic reads. The files are organized as follows. 
-
+```
 ├── code
 │   ├── flow.txt
 │   ├── stepA_prepare_input_data
@@ -19,6 +19,7 @@ the pipeline to obtain allele-specific sequencing reads. Including genotype impu
 └── doc
     ├── workflow_asseq.Rmd
     └── workflow_asseq.html
+```
 
 In the folder ```doc```, you can see an R markdown file and the ouptut in html format, which provide the explanation and example coede for the whole pipeline. 
 
