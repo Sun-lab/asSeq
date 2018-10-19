@@ -43,7 +43,7 @@ for(i in seq(22)){
   message(com)
   system(com2)
 }
-system(sprintf("mv shapeit* %s", shapeit_log))
+system(sprintf("mv shapeit* %s", proj_log))
 
 sessionInfo()
 q("no")
