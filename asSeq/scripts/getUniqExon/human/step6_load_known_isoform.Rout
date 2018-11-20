@@ -1,0 +1,107 @@
+
+R version 2.13.1 (2011-07-08)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin9.8.0/x86_64 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library(isoform)
+Loading required package: gtools
+Loading required package: MASS
+> 
+> setwd("~/research/data/human/")
+> 
+> # ---------------------------------------------------------
+> # load information of known isoforms
+> # ---------------------------------------------------------
+> 
+> nonOverlapExonFile  = "Homo_sapiens.GRCh37.66.nonoverlap.exon.gtf"
+> isoAll = knownIsoforms(nonOverlapExonFile)
+1000 Fri Apr 27 21:52:55 2012 
+2000 Fri Apr 27 21:52:57 2012 
+3000 Fri Apr 27 21:52:58 2012 
+4000 Fri Apr 27 21:53:01 2012 
+5000 Fri Apr 27 21:53:03 2012 
+6000 Fri Apr 27 21:53:04 2012 
+7000 Fri Apr 27 21:53:07 2012 
+8000 Fri Apr 27 21:53:09 2012 
+9000 Fri Apr 27 21:53:11 2012 
+10000 Fri Apr 27 21:53:13 2012 
+11000 Fri Apr 27 21:53:16 2012 
+12000 Fri Apr 27 21:53:18 2012 
+13000 Fri Apr 27 21:53:22 2012 
+14000 Fri Apr 27 21:53:23 2012 
+15000 Fri Apr 27 21:53:26 2012 
+16000 Fri Apr 27 21:53:28 2012 
+17000 Fri Apr 27 21:53:30 2012 
+18000 Fri Apr 27 21:53:33 2012 
+19000 Fri Apr 27 21:53:36 2012 
+20000 Fri Apr 27 21:53:38 2012 
+21000 Fri Apr 27 21:53:41 2012 
+22000 Fri Apr 27 21:53:45 2012 
+23000 Fri Apr 27 21:53:48 2012 
+24000 Fri Apr 27 21:53:52 2012 
+25000 Fri Apr 27 21:53:55 2012 
+26000 Fri Apr 27 21:53:58 2012 
+27000 Fri Apr 27 21:54:02 2012 
+28000 Fri Apr 27 21:54:06 2012 
+29000 Fri Apr 27 21:54:09 2012 
+30000 Fri Apr 27 21:54:14 2012 
+31000 Fri Apr 27 21:54:18 2012 
+32000 Fri Apr 27 21:54:22 2012 
+33000 Fri Apr 27 21:54:25 2012 
+34000 Fri Apr 27 21:54:30 2012 
+35000 Fri Apr 27 21:54:34 2012 
+36000 Fri Apr 27 21:54:38 2012 
+37000 Fri Apr 27 21:54:43 2012 
+38000 Fri Apr 27 21:54:47 2012 
+39000 Fri Apr 27 21:54:52 2012 
+40000 Fri Apr 27 21:54:57 2012 
+41000 Fri Apr 27 21:55:02 2012 
+42000 Fri Apr 27 21:55:07 2012 
+43000 Fri Apr 27 21:55:12 2012 
+44000 Fri Apr 27 21:55:17 2012 
+45000 Fri Apr 27 21:55:21 2012 
+46000 Fri Apr 27 21:55:26 2012 
+> 
+> length(isoAll)
+[1] 46011
+> nIso = sapply(isoAll, ncol)
+> summary(nIso)
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  1.000   1.000   1.000   3.894   4.000 141.000 
+> table(nIso)
+nIso
+    1     2     3     4     5     6     7     8     9    10    11    12    13 
+28080  4097  2086  1590  1255  1061   997   765   756   651   551   453   406 
+   14    15    16    17    18    19    20    21    22    23    24    25    26 
+  368   315   274   256   246   177   177   157   135   114   117    87    80 
+   27    28    29    30    31    32    33    34    35    36    37    38    39 
+   73    69    52    55    49    43    41    38    36    30    26    15    11 
+   40    41    42    43    44    45    46    47    48    49    50    51    52 
+   22    16    16     9    11     8    10    15    13     4     8     6     2 
+   53    54    55    56    57    58    59    60    61    62    63    64    65 
+    5     6     3     7     4     3     3     4     1     4     6     4     2 
+   66    67    68    69    71    72    73    74    76    77    79    80    81 
+    4     4     2     1     2     1     1     1     1     2     1     1     2 
+   85    88    93    96   102   113   141 
+    1     1     1     1     1     1     1 
+> 
+> save(isoAll, file="Homo_sapiens.GRCh37.66.nonoverlap.exon.knownIsoforms.RData")
+> 
+> proc.time()
+   user  system elapsed 
+279.577  60.573 340.154 

@@ -1,0 +1,24 @@
+
+useDynLib(asSeq)
+
+import(zlibbioc)
+
+# ------------------------------------------
+# Export directives.  
+# ------------------------------------------
+
+export(extractAsReads)
+export(prepareBAM)
+export(glmFit)
+export(glmTest)
+export(glmNB)
+export(ase)
+export(trec)
+export(trecase)
+export(trecaseP)
+export(pileupBAM)
+
+# ------------------------------------------
+# S3method declarations.  
+# ------------------------------------------
+

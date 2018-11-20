@@ -1,0 +1,350 @@
+
+R version 2.11.0 (2010-04-22)
+Copyright (C) 2010 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> 
+> ## when writing data into text file, it may use scientific format
+> ## when you read it into c, and using atoi. it will make mistakes
+> ## say 97000000 is written as 9.7e+07, and c think it is 9
+> ## options("scipen") can control write out behavior
+> 
+> options(scipen=20)
+> annoVersion = "Mus_musculus.NCBIM37.67"
+> 
+> # --------------------------------------------------------- 
+> # organize the annotation in exon level
+> # ---------------------------------------------------------
+> 
+> setwd("~/research/data/mouse/")
+> 
+> # --------------------------------------------------------- 
+> # ensemble genes
+> # ---------------------------------------------------------
+> 
+> ff  = sprintf("%s.exon.gtf", annoVersion)
+> date()
+[1] "Sat Jun  9 17:38:17 2012"
+> inf = read.table(ff, sep="\t", as.is=TRUE, quote="")
+> date()
+[1] "Sat Jun  9 17:38:38 2012"
+> 
+> dim(inf)
+[1] 688311      9
+> inf[1:2,]
+     V1                     V2   V3      V4      V5 V6 V7 V8
+1 chr18 unprocessed_pseudogene exon 3026901 3027882  .  -  .
+2 chr18 unprocessed_pseudogene exon 3080778 3081476  .  -  .
+                                                                                                                                                                          V9
+1  gene_id "ENSMUSG00000093774"; transcript_id "ENSMUST00000176956"; exon_number "1"; gene_name "Vmn1r-ps151"; gene_biotype "pseudogene"; transcript_name "Vmn1r-ps151-001";
+2  gene_id "ENSMUSG00000093444"; transcript_id "ENSMUST00000176452"; exon_number "1"; gene_name "Vmn1r-ps152"; gene_biotype "pseudogene"; transcript_name "Vmn1r-ps152-001";
+> 
+> names(inf) = c("chr", "source", "feature", "start", "end", 
++ "score", "strand", "frame", "anno")
+> 
+> table(inf$chr)
+
+ chr1 chr10 chr11 chr12 chr13 chr14 chr15 chr16 chr17 chr18 chr19  chr2  chr3 
+40026 29954 60835 19937 19777 22468 24313 22709 31548 13619 19430 71381 31675 
+ chr4  chr5  chr6  chr7  chr8  chr9  chrM  chrX  chrY 
+50706 47424 35353 51165 30788 35514    37 29170   482 
+> table(inf$source)
+
+          3prime_overlapping_ncrna                      ambiguous_orf 
+                                14                                138 
+                         antisense                   disrupted_domain 
+                              5933                                  7 
+                         IG_C_gene                          IG_D_gene 
+                                47                                 25 
+                         IG_J_gene                          IG_V_gene 
+                                88                                646 
+                           lincRNA                              miRNA 
+                              6484                               1626 
+                          misc_RNA                            Mt_rRNA 
+                               491                                  2 
+                           Mt_tRNA                         ncrna_host 
+                                22                                  3 
+                        non_coding                     non_stop_decay 
+                               433                                 14 
+           nonsense_mediated_decay             polymorphic_pseudogene 
+                             38079                                 82 
+              processed_pseudogene               processed_transcript 
+                               315                              55659 
+                    protein_coding                         pseudogene 
+                            508971                               1041 
+                   retained_intron                    retrotransposed 
+                             56376                                259 
+                              rRNA                     sense_intronic 
+                               332                                209 
+                 sense_overlapping                             snoRNA 
+                                17                               1557 
+                             snRNA   transcribed_processed_pseudogene 
+                              1424                               4131 
+transcribed_unprocessed_pseudogene                 unitary_pseudogene 
+                              2782                                 46 
+            unprocessed_pseudogene 
+                              1058 
+> table(inf$feature)
+
+  exon 
+688311 
+> table(inf$score)
+
+     . 
+688311 
+> table(inf$strand)
+
+     -      + 
+339322 348989 
+> table(inf$frame)
+
+     . 
+688311 
+> 
+> # --------------------------------------------------------- 
+> # whether any exon share the same start and end locations
+> # ---------------------------------------------------------
+> 
+> id  = paste(inf$chr, inf$start, inf$end, sep=":")
+> uid = unique(id)
+> 
+> length(id)
+[1] 688311
+> length(uid)
+[1] 354712
+> 
+> tid = table(id)
+> table(tid)
+tid
+     1      2      3      4      5      6      7      8      9     10     11 
+223093  54415  30433  18293  10885   6996   3819   2312   1524    979    610 
+    12     13     14     15     16     17     18     19     20     21     22 
+   376    241    195    180    100     52     42     36     13     23     17 
+    23     24     25     26     27     28     29     30     34 
+    29     14      8      8      6      3      6      3      1 
+> sort(tid, decreasing=TRUE)[1:3]
+id
+  chr18:3273420:3273576   chr10:3516044:3516564 chr10:73409776:73409894 
+                     34                      30                      30 
+> 
+> # --------------------------------------------------------- 
+> # sort the exons
+> # ---------------------------------------------------------
+> 
+> od     = order(inf$chr, inf$start, inf$end)
+> inf    = inf[od,]
+> 
+> # --------------------------------------------------------- 
+> # obtain gene_id
+> # --------------------------------------------------------- 
+> 
+> reg1   = regexpr('gene_id\\s"(\\S+)";', inf$anno, perl=TRUE)
+> len1   = attributes(reg1)[[1]]
+> nadd   = length(unlist(strsplit("gene_id", split=""))) + 2
+> geneId = substr(inf$anno, reg1+nadd, reg1+len1-3)
+> 
+> # --------------------------------------------------------- 
+> # obtain transcript_id
+> # --------------------------------------------------------- 
+> 
+> reg1   = regexpr('transcript_id\\s"(\\S+)";', inf$anno, perl=TRUE)
+> len1   = attributes(reg1)[[1]]
+> nadd   = length(unlist(strsplit("transcript_id", split=""))) + 2
+> tranId = substr(inf$anno, reg1+nadd, reg1+len1-3)
+> 
+> # --------------------------------------------------------- 
+> # obtain gene_name
+> # --------------------------------------------------------- 
+> 
+> reg1   = regexpr('gene_name\\s"(\\S+)";', inf$anno, perl=TRUE)
+> len1   = attributes(reg1)[[1]]
+> nadd   = length(unlist(strsplit("gene_name", split=""))) + 2
+> geneNm = substr(inf$anno, reg1+nadd, reg1+len1-3)
+> 
+> # --------------------------------------------------------- 
+> # obtain transcript_name
+> # --------------------------------------------------------- 
+> 
+> reg1   = regexpr('transcript_name\\s"(\\S+)";', inf$anno, perl=TRUE)
+> len1   = attributes(reg1)[[1]]
+> nadd   = length(unlist(strsplit("transcript_name", split=""))) + 2
+> tranNm = substr(inf$anno, reg1+nadd, reg1+len1-3)
+> 
+> # ---------------------------------------------------------
+> # find those duplicated exons
+> # ---------------------------------------------------------
+> 
+> nn = nrow(inf)
+> nn
+[1] 688311
+> 
+> wSame = (inf$chr[-nn] == inf$chr[-1])
+> wSame = wSame & (inf$start[-nn] == inf$start[-1])
+> wSame = wSame & (inf$end[-nn] == inf$end[-1])
+> 
+> ## the last entry will never been dropped
+> wSame = c(wSame, FALSE)
+> length(wSame)
+[1] 688311
+> 
+> table(wSame)
+wSame
+ FALSE   TRUE 
+354712 333599 
+> 
+> # ---------------------------------------------------------
+> # collapse annoations for the deleted row
+> # ---------------------------------------------------------
+> 
+> # suppose there are 6 records altogether, and 
+> # the 4th and 5th records are the same
+> # wSame = c(FALSE, FALSE, FALSE, TRUE, FALSE, FALSE)
+> # so I want to combine the 4th and 5th records
+> # rev(as.numeric(!wSame)) = (1 1 0 1 1 1)
+> # cumsum(rev(as.numeric(!wSame))) = (1 2 2 3 4 5)
+> # rev(cumsum(rev(as.numeric(!wSame)))) = (5 4 3 2 2 1)
+> 
+> id2kp      = rev(cumsum(rev(as.numeric(!wSame))))
+> pasteUniqu = function(v){paste(unique(v),collapse=":")}
+> geneId2use = tapply(geneId, id2kp, pasteUniqu)
+> 
+> if(!is.character(geneId2use)){
++   stop("I expecte geneID2use to be a character vector :(\n")
++ }
+> 
+> message("there are ", length(geneId2use), " unique exons.")
+there are 354712 unique exons.
+> 
+> xx = grep(":", geneId2use)
+> if(length(xx) > 0){
++   message(length(xx), " exons belong to more than one gene.")
++   geClusters = strsplit(geneId2use[xx], split=":")
++   t1         = table(sapply(geClusters, length))
++   message("their distributuion is")
++   print(t1)
++ }
+1228 exons belong to more than one gene.
+their distributuion is
+
+   2    3    4    6    9 
+1198   21    5    1    3 
+> 
+> tranId2use = tapply(tranId, id2kp, pasteUniqu)
+> xx = grep(":", tranId2use)
+> if(length(xx) > 0){
++   message(length(xx), " exons belong to more than one transcript.")
++   trClusters = strsplit(tranId2use[xx], split=":")
++   t1         = table(sapply(trClusters, length))
++   message("their distributuion is")
++   print(t1)
++ }
+131619 exons belong to more than one transcript.
+their distributuion is
+
+    2     3     4     5     6     7     8     9    10    11    12    13    14 
+54415 30433 18293 10885  6996  3819  2312  1524   979   610   376   241   195 
+   15    16    17    18    19    20    21    22    23    24    25    26    27 
+  180   100    52    42    36    13    23    17    29    14     8     8     6 
+   28    29    30    34 
+    3     6     3     1 
+> 
+> 
+> geneNm2use = tapply(geneNm, id2kp, pasteUniqu)
+> tranNm2use = tapply(tranNm, id2kp, pasteUniqu)
+> 
+> # ---------------------------------------------------------
+> # drop duplicated exons
+> # ---------------------------------------------------------
+> 
+> infNew = list()
+> nms = names(inf)
+> nms[1:8]
+[1] "chr"     "source"  "feature" "start"   "end"     "score"   "strand" 
+[8] "frame"  
+> 
+> for(i in 1:8){
++   nm1 = nms[i]  
++   cat(i, nm1, "\n")
++ 
++   if(nm1 == "source" || nm1 == "strand"){
++     it1 = tapply(inf[[nm1]], id2kp, pasteUniqu)
++   }else{
++     it1 = tapply(inf[[nm1]], id2kp, unique)
++   }
++   
++   if(mode(it1) == "list") { stop("hm... non unique ", nm1, "\n") }
++   
++   infNew[[nm1]] = it1
++ }
+1 chr 
+2 source 
+3 feature 
+4 start 
+5 end 
+6 score 
+7 strand 
+8 frame 
+> 
+> geneId2use = paste("gene_id \"", geneId2use, "\";", sep="")
+> tranId2use = paste("transcript_id \"", tranId2use, "\";", sep="")
+> geneNm2use = paste("gene_name \"", geneNm2use, "\";", sep="")
+> tranNm2use = paste("transcript_name \"", tranNm2use, "\";", sep="")
+> 
+> infNew$anno = paste(geneId2use, tranId2use, geneNm2use, tranNm2use, sep=" ")
+> 
+> infNew = as.data.frame(infNew)
+> dim(infNew)
+[1] 354712      9
+> infNew[1:2,]
+   chr         source feature   start     end score strand frame
+1 chrY protein_coding    exon 2550262 2552957     .      +     .
+2 chrY protein_coding    exon 2398179 2398856     .      +     .
+                                                                                                                 anno
+1 gene_id "ENSMUSG00000090600"; transcript_id "ENSMUST00000172100"; gene_name "Gm3395"; transcript_name "Gm3395-201";
+2 gene_id "ENSMUSG00000091987"; transcript_id "ENSMUST00000166474"; gene_name "Gm3376"; transcript_name "Gm3376-201";
+> 
+> # --------------------------------------------------------- 
+> # sort the exons
+> # ---------------------------------------------------------
+> 
+> od     = order(infNew$chr, infNew$start, infNew$end)
+> any(diff(od) < 0)
+[1] TRUE
+> infNew = infNew[od,]
+> 
+> # ---------------------------------------------------------
+> # write out
+> # ---------------------------------------------------------
+> 
+> id  = paste(infNew$chr, infNew$start, infNew$end, sep=":")
+> uid = unique(id)
+> 
+> length(id)
+[1] 354712
+> length(uid)
+[1] 354712
+> 
+> outFile = sprintf("%s.unique.exon.gtf", annoVersion)
+> 
+> write.table(infNew, file = outFile, append = FALSE, 
++   quote = FALSE, sep = "\t", row.names = FALSE, 
++   col.names = FALSE)
+> 
+> 
+> proc.time()
+   user  system elapsed 
+290.987   5.338 299.306 

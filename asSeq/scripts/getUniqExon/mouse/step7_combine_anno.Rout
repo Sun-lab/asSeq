@@ -1,0 +1,206 @@
+
+R version 2.11.0 (2010-04-22)
+Copyright (C) 2010 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+> 
+> annoVersion = "Mus_musculus.NCBIM37.67"
+> 
+> setwd("~/research/data/mouse/")
+> 
+> # --------------------------------------------------------- 
+> # read in ensemble gene annotation
+> # ---------------------------------------------------------
+> 
+> ref  = sprintf("%s.exon.gtf", annoVersion)
+> info = read.table(ref, sep="\t", as.is=TRUE)
+> dim(info)
+[1] 688311      9
+> info[1:2,]
+     V1                     V2   V3      V4      V5 V6 V7 V8
+1 chr18 unprocessed_pseudogene exon 3026901 3027882  .  -  .
+2 chr18 unprocessed_pseudogene exon 3080778 3081476  .  -  .
+                                                                                                                                                              V9
+1  gene_id ENSMUSG00000093774; transcript_id ENSMUST00000176956; exon_number 1; gene_name Vmn1r-ps151; gene_biotype pseudogene; transcript_name Vmn1r-ps151-001;
+2  gene_id ENSMUSG00000093444; transcript_id ENSMUST00000176452; exon_number 1; gene_name Vmn1r-ps152; gene_biotype pseudogene; transcript_name Vmn1r-ps152-001;
+> 
+> names(info) = c("chr", "source", "feature", "start", "end", 
++ "score", "strand", "frame", "anno")
+> 
+> table(info$chr)
+
+ chr1 chr10 chr11 chr12 chr13 chr14 chr15 chr16 chr17 chr18 chr19  chr2  chr3 
+40026 29954 60835 19937 19777 22468 24313 22709 31548 13619 19430 71381 31675 
+ chr4  chr5  chr6  chr7  chr8  chr9  chrM  chrX  chrY 
+50706 47424 35353 51165 30788 35514    37 29170   482 
+> table(info$source)
+
+          3prime_overlapping_ncrna                      ambiguous_orf 
+                                14                                138 
+                         antisense                   disrupted_domain 
+                              5933                                  7 
+                         IG_C_gene                          IG_D_gene 
+                                47                                 25 
+                         IG_J_gene                          IG_V_gene 
+                                88                                646 
+                           lincRNA                              miRNA 
+                              6484                               1626 
+                          misc_RNA                            Mt_rRNA 
+                               491                                  2 
+                           Mt_tRNA                         ncrna_host 
+                                22                                  3 
+                        non_coding                     non_stop_decay 
+                               433                                 14 
+           nonsense_mediated_decay             polymorphic_pseudogene 
+                             38079                                 82 
+              processed_pseudogene               processed_transcript 
+                               315                              55659 
+                    protein_coding                         pseudogene 
+                            508971                               1041 
+                   retained_intron                    retrotransposed 
+                             56376                                259 
+                              rRNA                     sense_intronic 
+                               332                                209 
+                 sense_overlapping                             snoRNA 
+                                17                               1557 
+                             snRNA   transcribed_processed_pseudogene 
+                              1424                               4131 
+transcribed_unprocessed_pseudogene                 unitary_pseudogene 
+                              2782                                 46 
+            unprocessed_pseudogene 
+                              1058 
+> table(info$feature)
+
+  exon 
+688311 
+> 
+> info   = info[info$feature == "exon",]
+> dim(info)
+[1] 688311      9
+> 
+> # --------------------------------------------------------- 
+> # obtain gene_id
+> # --------------------------------------------------------- 
+> 
+> reg1   = regexpr('gene_id\\s(\\S+);', info$anno, perl=TRUE)
+> len1   = attributes(reg1)[[1]]
+> nadd   = length(unlist(strsplit("gene_id", split=""))) + 1
+> info$geneId = substr(info$anno, reg1+nadd, reg1+len1-2)
+> 
+> # --------------------------------------------------------- 
+> # obtain transcript_id
+> # --------------------------------------------------------- 
+> 
+> reg1   = regexpr('transcript_id\\s(\\S+);', info$anno, perl=TRUE)
+> len1   = attributes(reg1)[[1]]
+> nadd   = length(unlist(strsplit("transcript_id", split=""))) + 1
+> info$tranId = substr(info$anno, reg1+nadd, reg1+len1-2)
+> 
+> # --------------------------------------------------------- 
+> # obtain transcript length
+> # --------------------------------------------------------- 
+> 
+> infoTLen = tapply(info$end - info$start+1, info$tranId, sum)
+> 
+> # --------------------------------------------------------- 
+> # calculate the number of exons per gene and 
+> # the nubmer of isoforms per gene
+> # --------------------------------------------------------- 
+> 
+> nT = tapply(info$tranId, info$geneId, function(v){length(unique(v))} )
+> nE = tapply(info$tranId, info$geneId, length )
+> 
+> all(names(nT) == names(nE))
+[1] TRUE
+> nTE = data.frame(geneId=names(nE), nE = nE, nT=nT)
+> dim(nTE)
+[1] 37620     3
+> 
+> # --------------------------------------------------------- 
+> # read in information of unique exons 
+> # --------------------------------------------------------- 
+> 
+> bedF = sprintf("~/research/data/mouse/%s.nonoverlap.exon.bed", annoVersion)
+> 
+> bedD = read.table(bedF, sep="\t", as.is=TRUE)
+> dim(bedD)
+[1] 365132      6
+> bedD[1:2,]
+    V1      V2      V3                             V4  V5 V6
+1 chr1 3044313 3044814 chr1_1638|ENSMUSG00000090025|1 666  +
+2 chr1 3092096 3092206 chr1_1034|ENSMUSG00000064842|1 666  +
+> 
+> names(bedD) = c("chr", "start", "end", "name", "score", "strand")
+> 
+> ids  = matrix(unlist(strsplit(bedD$name, split="|", fixed=TRUE)), byrow=TRUE, ncol=3)
+> dim(ids)
+[1] 365132      3
+> ids  = unique(ids[,1:2], MARGIN=1)
+> dim(ids)
+[1] 41177     2
+> 
+> colnames(ids) = c("clustID", "geneID")
+> ids  = as.data.frame(ids, stringsAsFactors=FALSE)
+> ids[1:2,]
+    clustID             geneID
+1 chr1_1638 ENSMUSG00000090025
+2 chr1_1034 ENSMUSG00000064842
+> 
+> # --------------------------------------------------------- 
+> # map between transcript ID and gene ID 
+> # --------------------------------------------------------- 
+> 
+> gID2 = strsplit(ids$geneID, split=":")
+> cID2 = rep(ids$clustID, times=sapply(gID2, length))
+> ids2 = data.frame(clustID=cID2, geneID=unlist(gID2), stringsAsFactors=FALSE)
+> 
+> dim(ids2)
+[1] 45395     2
+> ids2 = unique(ids2, MARGIN=1)
+> dim(ids2)
+[1] 37620     2
+> 
+> tb1  = table(ids2$clustID)
+> table(tb1)
+tb1
+    1     2     3     4     5     6     7     9    10 
+30653  2430   456   116    35     5     6     2     1 
+> 
+> length(unique(ids$clustID))
+[1] 33704
+> length(unique(ids2$clustID))
+[1] 33704
+> 
+> mat1 = match(nTE$geneId, ids2$geneID)
+> 
+> if(!(all(ids2$geneID[mat1] == nTE$geneId))){
++   stop("geneID not mapped\n")  
++ }
+> 
+> nTE$clustID =ids2$clustID[mat1]
+> rownames(nTE) = NULL
+> 
+> nTE$geneId  = as.character(nTE$geneId)
+> nTE$clustID = as.character(nTE$clustID)
+> 
+> save(nTE, file=sprintf("%s.nTE.RData", annoVersion))
+> 
+> proc.time()
+   user  system elapsed 
+ 94.930   2.629  98.631 

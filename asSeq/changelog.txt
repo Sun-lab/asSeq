@@ -1,0 +1,43 @@
+Chong Jin
+2016-06-28
+
+=====================
+prepareBAM.R
+=====================
+NOTE: For Backward compatibility concerns, the default of "fixmate" is set
+to be FALSE. So if any script disregards the "fixmate" parameter, as any
+older script would do, then the only difference would be that this version
+of prepareBAM does not attempt to change IsMateMapped in the filter_bam step.
+The older version would attempt to make the IsMateMapped flag 
+"unmapped" for every single end read.
+
+NOTE: For "fixmate = TRUE" to take effect, set "getUniqMapping = TRUE".
+
+1. Add "fixmate = TRUE". If this is the case, paired-end reads will become
+IsPaired and IsMateMapped, and RNEXT along with PNEXT are also filled in.
+This is actually almost equivalent to "samtools fixmate" coupled with a
+IsMateMapped fix.
+
+=====================
+getUnique_bam.cpp
+=====================
+NOTE: Only when the reads are sorted in qnames the package will have the
+desired effects.
+
+1. Add "fixmate = TRUE". If this is the case, paired-end reads will become
+IsPaired and IsMateMapped, and RNEXT along with PNEXT are also filled in.
+This is actually almost equivalent to "samtools fixmate" coupled with a
+IsMateMapped fix.
+
+=====================
+filter_bam.cpp
+=====================
+"If 0x1 is unset, no assumptions can be made about 0x2, 0x8, 0x20, 0x40 and
+0x80." -- Sam format specification
+
+1. al1.IsPaired() is used as the condition to detect paired-end reads instead
+of the usually undefined al1.IsMateMapped().
+
+2. filter_bam.cpp does not attempt to fix IsMateMapped flag any longer. If you
+need to set it to mate mapped, use "fixmate = TRUE" when calling prepareBAM.
+

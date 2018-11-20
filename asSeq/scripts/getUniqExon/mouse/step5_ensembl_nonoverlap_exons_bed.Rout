@@ -1,0 +1,134 @@
+
+R version 2.11.0 (2010-04-22)
+Copyright (C) 2010 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> 
+> annoVersion = "Mus_musculus.NCBIM37.67"
+> 
+> ## when writing data into text file, it may use scientific format
+> ## when you read it into c, and using atoi. it will make mistakes
+> ## say 97000000 is written as 9.7e+07, and c think it is 9
+> ## options("scipen") can control write out behavior
+> 
+> options(scipen=20)
+> 
+> # --------------------------------------------------------- 
+> # read in data
+> # ---------------------------------------------------------
+> 
+> setwd("~/research/data/mouse/")
+> 
+> ff  = sprintf("%s.nonoverlap.exon.gtf", annoVersion)
+> 
+> date()
+[1] "Sun Jun 10 15:21:44 2012"
+> inf = read.table(ff, sep="\t", as.is=TRUE, header=FALSE, quote="")
+> date()
+[1] "Sun Jun 10 15:21:58 2012"
+> 
+> names(inf) = c("chr", "source", "feature", "start", "end", 
++ "score", "strand", "frame", "anno")
+> 
+> dim(inf)
+[1] 365132      9
+> inf[1:2,]
+   chr                             source feature   start     end score strand
+1 chr1 transcribed_unprocessed_pseudogene    exon 3044314 3044814     .      +
+2 chr1                              snRNA    exon 3092097 3092206     .      +
+  frame
+1     .
+2     .
+                                                                                                                                                     anno
+1 gene_id "ENSMUSG00000090025"; transcript_id "ENSMUST00000160944"; gene_name "Gm16088"; transcript_name "Gm16088-001"; exon_id "1"; clustId "chr1_1638";
+2       gene_id "ENSMUSG00000064842"; transcript_id "ENSMUST00000082908"; gene_name "U6"; transcript_name "U6.149-201"; exon_id "1"; clustId "chr1_1034";
+> 
+> table(inf$chr)
+
+ chr1 chr10 chr11 chr12 chr13 chr14 chr15 chr16 chr17 chr18 chr19  chr2  chr3 
+21189 15818 31408 10993 11174 13257 13009 11270 17539  7646 10607 35637 16653 
+ chr4  chr5  chr6  chr7  chr8  chr9  chrM  chrX  chrY 
+26599 23946 18745 28149 16564 18972    46 15634   277 
+> table(inf$strand)
+
+     -    -:+      +    +:- 
+181131     13 183978     10 
+> 
+> summary(inf$end - inf$start)
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    0.0    62.0   114.0   239.2   192.0 52270.0 
+> 
+> table(inf$end - inf$start == 0)
+
+ FALSE   TRUE 
+363942   1190 
+> 
+> ## for bed format, the first base in a chromosome is numbered 0.
+> ## while in gtf format, the first base in a chromosome is numbered 1.
+> 
+> inf$start = inf$start - 1
+> 
+> # --------------------------------------------------------- 
+> # obtain clust_id
+> # --------------------------------------------------------- 
+> 
+> reg1   = regexpr('clustId\\s"(\\S+)";', inf$anno, perl=TRUE)
+> len1   = attributes(reg1)[[1]]
+> nadd   = length(unlist(strsplit("clustId", split=""))) + 2
+> clustId = substr(inf$anno, reg1+nadd, reg1+len1-3)
+> 
+> # --------------------------------------------------------- 
+> # obtain gene_id
+> # --------------------------------------------------------- 
+> 
+> reg1   = regexpr('gene_id\\s"(\\S+)";', inf$anno, perl=TRUE)
+> len1   = attributes(reg1)[[1]]
+> nadd   = length(unlist(strsplit("gene_id", split=""))) + 2
+> geneId = substr(inf$anno, reg1+nadd, reg1+len1-3)
+> 
+> # --------------------------------------------------------- 
+> # obtain exon_id
+> # --------------------------------------------------------- 
+> 
+> reg1   = regexpr('exon_id\\s"(\\S+)";', inf$anno, perl=TRUE)
+> len1   = attributes(reg1)[[1]]
+> nadd   = length(unlist(strsplit("exon_id", split=""))) + 2
+> exonId = substr(inf$anno, reg1+nadd, reg1+len1-3)
+> 
+> # --------------------------------------------------------- 
+> # construct bed file
+> # --------------------------------------------------------- 
+> 
+> names = paste(clustId, geneId, exonId, sep="|")
+> score = rep("666", length(names))
+> bed   = cbind(inf$chr, inf$start, inf$end, names, score, inf$strand)
+> 
+> # ---------------------------------------------------------
+> # write out results
+> # ---------------------------------------------------------
+> 
+> setwd("~/research/data/mouse/")
+> 
+> outFile = sprintf("%s.nonoverlap.exon.bed", annoVersion)
+> 
+> write.table(bed, col.names = FALSE, append = FALSE, 
++ file = outFile, quote = FALSE, sep = "\t", row.names = FALSE)
+> 
+> 
+> proc.time()
+   user  system elapsed 
+ 18.866   0.720  20.279 

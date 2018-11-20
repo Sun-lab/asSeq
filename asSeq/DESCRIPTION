@@ -1,0 +1,13 @@
+Package: asSeq
+Type: Package
+Title: allele specific sequencing study
+Version: 0.99.401
+Date: 2016-06-30
+Author: Wei Sun, Vasyl Zhabotynsky and Chong Jin
+Maintainer: Wei Sun <weisun@email.unc.edu>
+Imports: zlibbioc
+Description: allele specific study of RNA-seq data.  
+License: GPL (>= 2)
+LazyLoad: yes
+Packaged: 2016-06-30 03:47:10 UTC; chong
+NeedsCompilation: yes
