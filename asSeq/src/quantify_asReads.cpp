@@ -1,6 +1,6 @@
 /**********************************************************************
  *
- * extract_asReads.cc
+ * quantify_asReads.cc
  *
  * allele specfic sequecing study
  *
@@ -80,28 +80,7 @@ extern "C" {
              (4) CP: Leftmost coordinate of the next hit
  */
 
-hash_map_char<char*> *load_snp_set(FILE *fp)
-{
-  char chr[255], allele1[7], allele2[7];
-  char buffer[2], key[255];
-  int pos, c;
-  hash_map_char<char*> *hash = new hash_map_char<char*>;
-  while (fscanf(fp, "%s\t%d\t%s\t%s", chr, &pos, allele1, allele2) == 4) {
-    
-    /* skip it if this is not a heterzygous SNP*/
-    if(strcmp(allele1, allele2)==0){ continue; }
-    
-    sprintf(key, "%s.%d", chr, pos);
-    buffer[0] = allele1[0];
-    buffer[1] = allele2[0];
-    buffer[2] = 0;
-    while ((c = fgetc(fp)) != EOF && c != '\n');
-    hash->insert(key, strdup(buffer));
-  }
-  return hash;
-}
-  
-void extract_asReads(char **Rinput, char **Routput, char ** RsnpList, 
+void quantify_asReads(char **Rinput, char **Routput, char ** RsnpList, 
                   double* Rpropcut,double* RavgQ, double* RsnpQ, 
                   int *Rflag2kp, int *Rflag2rm, int* Rphred, int *skip)
 {
@@ -113,6 +92,7 @@ void extract_asReads(char **Rinput, char **Routput, char ** RsnpList,
    */
   
   // proportion of AS reads to haplotype 1 and 2.
+  int append=0;
   int delim_ind=0;//this addition
   double prop1, prop2;
   
@@ -140,12 +120,13 @@ void extract_asReads(char **Rinput, char **Routput, char ** RsnpList,
     
   char *output, *snpList;
   output  = Routput[0];
-  string outputhap1, outputhap2, outputhap3;
+  //string outputhap1, outputhap2, outputhap3;
+  string outputtxt;
 
   FILE *Fsnp; 
   
   BamMultiReader reader;
-  BamWriter writer1,writer2,writer3;
+//  BamWriter writer1,writer2,writer3;
   char* pBaseQualities;
   
   char currentchr[MAX_LEN];
@@ -158,10 +139,12 @@ void extract_asReads(char **Rinput, char **Routput, char ** RsnpList,
   std::vector<std::string> input,chrs;
   input.push_back(Rinput[0]);
 
-  outputhap1=outputhap2=outputhap3=string(output);
-  outputhap1+="_hap1.bam";
-  outputhap2+="_hap2.bam";
-  outputhap3+="_hapN.bam";
+//  outputhap1=outputhap2=outputhap3=string(output);
+//  outputhap1+="_hap1.bam";
+//  outputhap2+="_hap2.bam";
+//  outputhap3+="_hapN.bam";
+  outputtxt = string(output);
+  outputtxt += "_snp.txt";
   
   snpList = RsnpList[0];
 
@@ -177,9 +160,11 @@ void extract_asReads(char **Rinput, char **Routput, char ** RsnpList,
    * N: skipped region from the reference
   */
   
-  char *key, *alleles;
+  char *key, *alleles;  
   key     = (char*)calloc(255, 1);
   alleles = (char*)calloc(7, 1);
+  char lstsnpchr[MAX_LEN], lstsnppos[MAX_LEN], allsnpchr[MAX_LEN], allsnppos[MAX_LEN];
+  
 
   if(!reader.Open(input)){
 	  Rprintf("Could not open some input files.\n");
@@ -197,7 +182,7 @@ void extract_asReads(char **Rinput, char **Routput, char ** RsnpList,
     chrs.push_back(currentSeq.Name);
     chri++;
   }
-  
+/*  
   if(!writer1.Open(outputhap1,header,references)){
 	  Rprintf("Could not open %s output file.\n",outputhap1.c_str());
 	  return;
@@ -212,7 +197,22 @@ void extract_asReads(char **Rinput, char **Routput, char ** RsnpList,
 	  Rprintf("Could not open %s output file.\n",outputhap3.c_str());
 	  return;
   }
+*/  
+  FILE *fo;
   
+  /* output file for the intermediate SNP count */
+  fo = fopen (output, "w");
+  
+  /**
+   * write out the header in the output file
+   */
+//  fprintf(fo, "GeneRowID\tMarkerRowID\tTReC_b\tTReC_Chisq\tTReC_df\tTReC_Pvalue\t");
+//  fprintf(fo, "ASE_b\tASE_Chisq\tASE_df\tASE_Pvalue\t");
+//  fprintf(fo, "Joint_b\tJoint_Chisq\tJoint_df\tJoint_Pvalue\t");
+//  fprintf(fo, "n_TReC\tn_ASE\tn_ASE_Het\ttrans_Chisq\ttrans_Pvalue\tfinal_Pvalue\n");
+    fprintf(fo, "chr\tpos\tk1\tk2\tk3\tchrs\tpositions\n");
+
+
   int n_unrecognized = 0;
   
   /*
@@ -245,7 +245,7 @@ void extract_asReads(char **Rinput, char **Routput, char ** RsnpList,
     delim_ind=whichDelim(al1.Name);
     
     if((i%1000000)==0) Rprintf("processing %d'th read\n",i);
-    
+//    if(i> 10000)break;
     // Rprintf("processing %d'th read\n",i);
 
     /**
@@ -404,6 +404,7 @@ void extract_asReads(char **Rinput, char **Routput, char ** RsnpList,
       
       k1 = k2 = k3 = 0;	
       sprintf(currentchr,"%s",chrs[al1.RefID].c_str());
+      append = 0;
       
       for(j=0; j<al1.Length; j++){
         /**
@@ -430,6 +431,17 @@ void extract_asReads(char **Rinput, char **Routput, char ** RsnpList,
               pos3[k3++]=currentpos;
 			        // Rprintf("observed allele %c, expect %c or %c\n", al1.QueryBases[j], alleles[0], alleles[1]);
             }
+            //prepare one-sided
+            sprintf(lstsnpchr, "%s", currentchr);
+            sprintf(lstsnppos, "%ld", currentpos);            
+            if(append){
+              sprintf(allsnpchr, "%s,%s", allsnpchr, lstsnpchr);
+              sprintf(allsnppos, "%s,%s", allsnppos, lstsnppos);
+            }else{
+              sprintf(allsnpchr, "%s", lstsnpchr);
+              sprintf(allsnppos, "%s", lstsnppos);            
+              append = 1;
+            }
           }
 
         }else{
@@ -440,19 +452,7 @@ void extract_asReads(char **Rinput, char **Routput, char ** RsnpList,
       kall=k1+k2+k3;
       
       if(kall>0){
-        prop1=((double)k1)/kall;
-        prop2=((double)k2)/kall;
-        
-        if((prop1>propcut)||(prop2>propcut)){
-          if(prop1>propcut){
-            writer1.SaveAlignment(al1);
-          }else{
-            writer2.SaveAlignment(al1);
-          }
-        }else{
-          // Rprintf("observed an inconsistent read: found snps of allele1 %d, allele2 %d & another allele %d, need to skip it.\n",k1,k2,k3);
-          writer3.SaveAlignment(al1);
-        }
+          fprintf(fo, "%s\t%s\t%d\t%d\t%d\t%s\t%s\n", lstsnpchr, lstsnppos, k1, k2, k3, allsnpchr, allsnppos);
       }
       
     }else{ // keepIt1!=0 and keepIt2!=0
@@ -573,7 +573,7 @@ void extract_asReads(char **Rinput, char **Routput, char ** RsnpList,
       
       k1 = k2 = k3 = 0;	
 	    sprintf(currentchr,"%s",chrs[al1.RefID].c_str());
-      
+      append = 0;
       for(j=0; j<al1.Length; j++){
         /**
          * consider only the cases when we don't have an insertion
@@ -589,6 +589,16 @@ void extract_asReads(char **Rinput, char **Routput, char ** RsnpList,
             /**
              * make sure this snp is not methylated
              */
+            sprintf(lstsnpchr, "%s", currentchr);
+            sprintf(lstsnppos, "%ld", currentpos);            
+            if(append){
+              sprintf(allsnpchr, "%s,%s", allsnpchr, lstsnpchr);
+              sprintf(allsnppos, "%s,%s", allsnppos, lstsnppos);
+            }else{
+              sprintf(allsnpchr, "%s", lstsnpchr);
+              sprintf(allsnppos, "%s", lstsnppos);            
+              append = 1;
+            }
             nSNP += 1;
             if(toupper(al1.QueryBases[j]) == alleles[0]){
               pos1[k1++]=currentpos;
@@ -635,7 +645,6 @@ void extract_asReads(char **Rinput, char **Routput, char ** RsnpList,
                   offset2[j]=-1;
               }
               if(offset2[j]!=-1)pos2[k2++]=currentpos;
-              
             }else {
               n_unrecognized += 1;
               
@@ -647,6 +656,18 @@ void extract_asReads(char **Rinput, char **Routput, char ** RsnpList,
             
               // Rprintf("observed allele %c, expect %c or %c\n", al2.QueryBases[j], alleles[0], alleles[1]);
             }
+            if(offset2[j]!=-1){
+              sprintf(lstsnpchr, "%s", currentchr);
+              sprintf(lstsnppos, "%ld", currentpos);            
+              if(append){
+                sprintf(allsnpchr, "%s,%s", allsnpchr, lstsnpchr);
+                sprintf(allsnppos, "%s,%s", allsnppos, lstsnppos);
+              }else{
+                sprintf(allsnpchr, "%s", lstsnpchr);
+                sprintf(allsnppos, "%s", lstsnppos);            
+                append = 1;
+              }
+            }            
           }
         }else{
           skip2 +=1;
@@ -656,22 +677,7 @@ void extract_asReads(char **Rinput, char **Routput, char ** RsnpList,
       kall=k1+k2+k3;
       
       if(kall>0){
-        prop1=((double)k1)/kall;
-        prop2=((double)k2)/kall;
-        
-        if((prop1>propcut)||(prop2>propcut)){
-          if(prop1>propcut){
-            writer1.SaveAlignment(al1);
-            writer1.SaveAlignment(al2);
-          }else{
-            writer2.SaveAlignment(al1);
-            writer2.SaveAlignment(al2);
-          }
-        }else{
-          // Rprintf("observed an inconsistent read: found snps of allele1 %d, allele2 %d & another allele %d, need to skip it.\n",k1,k2,k3);
-          writer3.SaveAlignment(al1);
-          writer3.SaveAlignment(al2);
-        }
+        fprintf(fo, "%s\t%s\t%d\t%d\t%d\t%s\t%s\n", lstsnpchr, lstsnppos, k1, k2, k3, allsnpchr, allsnppos);
       }
     }
     
@@ -679,13 +685,14 @@ void extract_asReads(char **Rinput, char **Routput, char ** RsnpList,
   
   reader.Close();
     
-  writer1.Close();
-  writer2.Close();
-  writer3.Close();
+//  writer1.Close();
+//  writer2.Close();
+//  writer3.Close();
 
   delete hash_map;
   free(key);
   free(alleles);
+  fclose(fo);
   
   Rprintf("total %d lines processed\n",i);
 }

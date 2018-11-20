@@ -111,6 +111,7 @@ void filter_bam(char **Rinput,int *Rnum_inp, char **Routput,
   int skip0=0; // the number of reads skipped due to flags
   int skip1=0; // the number of reads skipped due to min_avgQ
   int skip2=0; // the number of reads skipped due to min_mapQ
+  int skip3=0; // skipped due to malformat
   int isSame=0;
 
   const char* strand="+-";
@@ -166,18 +167,27 @@ void filter_bam(char **Rinput,int *Rnum_inp, char **Routput,
   
   while(reader.GetNextAlignment(al1)){
     i++;
+    keepIt1=1;
+    //cout << i<< endl;
+    if(al1.Name.empty()){
+      al1.SetIsPaired(false);
+      skip3++;
+      keepIt1=0;
+      //cout << "skipping " << i << endl;
+    }
     delim_ind=whichDelim(al1.Name);
 
-    //if(i>100000)break;
+    //if(i>100)break;
     if((i%1000000)==0)Rprintf(".");
     if((i%10000000)==0)Rprintf("\nprocessing %d million-th line\n", i/1000000);
     
     // keepIt1 and keepIt2 indicate whether to keep 1st or 2nd read
-    keepIt1=1;
     
-    if(al1.IsPaired()){	  
+    if(al1.IsPaired()){	
+      //cout << "is paired";  
       if(reader.GetNextAlignment(al2)){
         i++;
+        cout << i<< endl;
         if((i%1000000)==0)Rprintf(".");
         if((i%10000000)==0)Rprintf("\nprocessing %d million-th line\n", i/1000000);
 
@@ -281,6 +291,7 @@ void filter_bam(char **Rinput,int *Rnum_inp, char **Routput,
   Rprintf("%d reads are skipped due to flags\n",skip0);
   Rprintf("%d reads are skipped due to min_avgQ\n",skip1);
   Rprintf("%d reads are skipped due to min_mapQ\n",skip2);
+  Rprintf("%d reads were malformatted\n",skip3);
   Rprintf("%d reads are processed in total\n",i);
   
 }

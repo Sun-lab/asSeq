@@ -123,6 +123,8 @@ void getUnique_bam(char **Rinput, int* Rnum_inp, char **Routput, int *fixmate)
   int skipMulti = 0;
   int writPair  = 0;
   int writOne   = 0;
+  int skip3 = 0;
+  int keepIt = 0;
   
   BamAlignment al1,al2,tmp;
   
@@ -131,9 +133,21 @@ void getUnique_bam(char **Rinput, int* Rnum_inp, char **Routput, int *fixmate)
   int notNullAlignment=0,isSame=0;
   int numReads=1;
   
-  notNullAlignment=reader.GetNextAlignment(al1);
-  
   i=1;
+
+  do{
+    keepIt = 1;
+    notNullAlignment=reader.GetNextAlignment(al1);
+  
+    //cout << i<< endl;
+    if(al1.Name.empty()){
+      al1.SetIsPaired(false);
+      skip3++;
+      //cout << "skipping " << i << endl;
+      keepIt = 0;
+    }
+  }while(keepIt==0);
+  
   delim_ind=whichDelim(al1.Name);
   cout<<"delim: "<<DELIM_LOOKUP[delim_ind]<<endl;
 
@@ -234,6 +248,7 @@ void getUnique_bam(char **Rinput, int* Rnum_inp, char **Routput, int *fixmate)
   Rprintf("%d single reads are skipped because they are not mapped\n", skipOne);
   Rprintf("%d paired reads are skipped because they are not mapped\n", skipPair);
   Rprintf("%d reads that appear more than twice are skipped\n", skipMulti);
+  Rprintf("%d reads were malformatted\n",skip3);
   Rprintf("total %d lines processed\n", i);
 
 
