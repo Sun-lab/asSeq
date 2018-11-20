@@ -187,7 +187,7 @@ void filter_bam(char **Rinput,int *Rnum_inp, char **Routput,
       //cout << "is paired";  
       if(reader.GetNextAlignment(al2)){
         i++;
-        cout << i<< endl;
+        //cout << i<< endl;
         if((i%1000000)==0)Rprintf(".");
         if((i%10000000)==0)Rprintf("\nprocessing %d million-th line\n", i/1000000);
 
