@@ -121,7 +121,7 @@ tp = table(meta3$participant)
 table(tp)
 table(meta3$sample)
 
-write.table(meta3, file = './data/LUAD_clinical_meta.txt',
+write.table(meta3, file = './data/clinical_meta.txt',
             sep = '\t', quote = F, row.names = F)
 
 barcode = substr(as.character(meta3$associated_entities.entity_submitter_id), 1, 12)
