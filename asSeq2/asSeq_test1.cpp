@@ -3,9 +3,39 @@
 #include <Rmath.h>
 
 // [[Rcpp::depends("RcppArmadillo")]]
-/* ---------------------------
- * 
- ---------------------------*/
+
+template<typename T>
+void printR_obj(const T& obj){
+  Rcpp::Rcout << obj << std::endl;	
+}
+
+const double LOG2PI = log(2*arma::datum::pi);
+
+// --------------------
+// Intermediate Functions
+// --------------------
+
+// [[Rcpp::export]]
+double Rcpp_norm(const arma::vec& a){
+  return arma::norm(a);
+}
+
+// [[Rcpp::export]]
+double Rcpp_logSumExp(const arma::vec& log_x){
+  if( log_x.n_elem == 1 ){
+    return log_x.at(0);
+  } else {
+    double max_val = max(log_x);
+    arma::vec log_x_2 = log_x - max_val;
+    return log(arma::sum(arma::exp(log_x_2))) + max_val;
+  }
+}
+
+// [[Rcpp::export]]
+double Rcpp_min_diff(const arma::vec& x){
+  return arma::min(arma::diff(arma::sort(x)));
+}
+
 /* ---------------------------
  * TReC
  ---------------------------*/
@@ -13,74 +43,77 @@
 using namespace Rcpp;
 
 // [[Rcpp::export]] 
-double loglikNB(const double& phi, const int& n, const arma::vec& lgy1,
-                const arma::vec& mu, const arma::vec& y){
+double loglikNB(const double& phi,const arma::vec& mu1,
+                const arma::vec& y, const arma::vec& lgy1){
   //lgy1 = std::lgamma(y + 1)
   double loglik = 0.0;
   arma::uword ii;
   double vphi = 1.0/phi;
   
-  for(ii = 0; ii<n; ii++){
+  for(ii = 0; ii< y.n_elem; ii++){
     if(y.at(ii) > 0){
       loglik += lgamma(y.at(ii) + vphi) -lgamma(vphi) - lgy1.at(ii) +
-        y.at(ii) * std::log(mu.at(ii));
+        y.at(ii) * std::log(mu1.at(ii));
     }
     loglik += vphi*std::log(vphi) - 
-      (vphi+y.at(ii)) * std::log(vphi+mu.at(ii));
+      (vphi+y.at(ii)) * std::log(vphi+mu1.at(ii));
   }
   
   return loglik;
 }
 
 // [[Rcpp::export]] 
-double loglik_pois(const int& n, const arma::vec& lgy1,
-                   const arma::vec& mu, const arma::vec& y){
+double loglik_pois(const arma::vec& mu1, const arma::vec& y, 
+                   const arma::vec& lgy1){
   //lgy1 = std::lgamma(y + 1)
   double loglik = 0.0;
   arma::uword ii;
-  for(ii =0; ii<n; ii++){
-    loglik += y.at(ii)*std::log(mu.at(ii)) - mu.at(ii) - lgamma(y.at(ii)+1);
+  for(ii =0; ii<y.n_elem; ii++){
+    loglik += y.at(ii)*std::log(mu1.at(ii)) - mu1.at(ii) - lgy1.at(ii);
+    //loglik += R::dpois(y.at(ii), mu1.at(ii), true);
   }
   return loglik;
 }
 
 // [[Rcpp::export]] 
-double logLTReC(const double& bxj, const int& n, const arma::vec& lgy1,
+double logLTReC(const double& bxj, const arma::vec& lgy1,
                 const arma::vec& y, const arma::vec& z,
                 const arma::vec& mu, const double b0, const double& phi,
                 const bool& fam_nb, arma::vec& mu1, arma::vec& offsets){
   // z is the genotype vector take value 0,1,2 (same as x in the R code)
   // lgy1 = lgamma(y+1)
   arma::uword ii; 
-  //arma::vec mu1 = arma::zeros<arma::vec>(n);
+  //arma::vec mu1 = arma::zeros<arma::vec>(y.n_elem);
   
-  for(ii =0; ii<n; ii++){
+  for(ii =0; ii<y.n_elem; ii++){
     if(z.at(ii) == 2){
       offsets.at(ii) = bxj;
       mu1.at(ii) = mu.at(ii)*std::exp(bxj - b0);
+      //mu1.at(ii) = mu.at(ii)*std::exp(bxj);
     }else if(z.at(ii) == 1){
-      offsets.at(ii) = (1+std::exp(bxj))/2;
+      offsets.at(ii) = std::log((1+std::exp(bxj))/2);
       mu1.at(ii) = mu.at(ii)*(1+std::exp(bxj))/(1+std::exp(b0));
+      //mu1.at(ii) = mu.at(ii)*(1+std::exp(bxj))/2;
     }else{
       mu1.at(ii) = mu.at(ii);
     }
   }
   
   if(fam_nb){
-    return loglikNB(phi,n,lgy1, mu1, y);
+    return loglikNB(phi, mu1, y, lgy1);
   }else{
-    return loglik_pois(n,lgy1, mu1, y);
+    return loglik_pois( mu1, y, lgy1);
   }
 }
 
 // [[Rcpp::export]]
-double grad_bxj_trec(const double& bxj, const int& n, const arma::vec& y,
+double grad_bxj_trec(const double& bxj, const arma::vec& y,
                      const arma::vec& z, const arma::vec& mu1, const double b0,
                      const double& phi, const bool& fam_nb ){
   double grad = 0.0, dg_dmu =0.0, dmu_db = 0.0;
   arma::uword ii;
   
-  for(ii =0; ii<n; ii++){
+  for(ii =0; ii<y.n_elem; ii++){
     if(fam_nb){
       dg_dmu = y.at(ii)/mu1.at(ii) - (1.0+phi*y.at(ii))/(1.0+phi*mu1.at(ii));
     }else{
@@ -96,3 +129,325 @@ double grad_bxj_trec(const double& bxj, const int& n, const arma::vec& y,
   }
   return grad;
 }
+
+/* ---------------------------
+ * NB regression 
+*/
+// [[Rcpp::export]]
+double NB_reg_LL(const arma::vec& y, const arma::mat& X,
+                 const arma::vec& offsets, const arma::vec& PARAMS,
+                 const arma::vec& lgy1, arma::vec& mu){
+  arma::uword ii;
+  //double mu;
+  double LL = 0.0;
+  arma::uword pp = X.n_cols;
+  arma::vec BETA = PARAMS.subvec(0,pp-1);
+  double phi = std::exp(PARAMS.at(pp));
+  double vphi = 1.0/phi;
+  
+  for(ii = 0; ii< y.n_elem; ii++){
+    mu.at(ii) = std::exp( arma::dot(X.row(ii).t(),BETA) + offsets.at(ii) );
+    if(y.at(ii) > 0){
+      LL += lgamma(y.at(ii) + vphi) -lgamma(vphi) - lgy1.at(ii) +
+        y.at(ii) * std::log(mu.at(ii));
+    }
+    LL += vphi*std::log(vphi) - 
+      (vphi+y.at(ii)) * std::log(vphi+mu.at(ii));
+  }
+  
+  return LL;
+  
+}
+
+// [[Rcpp::export]]
+arma::vec NB_reg_grad(const arma::vec& y, const arma::mat& X,
+                   const arma::vec& mu, const arma::vec& PARAMS){
+  arma::uword ii;
+  arma::uword pp = X.n_cols;
+  arma::vec BETA = PARAMS.subvec(0,pp-1);
+  double phi = std::exp(PARAMS.at(pp));
+  double phi_mu1;
+  double vphi = 1.0 / phi;
+  arma::vec GRAD = arma::zeros<arma::vec>(pp + 1);
+  double digam_vphi = R::digamma(vphi);
+  double log_vphi = std::log(vphi);
+
+  for(ii = 0; ii < y.n_elem; ii++){
+    //mu = std::exp( arma::dot(X.row(ii).t(),BETA) + offsets.at(ii) );
+    phi_mu1 = (1.0 + phi*mu.at(ii));
+    // Part BETA
+    GRAD.subvec(0,pp - 1) += (y.at(ii) - mu.at(ii))/phi_mu1 * X.row(ii).t();
+    // Part PHI*
+    GRAD.at(pp) += (-1.0*vphi*vphi)*(R::digamma(y.at(ii) + vphi) - digam_vphi -
+      std::log(phi_mu1)) - (vphi+y.at(ii))*mu.at(ii)/phi_mu1 + y.at(ii)*vphi;
+  }
+
+  return GRAD;
+}
+
+// [[Rcpp::export]]
+arma::mat NB_reg_Hess(const arma::vec& y, const arma::mat& X,
+                      const arma::vec& mu, const arma::vec& PARAMS){
+  arma::uword ii;
+  arma::uword pp = X.n_cols;
+  arma::vec BETA = PARAMS.subvec(0,pp-1);
+  double phi = std::exp(PARAMS.at(pp));
+  double phi_mu;
+  double vphi = 1.0 / phi;
+  arma::mat HESS = arma::zeros<arma::mat>(pp + 1,pp + 1);
+  arma::vec hess_beta_phi = arma::zeros<arma::vec>(pp);
+  double trigam_vphi = R::trigamma(vphi);
+  double digam_vphi = R::digamma(vphi);
+  double log_vphi = std::log(vphi);
+
+  for(ii = 0; ii < y.n_elem; ii++){
+    //mu.at(ii) = std::exp( arma::dot(X.row(ii).t(),BETA) + offsets.at(ii) );
+    phi_mu =  phi*mu.at(ii);
+    // Part2 BETA
+    HESS.submat(0,0,pp-1,pp-1) += -1.0 * (vphi + y.at(ii)) / 
+      std::pow(vphi + mu.at(ii),2.0) * 
+      vphi * mu.at(ii) * X.row(ii).t() * X.row(ii);
+    
+    // Part2 BETA*phi*
+    hess_beta_phi = -1.0 * (y.at(ii) - mu.at(ii)) / std::pow((1.0+phi_mu),2.0) *
+      mu.at(ii) * X.row(ii).t();
+    HESS(arma::span(0,pp - 1),pp) += hess_beta_phi;
+    HESS(pp,arma::span(0,pp - 1)) += hess_beta_phi.t();
+
+    // Part2 phi*
+    HESS.at(pp,pp) += 2.0*pow(vphi, 3.0)*( R::digamma(y.at(ii)+vphi) - digam_vphi -
+      log(1.0 + phi_mu) ) +
+      pow(vphi, 4.0)*( R::trigamma(y.at(ii)+vphi) - trigam_vphi ) +
+      2.0 * pow(vphi, 2.0)*mu.at(ii)/(1.0+phi_mu) - y.at(ii)*pow(vphi,2.0)
+      + (vphi + y.at(ii))*pow(mu.at(ii), 2.0)/pow(1+phi_mu, 2.0);
+  }
+
+  return HESS;
+}
+
+// [[Rcpp::export]]
+Rcpp::List Rcpp_NB_reg(const arma::vec& y,
+                       const arma::mat& X,const arma::vec& offsets,
+                       const arma::vec& params0, const arma::vec& lgy1,
+                       const arma::uword& max_iter = 4e3,
+                       const double& eps = 1e-7,const bool& show = true){
+  // arma::uword N = X.n_rows;
+  arma::uword iter = 0;
+  arma::uword jj,uu;
+  arma::uword converge = 0;
+  arma::uword num_params = X.n_cols + 1;
+  double curr_LL = 0.0;
+  double old_LL,new_LL;
+  arma::vec old_PARAMS = params0;
+  arma::vec curr_PARAMS = params0;
+  arma::vec new_PARAMS = params0;
+  arma::vec old_grad = arma::zeros<arma::vec>(num_params);
+  arma::vec mu = arma::zeros<arma::vec>(y.n_elem);
+  arma::vec old_hess_grad = old_grad;
+  
+  while(iter < max_iter){
+    old_LL = NB_reg_LL(y,X,offsets,old_PARAMS, lgy1, mu);
+    old_grad = NB_reg_grad(y,X,mu,old_PARAMS);
+    old_hess_grad = -1.0 * arma::inv(NB_reg_Hess(y,X,mu,old_PARAMS)) * old_grad;
+    old_grad = old_grad / std::max(1.0,Rcpp_norm(old_grad));
+    old_hess_grad = old_hess_grad / std::max(1.0,Rcpp_norm(old_hess_grad));
+    uu = 0;
+    for(jj = 0; jj <= 15; jj++){
+      new_PARAMS = old_PARAMS + old_hess_grad / std::pow(4.0,jj);
+      new_LL = NB_reg_LL(y,X,offsets,new_PARAMS, lgy1,mu);
+      if( new_LL > old_LL ){
+        old_PARAMS = new_PARAMS;
+        old_LL = new_LL;
+        uu = 1;
+        break;
+      } else {
+        new_PARAMS = old_PARAMS + old_grad / std::pow(4.0,jj);
+        new_LL = NB_reg_LL(y,X,offsets,new_PARAMS, lgy1,mu);
+        if(new_LL > old_LL){
+          old_PARAMS = new_PARAMS;
+          old_LL = new_LL;
+          uu = 2;
+          break;
+        }
+      }
+    }
+    
+    if(show){
+      if(uu == 0){
+        printR_obj("Failed update");
+      } else if(uu == 1){
+        printR_obj("Newton-Raphson update");
+      } else {
+        printR_obj("Gradient-Descent update");
+      }
+    }
+    
+    if( uu == 0 ) break;
+    
+    if(iter > 0){
+      if( std::abs(curr_LL - old_LL) < eps && Rcpp_norm(curr_PARAMS - old_PARAMS) < eps ){
+        old_grad = NB_reg_grad(y,X,mu,old_PARAMS);
+        old_hess_grad = -1.0 * arma::inv(NB_reg_Hess(y,X,mu,old_PARAMS)) * old_grad;
+        if( Rcpp_norm(old_grad) < eps && Rcpp_norm(old_hess_grad) < eps ){
+          converge = 1;
+          break;
+        }
+      }
+    }
+    
+    curr_PARAMS = old_PARAMS;
+    curr_LL = old_LL;
+    iter++;
+  }
+  
+  // return R_NilValue;
+  return Rcpp::List::create(
+    Rcpp::Named("converge",converge),
+    Rcpp::Named("LL",old_LL),
+    Rcpp::Named("iter",iter),
+    Rcpp::Named("norm_HG",Rcpp_norm(old_hess_grad)),
+    Rcpp::Named("norm_G",Rcpp_norm(old_grad)),
+    Rcpp::Named("PARAMS",Rcpp::NumericVector(old_PARAMS.begin(),old_PARAMS.end()))
+  );
+}
+/* ---------------------------
+ * Poisson regression 
+*/
+
+// [[Rcpp::export]]
+double pois_reg_LL(const arma::vec& y, const arma::mat& X,
+                 const arma::vec& offsets, const arma::vec& PARAMS,
+                 const arma::vec& lgy1, arma::vec& mu){
+  //lgy1 = std::lgamma(y + 1)
+  double loglik = 0.0;
+  arma::uword ii;
+  arma::vec BETA = PARAMS.subvec(0, X.n_cols-1);
+
+  for(ii =0; ii<y.n_elem; ii++){
+    mu.at(ii) = std::exp( arma::dot(X.row(ii).t(),BETA) + offsets.at(ii) );
+    loglik += y.at(ii)*std::log(mu.at(ii)) - mu.at(ii) - lgy1.at(ii);
+    //loglik += R::dpois(y.at(ii), mu1.at(ii), true);
+  }
+  return loglik;
+  }
+
+// [[Rcpp::export]]
+arma::vec pois_reg_grad(const arma::vec& y, const arma::mat& X,
+                     const arma::vec& mu, const arma::vec& PARAMS){
+  arma::vec GRAD = arma::zeros<arma::vec>(X.n_cols) ;
+  arma::uword ii;
+  arma::vec BETA = PARAMS.subvec(0, X.n_cols-1);
+  
+  for(ii=0; ii<y.n_elem; ii++){
+    GRAD += ((y.at(ii) - mu.at(ii)))* X.row(ii).t();
+  }
+  return GRAD;
+}
+
+// [[Rcpp::export]]
+arma::mat pois_reg_Hess(const arma::vec& y, const arma::mat& X,
+                        const arma::vec& mu, const arma::vec& PARAMS){
+  arma::uword ii;
+  arma::mat HESS = arma::zeros<arma::mat>(X.n_cols, X.n_cols);
+  
+  for(ii = 0; ii<y.n_elem; ii++){
+    HESS += mu.at(ii) * X.row(ii).t() *X.row(ii);
+  }
+  
+return HESS;
+}
+  
+// [[Rcpp::export]]
+Rcpp::List Rcpp_pois_reg(const arma::vec& y,
+                         const arma::mat& X,const arma::vec& offsets,
+                         const arma::vec& params0, const arma::vec& lgy1,
+                         const arma::uword& max_iter = 4e3,
+                         const double& eps = 1e-7,const bool& show = true){
+  // arma::uword N = X.n_rows;
+  arma::uword iter = 0;
+  arma::uword jj,uu;
+  arma::uword converge = 0;
+  arma::uword num_params = X.n_cols + 1;
+  double curr_LL = 0.0;
+  double old_LL,new_LL;
+  arma::vec old_PARAMS = params0;
+  arma::vec curr_PARAMS = params0;
+  arma::vec new_PARAMS = params0;
+  arma::vec old_grad = arma::zeros<arma::vec>(num_params);
+  arma::vec mu = arma::zeros<arma::vec>(y.n_elem);
+  arma::vec old_hess_grad = old_grad;
+  
+  while(iter < max_iter){
+    old_LL = pois_reg_LL(y,X,offsets,old_PARAMS, lgy1, mu);
+    old_grad = pois_reg_grad(y,X,mu,old_PARAMS);
+    old_hess_grad = -1.0 * arma::inv(pois_reg_Hess(y,X,mu,old_PARAMS)) * old_grad;
+    old_grad = old_grad / std::max(1.0,Rcpp_norm(old_grad));
+    old_hess_grad = old_hess_grad / std::max(1.0,Rcpp_norm(old_hess_grad));
+    uu = 0;
+    for(jj = 0; jj <= 15; jj++){
+      new_PARAMS = old_PARAMS + old_hess_grad / std::pow(4.0,jj);
+      new_LL = pois_reg_LL(y,X,offsets,new_PARAMS, lgy1,mu);
+      if( new_LL > old_LL ){
+        old_PARAMS = new_PARAMS;
+        old_LL = new_LL;
+        uu = 1;
+        break;
+      } else {
+        new_PARAMS = old_PARAMS + old_grad / std::pow(4.0,jj);
+        new_LL = pois_reg_LL(y,X,offsets,new_PARAMS, lgy1,mu);
+        if(new_LL > old_LL){
+          old_PARAMS = new_PARAMS;
+          old_LL = new_LL;
+          uu = 2;
+          break;
+        }
+      }
+    }
+    
+    if(show){
+      if(uu == 0){
+        printR_obj("Failed update");
+      } else if(uu == 1){
+        printR_obj("Newton-Raphson update");
+      } else {
+        printR_obj("Gradient-Descent update");
+      }
+    }
+    
+    if( uu == 0 ) break;
+    
+    if(iter > 0){
+      if( std::abs(curr_LL - old_LL) < eps && Rcpp_norm(curr_PARAMS - old_PARAMS) < eps ){
+        old_grad = pois_reg_grad(y,X,mu,old_PARAMS);
+        old_hess_grad = -1.0 * arma::inv(pois_reg_Hess(y,X,mu,old_PARAMS)) * old_grad;
+        if( Rcpp_norm(old_grad) < eps && Rcpp_norm(old_hess_grad) < eps ){
+          converge = 1;
+          break;
+        }
+      }
+    }
+    
+    curr_PARAMS = old_PARAMS;
+    curr_LL = old_LL;
+    iter++;
+  }
+  
+  // return R_NilValue;
+  return Rcpp::List::create(
+    Rcpp::Named("converge",converge),
+    Rcpp::Named("LL",old_LL),
+    Rcpp::Named("iter",iter),
+    Rcpp::Named("norm_HG",Rcpp_norm(old_hess_grad)),
+    Rcpp::Named("norm_G",Rcpp_norm(old_grad)),
+    Rcpp::Named("PARAMS",Rcpp::NumericVector(old_PARAMS.begin(),old_PARAMS.end()))
+  );
+}
+
+// [[Rcpp::export]]
+//trec_BFGS
+
+
+
+/* ---------------------------
+ * ASE
+ ---------------------------*/
