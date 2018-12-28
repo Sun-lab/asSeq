@@ -227,188 +227,6 @@ arma::mat Rcpp_NB_reg_Hess(const arma::vec& y, const arma::mat& X,
   return HESS;
 }
 
-// [[Rcpp::export]]
-Rcpp::List Rcpp_NB_reg(const arma::vec& y,
-                       const arma::mat& X,const arma::vec& offsets,
-                       const arma::vec& params0, const arma::vec& lgy1,
-                       const arma::uword& max_iter = 4e3,
-                       const double& eps = 1e-7,const bool& show = true){
-  // arma::uword N = X.n_rows;
-  arma::uword iter = 0;
-  arma::uword jj,uu;
-  arma::uword converge = 0;
-  arma::uword num_params = X.n_cols + 1;
-  double curr_LL = 0.0;
-  double old_LL,new_LL;
-  arma::vec old_PARAMS = params0;
-  arma::vec curr_PARAMS = params0;
-  arma::vec new_PARAMS = params0;
-  arma::vec old_grad = arma::zeros<arma::vec>(num_params);
-  arma::vec mu = arma::zeros<arma::vec>(y.n_elem);
-  arma::vec old_hess_grad = old_grad;
-  
-  while(iter < max_iter){
-    old_LL = Rcpp_NB_reg_LL(y,X,offsets,old_PARAMS, lgy1, mu);
-    old_grad = Rcpp_NB_reg_grad(y,X,mu,old_PARAMS);
-    old_hess_grad = -1.0 * arma::inv(Rcpp_NB_reg_Hess(y,X,mu,old_PARAMS)) * old_grad;
-    old_grad = old_grad / std::max(1.0,Rcpp_norm(old_grad));
-    old_hess_grad = old_hess_grad / std::max(1.0,Rcpp_norm(old_hess_grad));
-    uu = 0;
-    for(jj = 0; jj <= 15; jj++){
-      new_PARAMS = old_PARAMS + old_hess_grad / std::pow(4.0,jj);
-      new_LL = Rcpp_NB_reg_LL(y,X,offsets,new_PARAMS, lgy1,mu);
-      if( new_LL > old_LL ){
-        old_PARAMS = new_PARAMS;
-        old_LL = new_LL;
-        uu = 1;
-        break;
-      } else {
-        new_PARAMS = old_PARAMS + old_grad / std::pow(4.0,jj);
-        new_LL = Rcpp_NB_reg_LL(y,X,offsets,new_PARAMS, lgy1,mu);
-        if(new_LL > old_LL){
-          old_PARAMS = new_PARAMS;
-          old_LL = new_LL;
-          uu = 2;
-          break;
-        }
-      }
-    }
-    
-    if(show){
-      if(uu == 0){
-        printR_obj("Failed update");
-      } else if(uu == 1){
-        printR_obj("Newton-Raphson update");
-      } else {
-        printR_obj("Gradient-Descent update");
-      }
-    }
-    
-    if( uu == 0 ) break;
-    
-    if(iter > 0){
-      if( std::abs(curr_LL - old_LL) < eps && Rcpp_norm(curr_PARAMS - old_PARAMS) < eps ){
-        old_grad = Rcpp_NB_reg_grad(y,X,mu,old_PARAMS);
-        old_hess_grad = -1.0 * arma::inv(Rcpp_NB_reg_Hess(y,X,mu,old_PARAMS)) * old_grad;
-        if( Rcpp_norm(old_grad) < eps && Rcpp_norm(old_hess_grad) < eps ){
-          converge = 1;
-          break;
-        }
-      }
-    }
-    
-    curr_PARAMS = old_PARAMS;
-    curr_LL = old_LL;
-    iter++;
-  }
-  
-  // return R_NilValue;
-  return Rcpp::List::create(
-    Rcpp::Named("converge",converge),
-    Rcpp::Named("LL",old_LL),
-    Rcpp::Named("iter",iter),
-    Rcpp::Named("norm_HG",Rcpp_norm(old_hess_grad)),
-    Rcpp::Named("norm_G",Rcpp_norm(old_grad)),
-    Rcpp::Named("PARAMS",Rcpp::NumericVector(old_PARAMS.begin(),old_PARAMS.end()))
-  );
-}
-
-// [[Rcpp::export]]
-Rcpp::List Rcpp_NB_reg_BFGS(const arma::vec& y,
-                            const arma::mat& X,const arma::vec& offsets,
-                            const arma::vec& params0, const arma::vec& lgy1,
-                            const arma::uword& max_iter = 4e3,
-                            const double& eps = 1e-7,const bool& show = true){
-  
-  arma::uword num_params = params0.n_elem;
-  arma::uword iter = 0;
-  arma::uword jj,uu;
-  arma::uword converge = 0;
-  
-  arma::vec xk = params0;
-  arma::mat inv_Bk = arma::eye<arma::mat>(num_params,num_params);
-  arma::vec curr_xk = arma::zeros<arma::vec>(num_params);
-  arma::mat I_num_params = arma::eye<arma::mat>(num_params,num_params);
-  arma::vec new_xk = arma::zeros<arma::vec>(num_params);
-  arma::vec gr_k = arma::zeros<arma::vec>(num_params);
-  arma::vec p_k = arma::zeros<arma::vec>(num_params);
-  arma::vec s_k = arma::zeros<arma::vec>(num_params);
-  arma::vec y_k = arma::zeros<arma::vec>(num_params);
-  arma::mat ISYT = arma::zeros<arma::mat>(num_params,num_params);
-  arma::vec mu = arma::zeros<arma::vec>(y.n_elem);
-  
-  double old_LL,new_LL,inv_norm_p_k,tmp_alpha,ys;
-  double fnscale = -1.0; // For maximization
-  double curr_LL = 0.0;
-  
-  while(iter < max_iter){
-    //calculate direction p_k
-    uu = 0;
-    old_LL = fnscale * Rcpp_NB_reg_LL(y, X, offsets, xk, lgy1, mu);
-    gr_k = fnscale * Rcpp_NB_reg_grad(y, X, mu, xk);
-    p_k = -1.0 * inv_Bk * gr_k;
-    inv_norm_p_k =  1.0 / std::max(1.0, Rcpp_norm(p_k));
-    
-    //line search for new xk
-    for(jj=0; jj<30; jj++){
-      tmp_alpha = inv_norm_p_k / std::pow(4, jj);
-      new_xk = xk + tmp_alpha * p_k;
-      new_LL = fnscale * Rcpp_NB_reg_LL(y, X, offsets, new_xk, lgy1, mu);
-      if(new_LL < old_LL){ //minimizing
-        s_k = tmp_alpha * p_k;
-        y_k = fnscale * Rcpp_NB_reg_grad(y, X, mu, new_xk);
-        ys = arma::dot(y_k, s_k);
-        if(ys > 0.0){
-          if(show) printR_obj("Update xk and inv_Bk");
-          ISYT = I_num_params - (s_k * y_k.t()) /ys;
-          inv_Bk = ISYT * inv_Bk * ISYT.t() + s_k * s_k.t() / ys;
-        }else{
-          if(show) printR_obj("Update xk only");
-        }
-        xk = new_xk; 
-        old_LL = new_LL;
-        uu = 1;
-        break;
-      }
-    }
-    
-    if(uu==0){
-      if(Rcpp_norm(gr_k) > 1.0){
-        if(show) printR_obj("Reset inv_Bk");
-        inv_Bk = I_num_params;
-      }else{
-        if(show) printR_obj("Failed in search");
-        break;
-      }
-    }
-    
-    //check convergence 
-    if(iter > 0){
-      if(std::abs(curr_LL - old_LL) < eps && 
-         Rcpp_norm(curr_xk - xk) < eps){
-        gr_k = Rcpp_NB_reg_grad(y, X, mu, xk);
-        if(Rcpp_norm(gr_k) < eps){
-          converge = 1;
-          break;
-        }
-      }
-    }
-    curr_xk = xk;
-    curr_LL = old_LL;
-    iter++;
-  }
-  
-  old_LL = Rcpp_NB_reg_LL(y, X, offsets, xk, lgy1, mu);
-  //gr_k = Rcpp_NB_reg_grad(y, X, mu, xk);
-  return Rcpp::List::create(
-    Rcpp::Named("converge", converge),
-    Rcpp::Named("LL", old_LL),
-    Rcpp::Named("iter", iter),
-    Rcpp::Named("norm_GRAD", Rcpp_norm(gr_k)),
-    Rcpp::Named("PAR", Rcpp::NumericVector(xk.begin(), xk.end()))
-  );
-}
-
 
 /* ---------------------------
  * Poisson regression 
@@ -457,12 +275,58 @@ arma::mat Rcpp_pois_reg_Hess(const arma::vec& y, const arma::mat& X,
 return HESS;
 }
   
+/* ---------------------------
+ * Trec Regression 
+ */
 // [[Rcpp::export]]
-Rcpp::List Rcpp_pois_reg(const arma::vec& y,
-                         const arma::mat& X,const arma::vec& offsets,
-                         const arma::vec& params0, const arma::vec& lgy1,
-                         const arma::uword& max_iter = 4e3,
-                         const double& eps = 1e-7,const bool& show = true){
+double Rcpp_reg_LL(const arma::vec& y, const arma::mat& X,
+                  const arma::vec& offsets, const arma::vec& PARAMS, 
+                  const bool& fam_nb,
+                  const arma::vec& lgy1, arma::vec& mu){
+  if(fam_nb){
+    return Rcpp_NB_reg_LL(y, X, offsets, PARAMS, lgy1, mu);
+  }else{
+    return Rcpp_pois_reg_LL(y, X, offsets, PARAMS, lgy1, mu);
+  }
+}
+
+// [[Rcpp::export]]
+arma::vec Rcpp_reg_grad(const arma::vec& y, const arma::mat& X,
+                        const arma::vec& mu, const arma::vec& PARAMS,
+                        const bool& fam_nb){
+  arma::uword ii;
+  arma::mat HESS = arma::zeros<arma::mat>(X.n_cols, X.n_cols);
+  
+  if(fam_nb){
+    return Rcpp_NB_reg_grad(y, X, mu, PARAMS);
+  }else{
+    return Rcpp_pois_reg_grad(y, X, mu, PARAMS);
+  }
+  
+}
+
+// [[Rcpp::export]]
+arma::mat Rcpp_reg_Hess(const arma::vec& y, const arma::mat& X,
+                             const arma::vec& mu, const arma::vec& PARAMS,
+                             const bool& fam_nb){
+  arma::uword ii;
+  arma::mat HESS = arma::zeros<arma::mat>(X.n_cols, X.n_cols);
+  
+  if(fam_nb){
+    return Rcpp_NB_reg_Hess(y, X, mu, PARAMS);
+  }else{
+    return Rcpp_pois_reg_Hess(y, X, mu, PARAMS);
+  }
+  
+}
+
+
+// [[Rcpp::export]]
+Rcpp::List Rcpp_reg(const arma::vec& y, const arma::mat& X, 
+                    const arma::vec& offsets, const arma::vec& params0, 
+                    const bool& fam_nb, const arma::vec& lgy1, 
+                    const arma::uword& max_iter = 4e3,
+                    const double& eps = 1e-7,const bool& show = true){
   // arma::uword N = X.n_rows;
   arma::uword iter = 0;
   arma::uword jj,uu;
@@ -478,15 +342,16 @@ Rcpp::List Rcpp_pois_reg(const arma::vec& y,
   arma::vec old_hess_grad = old_grad;
   
   while(iter < max_iter){
-    old_LL = Rcpp_pois_reg_LL(y,X,offsets,old_PARAMS, lgy1, mu);
-    old_grad = Rcpp_pois_reg_grad(y,X,mu,old_PARAMS);
-    old_hess_grad = -1.0 * arma::inv(Rcpp_pois_reg_Hess(y,X,mu,old_PARAMS)) * old_grad;
+    old_LL = Rcpp_reg_LL(y,X,offsets,old_PARAMS,fam_nb,lgy1, mu);
+    old_grad = Rcpp_reg_grad(y,X,mu,old_PARAMS,fam_nb);
+    old_hess_grad = -1.0 * arma::inv(Rcpp_reg_Hess(y,X,mu,old_PARAMS,fam_nb)) 
+      * old_grad;
     old_grad = old_grad / std::max(1.0,Rcpp_norm(old_grad));
     old_hess_grad = old_hess_grad / std::max(1.0,Rcpp_norm(old_hess_grad));
     uu = 0;
     for(jj = 0; jj <= 15; jj++){
       new_PARAMS = old_PARAMS + old_hess_grad / std::pow(4.0,jj);
-      new_LL = Rcpp_pois_reg_LL(y,X,offsets,new_PARAMS, lgy1,mu);
+      new_LL = Rcpp_reg_LL(y,X,offsets,new_PARAMS,fam_nb,lgy1,mu);
       if( new_LL > old_LL ){
         old_PARAMS = new_PARAMS;
         old_LL = new_LL;
@@ -494,7 +359,7 @@ Rcpp::List Rcpp_pois_reg(const arma::vec& y,
         break;
       } else {
         new_PARAMS = old_PARAMS + old_grad / std::pow(4.0,jj);
-        new_LL = Rcpp_pois_reg_LL(y,X,offsets,new_PARAMS, lgy1,mu);
+        new_LL = Rcpp_reg_LL(y,X,offsets,new_PARAMS,fam_nb,lgy1,mu);
         if(new_LL > old_LL){
           old_PARAMS = new_PARAMS;
           old_LL = new_LL;
@@ -517,9 +382,11 @@ Rcpp::List Rcpp_pois_reg(const arma::vec& y,
     if( uu == 0 ) break;
     
     if(iter > 0){
-      if( std::abs(curr_LL - old_LL) < eps && Rcpp_norm(curr_PARAMS - old_PARAMS) < eps ){
-        old_grad = Rcpp_pois_reg_grad(y,X,mu,old_PARAMS);
-        old_hess_grad = -1.0 * arma::inv(Rcpp_pois_reg_Hess(y,X,mu,old_PARAMS)) * old_grad;
+      if( std::abs(curr_LL - old_LL) < eps && 
+          Rcpp_norm(curr_PARAMS - old_PARAMS) < eps ){
+        old_grad = Rcpp_reg_grad(y,X,mu,old_PARAMS,fam_nb);
+        old_hess_grad = -1.0 * arma::inv(Rcpp_reg_Hess(y,X,mu,old_PARAMS,fam_nb)) 
+          * old_grad;
         if( Rcpp_norm(old_grad) < eps && Rcpp_norm(old_hess_grad) < eps ){
           converge = 1;
           break;
@@ -542,16 +409,145 @@ Rcpp::List Rcpp_pois_reg(const arma::vec& y,
     Rcpp::Named("PARAMS",Rcpp::NumericVector(old_PARAMS.begin(),old_PARAMS.end()))
   );
 }
-/*
+
 // [[Rcpp::export]]
-Rcpp::List Rcpp_trec_BFGS(const arma::vec& y, const arma::mat& X, 
-                          const arma::vec& offsets, const arma::vec& params0, 
-                          const arma::vec& lgy1, const arma::uword& max_iter = 4e3, 
-                          const double& eps = 1e-7,const bool& show = true){
+Rcpp::List Rcpp_reg_BFGS(const arma::vec& y, const arma::mat& X, 
+                         const arma::vec& offsets, const arma::vec& params0, 
+                         const bool& fam_nb, const arma::vec& lgy1, 
+                         const arma::uword& max_iter = 4e3,
+                         const double& eps = 1e-7,const bool& show = true){
   
+  arma::uword num_params = params0.n_elem;
+  arma::uword iter = 0;
+  arma::uword jj,uu;
+  arma::uword converge = 0;
+  
+  arma::vec xk = params0;
+  arma::mat inv_Bk = arma::eye<arma::mat>(num_params,num_params);
+  arma::vec curr_xk = arma::zeros<arma::vec>(num_params);
+  arma::mat I_num_params = arma::eye<arma::mat>(num_params,num_params);
+  arma::vec new_xk = arma::zeros<arma::vec>(num_params);
+  arma::vec gr_k = arma::zeros<arma::vec>(num_params);
+  arma::vec p_k = arma::zeros<arma::vec>(num_params);
+  arma::vec s_k = arma::zeros<arma::vec>(num_params);
+  arma::vec y_k = arma::zeros<arma::vec>(num_params);
+  arma::mat ISYT = arma::zeros<arma::mat>(num_params,num_params);
+  arma::vec mu = arma::zeros<arma::vec>(y.n_elem);
+  
+  double old_LL,new_LL,inv_norm_p_k,tmp_alpha,ys;
+  double fnscale = -1.0; // For maximization
+  double curr_LL = 0.0;
+  
+  while(iter < max_iter){
+    //calculate direction p_k
+    uu = 0;
+    old_LL = fnscale * Rcpp_reg_LL(y, X, offsets, xk,fam_nb, lgy1, mu);
+    gr_k = fnscale * Rcpp_reg_grad(y, X, mu, xk, fam_nb);
+    p_k = -1.0 * inv_Bk * gr_k;
+    inv_norm_p_k =  1.0 / std::max(1.0, Rcpp_norm(p_k));
+    
+    //line search for new xk
+    for(jj=0; jj<30; jj++){
+      tmp_alpha = inv_norm_p_k / std::pow(4, jj);
+      new_xk = xk + tmp_alpha * p_k;
+      new_LL = fnscale * Rcpp_reg_LL(y, X, offsets, new_xk,fam_nb, lgy1, mu);
+      if(new_LL < old_LL){ //minimizing
+        s_k = tmp_alpha * p_k;
+        y_k = fnscale * Rcpp_reg_grad(y, X, mu, new_xk,fam_nb) - gr_k;
+        ys = arma::dot(y_k, s_k);
+        if(ys > 0.0){
+          if(show) printR_obj("Update xk and inv_Bk");
+          ISYT = I_num_params - (s_k * y_k.t()) /ys;
+          inv_Bk = ISYT * inv_Bk * ISYT.t() + s_k * s_k.t() / ys;
+        }else{
+          if(show) printR_obj("Update xk only");
+        }
+        xk = new_xk; 
+        old_LL = new_LL;
+        uu = 1;
+        break;
+      }
+    }
+    
+    if(uu==0){
+      if(Rcpp_norm(gr_k) > 1.0){
+        if(show) printR_obj("Reset inv_Bk");
+        inv_Bk = I_num_params;
+      }else{
+        if(show) printR_obj("Failed in search");
+        break;
+      }
+    }
+    
+    //check convergence 
+    if(iter > 0){
+      if(std::abs(curr_LL - old_LL) < eps && 
+         Rcpp_norm(curr_xk - xk) < eps){
+        gr_k = Rcpp_reg_grad(y, X, mu, xk, fam_nb);
+        if(Rcpp_norm(gr_k) < eps){
+          converge = 1;
+          break;
+        }
+      }
+    }
+    curr_xk = xk;
+    curr_LL = old_LL;
+    iter++;
+  }
+  
+  old_LL = Rcpp_reg_LL(y, X, offsets, xk, fam_nb, lgy1, mu);
+  //gr_k = Rcpp_NB_reg_grad(y, X, mu, xk);
+  return Rcpp::List::create(
+    Rcpp::Named("converge", converge),
+    Rcpp::Named("LL", old_LL),
+    Rcpp::Named("iter", iter),
+    Rcpp::Named("norm_GRAD", Rcpp_norm(gr_k)),
+    Rcpp::Named("PAR", Rcpp::NumericVector(xk.begin(), xk.end()))
+  );
 }
 
-*/
+
+/* ---------------------------
+ * Trec BFGS 
+ */
+
+// 
+// // [[Rcpp::export]]
+// Rcpp::List Rcpp_trec_BFGS(const arma::vec& y, const arma::mat& X,
+//                           const arma::vec& offsets, const arma::vec& params0,
+//                           const arma::vec& lgy1, const arma::uword& max_iter = 4e3,
+//                           const double& eps = 1e-7,const bool& show = true){
+//   arma::uword num_params = params0.n_elem;
+//   arma::uword iter = 0;
+//   arma::uword jj,uu;
+//   arma::uword converge = 0;
+//   
+//   arma::vec xk = params0;
+//   arma::mat inv_Bk = arma::eye<arma::mat>(num_params,num_params);
+//   arma::vec curr_xk = arma::zeros<arma::vec>(num_params);
+//   arma::mat I_num_params = arma::eye<arma::mat>(num_params,num_params);
+//   arma::vec new_xk = arma::zeros<arma::vec>(num_params);
+//   arma::vec gr_k = arma::zeros<arma::vec>(num_params);
+//   arma::vec p_k = arma::zeros<arma::vec>(num_params);
+//   arma::vec s_k = arma::zeros<arma::vec>(num_params);
+//   arma::vec y_k = arma::zeros<arma::vec>(num_params);
+//   arma::mat ISYT = arma::zeros<arma::mat>(num_params,num_params);
+//   arma::vec mu = arma::zeros<arma::vec>(y.n_elem);
+//   
+//   double old_LL,new_LL,inv_norm_p_k,tmp_alpha,ys;
+//   double fnscale = -1.0; // For maximization
+//   double curr_LL = 0.0;
+//   
+//   while(iter < max_iter){
+//     //calculate direction p_k
+//     old_LL = Rcpp_logLTReC(bxj, lgy1, y, z, mu, phi, fam_nb, mu1, offsets);
+//     gr_k = fnscale * Rcpp_grad_bxj_trec(bxj, y, z, mu1, phi, fam_nb);
+//     
+//  }
+// 
+// }
+// 
+
 
 /* ---------------------------
  * ASE

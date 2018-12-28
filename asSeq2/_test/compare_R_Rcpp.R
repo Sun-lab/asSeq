@@ -1,6 +1,6 @@
 setwd('/fh/fast/sun_w/licai/_tumor_eQTL/GitHub/asSeq/asSeq2/_test')
 
-Rcpp::sourceCpp('../asSeq_test1.cpp')
+Rcpp::sourceCpp('../Rcpp/asSeq_test1.cpp')
 source("trecR.R")
 load('_test_func.Rdata')
 
@@ -8,7 +8,7 @@ N
 dat[1:5,]
 bxj
 lgy1 = dat$LGX1
-zz = ZZ[,2]
+zz = ZZ[,1]
 table(zz)
 zz[which(zz == 2)] = 1
 zz[which(zz == 3)] = 2
@@ -30,11 +30,11 @@ logLTReC(bxj, y, zz, mu, b0, phi, 'negbin')
 Rcpp_grad_bxj_trec(bxj, y, zz, mu1, phi, T)
 grad.bxj.trec(bxj, y, zz, mu, b0, phi, 'negbin')
 
-Rcpp_NB_reg_LL(y, X, offsets, PARAMS = c(betas, log(phi)), lgy1, mu)
-Rcpp_NB_reg_grad(y, X, mu, PARAMS = c(betas, log(phi)))
-Rcpp_NB_reg_Hess(y, X, mu, PARAMS = c(betas, log(phi)))
-Rcpp_NB_reg(y, X, offsets, rep(0.1, 5), lgy1)
-Rcpp_NB_reg_BFGS(y, X, offsets, rep(0.1, 5), lgy1) # close
+Rcpp_reg_LL(y, X, offsets, PARAMS = c(betas, log(phi)), fam_nb = T, lgy1, mu)
+Rcpp_reg_grad(y, X, mu, PARAMS = c(betas, log(phi)), fam_nb = T)
+Rcpp_reg_Hess(y, X, mu, PARAMS = c(betas, log(phi)), fam_nb = T)
+Rcpp_reg(y, X, offsets, rep(0.1, 5),fam_nb = T, lgy1)
+Rcpp_reg_BFGS(y, X, offsets, rep(0.1, 5),fam_nb = T, lgy1) 
 library(MASS)
 g1  = glm.nb(y ~ X+offset(offsets))
 g1
@@ -45,10 +45,10 @@ optim(b0, fn=logLTReC, gr=grad.bxj.trec, y=y, x=zz, mu=g1$fitted, b0=b0, phi=0.1
       fam='negbin', method="BFGS", control=list(fnscale=-1.0, trace=0))
 
 
-Rcpp_pois_reg_LL(y, X, offsets, PARAMS = c(betas),lgy1, mu)
-Rcpp_pois_reg_grad(y, X, mu, PARAMS = c(betas))
-Rcpp_pois_reg_Hess(y, X, mu, PARAMS = c(betas))
-Rcpp_pois_reg(y,X,offsets,rep(0,4), lgy1)
+Rcpp_reg_LL(y, X, offsets, PARAMS = c(betas),fam_nb = F,lgy1, mu)
+Rcpp_reg_grad(y, X, mu, PARAMS = c(betas),fam_nb = F)
+Rcpp_reg_Hess(y, X, mu, PARAMS = c(betas),fam_nb = F)
+Rcpp_reg(y,X,offsets,rep(0,4),fam_nb = F, lgy1)
 
 g1 = glm(y~X+offset(offsets), family = 'poisson')
 g1
