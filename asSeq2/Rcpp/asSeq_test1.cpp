@@ -168,21 +168,23 @@ Rcpp::List Rcpp_trec_bxj(const arma::vec& y, const arma::mat& X,
   
   while(iter < max_iter){
     old_LL = Rcpp_logLTReC(old_bxj, y, X, z, BETA, phi, fam_nb, lgy1, mu);
-    g_h = Rcpp_grad_hess_bxj_trec(old_bxj, y, z, mu, phi, fam_nb);
+    g_h    = Rcpp_grad_hess_bxj_trec(old_bxj, y, z, mu, phi, fam_nb);
     old_grad = g_h.at(0);
     old_hess_grad = -1.0 * old_grad/g_h.at(1);
     uu = 0;
+    
     for(jj =0; jj <= 15; jj++){
       new_bxj = old_bxj + old_hess_grad / std::pow(4.0,jj);
-      new_LL = Rcpp_logLTReC(new_bxj, y, X, z, BETA, phi, fam_nb, lgy1, mu);
+      new_LL  = Rcpp_logLTReC(new_bxj, y, X, z, BETA, phi, fam_nb, lgy1, mu);
+      
       if(new_LL > old_LL){
         old_bxj = new_bxj;
-        old_LL = new_LL;
+        old_LL  = new_LL;
         uu = 1;
         break;
       }else{
         new_bxj = old_bxj + old_grad / std::pow(4.0,jj);
-        new_LL = Rcpp_logLTReC(new_bxj, y, X, z, BETA, phi, fam_nb, lgy1, mu);
+        new_LL  = Rcpp_logLTReC(new_bxj, y, X, z, BETA, phi, fam_nb, lgy1, mu);
         if(new_LL > old_LL){
           old_bxj = new_bxj;
           old_LL = new_LL;
@@ -510,7 +512,7 @@ Rcpp::List Rcpp_reg_BFGS(const arma::vec& y, const arma::mat& X,
                          const arma::vec& offsets, const arma::vec& params0, 
                          const bool& fam_nb, const arma::vec& lgy1, 
                          const arma::uword& max_iter = 4e3,
-                         const double& eps = 1e-7,const bool& show = true){
+                         const double& eps = 1e-7, const bool& show = true){
   
   arma::uword num_params = params0.n_elem;
   arma::uword iter = 0;
@@ -537,22 +539,24 @@ Rcpp::List Rcpp_reg_BFGS(const arma::vec& y, const arma::mat& X,
     //calculate direction p_k
     uu = 0;
     old_LL = fnscale * Rcpp_reg_LL(y, X, offsets, xk,fam_nb, lgy1, mu);
-    gr_k = fnscale * Rcpp_reg_grad(y, X, mu, xk, fam_nb);
-    p_k = -1.0 * inv_Bk * gr_k;
+    gr_k   = fnscale * Rcpp_reg_grad(y, X, mu, xk, fam_nb);
+    p_k    = -1.0 * inv_Bk * gr_k;
     inv_norm_p_k =  1.0 / std::max(1.0, Rcpp_norm(p_k));
     
     //line search for new xk
     for(jj=0; jj<30; jj++){
       tmp_alpha = inv_norm_p_k / std::pow(4, jj);
-      new_xk = xk + tmp_alpha * p_k;
-      new_LL = fnscale * Rcpp_reg_LL(y, X, offsets, new_xk,fam_nb, lgy1, mu);
+      new_xk    = xk + tmp_alpha * p_k;
+      new_LL    = fnscale * Rcpp_reg_LL(y, X, offsets, new_xk, fam_nb, lgy1, mu);
+      
       if(new_LL < old_LL){ //minimizing
         s_k = tmp_alpha * p_k;
         y_k = fnscale * Rcpp_reg_grad(y, X, mu, new_xk,fam_nb) - gr_k;
-        ys = arma::dot(y_k, s_k);
+        ys  = arma::dot(y_k, s_k);
+        
         if(ys > 0.0){
           if(show) printR_obj("Update xk and inv_Bk");
-          ISYT = I_num_params - (s_k * y_k.t()) /ys;
+          ISYT   = I_num_params - (s_k * y_k.t()) /ys;
           inv_Bk = ISYT * inv_Bk * ISYT.t() + s_k * s_k.t() / ys;
         }else{
           if(show) printR_obj("Update xk only");
@@ -630,8 +634,8 @@ Rcpp::List Rcpp_trec(const arma::vec& y, const arma::mat& X,
   while(iter < max_iter){
     
     //update bxj
-    new_bxj_fit = Rcpp_trec_bxj(y, X, curr_bxj, z, BETA, phi, fam_nb, lgy1, max_iter, 
-                                eps, show);
+    new_bxj_fit = Rcpp_trec_bxj(y, X, curr_bxj, z, BETA, phi, fam_nb, lgy1,
+                                max_iter, eps, show);
     new_bxj     = as<double>(new_bxj_fit["bxj"]);
     new_LL      = as<double>(new_bxj_fit["LL"]);
 
@@ -662,8 +666,8 @@ Rcpp::List Rcpp_trec(const arma::vec& y, const arma::mat& X,
     }
     
     curr_reg_par = new_reg_par;
-    curr_bxj = new_bxj;
-    curr_LL = new_LL;
+    curr_bxj     = new_bxj;
+    curr_LL      = new_LL;
     iter++;
     
   }
