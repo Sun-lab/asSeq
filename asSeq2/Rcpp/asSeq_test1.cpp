@@ -686,78 +686,541 @@ Rcpp::List Rcpp_trec(const arma::vec& y, const arma::mat& X,
 
 // [[Rcpp::export]]
 double Rcpp_loglikBB(const arma::vec& ni, const arma::vec& ni0, 
-                const double& Pi, const double& theta, 
-                const arma::vec& lbc){
+                const double& Pi1, const double& log_theta, 
+                const arma::vec& lbc, const arma::vec& zeta){
   
   arma::uword ii;  
   double loglik = 0.0;
-  double vtheta = 1/theta;
-  double aa = Pi*vtheta;
+  double vtheta = std::exp(-log_theta);
+  double aa = Pi1*vtheta;
   double bb = vtheta - aa;
-  double lgvab = - lgamma(aa) - lgamma(bb) + lgamma(vtheta);
-  
-  if(Pi == 0.5){
-    for(ii=0;ii<ni.n_elem;ii++){
-      printR_obj(loglik);
+  double lgvt = lgamma(vtheta);
+  double lgvab = - lgamma(aa) - lgamma(bb) + lgvt;
+  double lgvabH0 = -2 *lgamma(0.5*vtheta) + lgvt;
+ 
+  for(ii=0;ii<ni.n_elem;ii++){
+    if(zeta.at(ii) == 1){   //het 
+      //printR_obj(loglik);
       loglik += lbc.at(ii) + lgamma(aa + ni0.at(ii)) +
         lgamma(bb + ni.at(ii) - ni0.at(ii)) + lgvab - 
         lgamma(vtheta + ni.at(ii));
-    } 
-  }else{
-    for(ii=0;ii<ni.n_elem;ii++){
-    printR_obj(loglik);
-    loglik += lbc.at(ii) + lgamma(aa + ni0.at(ii)) +
-      lgamma(bb + ni.at(ii) - ni0.at(ii)) - lgamma(vtheta + ni.at(ii)) + lgvab;
-  }
+    }else{
+      //printR_obj(loglik);
+      loglik += lbc.at(ii) + lgamma(0.5*vtheta + ni0.at(ii)) +
+        lgamma(0.5*vtheta + ni.at(ii) - ni0.at(ii)) + lgvabH0 - 
+        lgamma(vtheta + ni.at(ii)) ;
     }
+  }
   
   return loglik;
 }
 
-// [[Rcpp::export]]
-double Rcpp_log_BB(const arma::uword& x,
-                   const arma::uword& n,const double& pp,
-                   const double& psi,const double& lbc){
-  
-  double aa = pp / psi;
-  double bb = (1.0 - pp) / psi;
-  
-  return lbc + lgamma(x + aa) +
-    lgamma(n - x + bb) +
-    lgamma(aa + bb) -
-    lgamma(n + aa + bb) -
-    lgamma(aa) - lgamma(bb);
-}
 
 // [[Rcpp::export]]
-double Rcpp_vec_log_BB(const arma::uvec& x,
-                       const arma::uvec& n,const double& pp,
-                       const double& psi,const arma::vec& lbc){
-  
-  double out = 0.0;
+arma::vec Rcpp_ase_grad(const arma::vec& ni, const arma::vec& ni0,
+                    const double& Pi1, const double& log_theta, 
+                    const arma::vec& zeta){
+
   arma::uword ii;
-  for(ii = 0; ii < x.n_elem; ii++){
-    out += Rcpp_log_BB(x.at(ii),n.at(ii),
-                       pp,psi,lbc.at(ii));
+  arma::vec grad = arma::zeros<arma::vec>(2);
+  double vtheta = std::exp(-log_theta);
+  double aa     = Pi1*vtheta;
+  double bb     = vtheta - aa;
+  double diaa   = R::digamma(aa);
+  double dibb   = R::digamma(bb);
+  double divt   = R::digamma(vtheta);
+  
+  //Pi = 0.5
+  double diaa_ni0, dibb_ni1; 
+  
+  for(ii=0;ii<ni.n_elem;ii++){
+    if(zeta.at(ii) == 1){
+      diaa_ni0 = R::digamma(aa + ni0.at(ii));
+      dibb_ni1 = R::digamma(bb + ni.at(ii) - ni0.at(ii)); 
+
+      grad.at(0) += diaa_ni0 - dibb_ni1
+        - diaa + dibb;
+    
+      //dlase_dtheta
+      grad.at(1) += - Pi1*(diaa_ni0 - diaa) -
+      (1.0 - Pi1) * (dibb_ni1 - dibb) -
+      (divt - R::digamma(vtheta + ni.at(ii)));
+      
+    }else{
+
+      //dlase_dpi
+      //grad.at(0) += diaa_ni0_H0 - dibb_ni1_H0; 
+      
+      //dlase_theta
+      grad.at(1) += - 0.5 * R::digamma(0.5*vtheta + ni0.at(ii)) 
+      - 0.5 * R::digamma(0.5*vtheta + ni.at(ii) - ni0.at(ii)) + 
+        R::digamma(0.5*vtheta) -
+        (divt - R::digamma(vtheta + ni.at(ii)));
+    }
+    //printR_obj(grad.at(1));
   }
-  return out;
+  grad.at(0) *= vtheta;
+  grad.at(1) *= pow(vtheta, 2.0);
+  
+  return grad;
 }
 
 // [[Rcpp::export]]
-double Rcpp_ase_bxj(const arma::vec& ni, const arma::vec& ni0,
-                    const double& Pi, const double& theta){
-
+double Rcpp_ase_grad_Pi(const arma::vec& ni, const arma::vec& ni0,
+                         const double& Pi1, const double& log_theta, 
+                         const arma::vec& zeta){
+  
   arma::uword ii;
   double grad = 0.0;
-  double vtheta = 1/theta;
-  double aa = Pi*vtheta;
-  double bb = vtheta - aa;
-
+  double vtheta = std::exp(-log_theta);
+  double aa     = Pi1*vtheta;
+  double bb     = vtheta - aa;
+  double diaa   = R::digamma(aa);
+  double dibb   = R::digamma(bb);
+  double divt   = R::digamma(vtheta);
+  
+  //Pi = 0.5
+  double diaa_ni0, dibb_ni1; 
+  
   for(ii=0;ii<ni.n_elem;ii++){
-    grad += R::digamma(aa + ni0.at(ii)) -
-      R::digamma(bb + ni.at(ii) - ni0.at(ii)) - R::digamma(aa) +
-      R::digamma(bb);
+    if(zeta.at(ii) == 1){
+      diaa_ni0 = R::digamma(aa + ni0.at(ii));
+      dibb_ni1 = R::digamma(bb + ni.at(ii) - ni0.at(ii)); 
+      
+      grad += diaa_ni0 - dibb_ni1 - diaa + dibb;
+      
+    }
+    // else{
+    // 
+    //   grad += R::digamma(0.5*vtheta + ni0.at(ii)) - 
+    //     R::digamma(0.5*vtheta + ni.at(ii) - ni0.at(ii)); 
+    //   
+    // }
+    //printR_obj(grad.at(1));
   }
+  grad *= vtheta;
+  
+  return grad;
+}
+
+// [[Rcpp::export]]
+double Rcpp_ase_grad_H0(const arma::vec& ni, const arma::vec& ni0,
+                        const double& Pi1, const double& log_theta, 
+                        const arma::vec& zeta){
+  
+  arma::uword ii;
+  double grad   = 0.0;
+  double vtheta = std::exp(-log_theta);
+  double aa     = Pi1*vtheta;
+  double bb     = vtheta - aa;
+  double diaa   = R::digamma(aa);
+  double dibb   = R::digamma(bb);
+  double divt   = R::digamma(vtheta);
+  
+  //Pi = 0.5
+  double diaa_ni0, dibb_ni1; 
+  
+  for(ii=0;ii<ni.n_elem;ii++){
+    
+    diaa_ni0 = R::digamma(aa + ni0.at(ii));
+    dibb_ni1 = R::digamma(bb + ni.at(ii) - ni0.at(ii)); 
+    
+    //dlase_dtheta
+    grad += - Pi1*(diaa_ni0 - diaa) -
+      (1.0 - Pi1) * (dibb_ni1 - dibb) -
+      (divt - R::digamma(vtheta + ni.at(ii)));
+    
+    //printR_obj(grad.at(1));
+  }
+  grad *= pow(vtheta, 2.0);
+  
+  return grad;
+}
 
 
+// // [[Rcpp::export]]
+// arma::mat Rcpp_ase_hess(const arma::vec& ni, const arma::vec& ni0,
+//                         const double& Pi1, const double& theta,
+//                         const arma::vec& zeta){
+//   arma::uword ii;
+//   arma::mat hess = arma::zeros<arma::mat>(2,2);
+//   double vtheta = 1/theta;
+//   double aa     = Pi1*vtheta;
+//   double bb     = vtheta - aa;
+//   double traa   = R::trigamma(aa);
+//   double trbb   = R::trigamma(bb);
+//   double diaa   = R::digamma(aa);
+//   double dibb   = R::digamma(bb);
+//   double trvt   = R::trigamma(vtheta);
+//   double divt   = R::digamma(vtheta);
+//   
+//   double w = 0.0, dw_dtheta = 0.0;
+//   
+//   double traa_ni0, trbb_ni1, diaa_ni0, dibb_ni1;
+// 
+//   for(ii=0;ii<ni.n_elem;ii++){
+//     if(zeta.at(ii) == 1){
+//       traa_ni0 = R::trigamma(aa + ni0.at(ii));
+//       trbb_ni1 = R::trigamma(bb + ni.at(ii) - ni0.at(ii));
+//       diaa_ni0 = R::digamma(aa + ni0.at(ii));
+//       dibb_ni1 = R::digamma(bb + ni.at(ii) - ni0.at(ii)); 
+//       
+//       //pi
+//       hess.at(0,0) += traa_ni0 + trbb_ni1
+//         - traa - trbb;
+// 
+//       //theta
+//       w +=  Pi1*(diaa_ni0 - diaa) +
+//       (1.0 - Pi1) * (dibb_ni1 - dibb) +
+//       (divt - R::digamma(vtheta + ni.at(ii)));
+//       
+//       dw_dtheta += pow(Pi1, 2.0)*(traa_ni0 - traa) +
+//         pow((1 - Pi1), 2.0) * (trbb_ni1 - trbb) +
+//         (trvt - R::trigamma(vtheta + ni.at(ii)));
+//        
+//        // pi*theta
+//        hess.at(0,1) += - pow(vtheta, 2.0) * ((diaa_ni0 - diaa) -
+//          (dibb_ni1 - dibb)) - 
+//          pow(vtheta, 3.0)*Pi1*(traa_ni0 - traa) + 
+//          pow(vtheta, 3.0)*(1.0-Pi1)*(trbb_ni1 - trbb) ;
+//          
+//     }else{
+// 
+//       //Pi
+//       //hess.at(0,0) += diaa_ni0_H0 - dibb_ni1_H0;
+// 
+//       //theta
+//       w +=  0.5 * R::digamma(0.5*vtheta + ni0.at(ii)) 
+//       + 0.5 * R::digamma(0.5*vtheta + ni.at(ii) - ni0.at(ii)) - 
+//         R::digamma(0.5*vtheta) +
+//         (divt - R::digamma(vtheta + ni.at(ii)));
+//       
+//       dw_dtheta += pow(0.5, 2.0)*(R::trigamma(0.5*vtheta + ni0.at(ii))) - 
+//         0.5*R::trigamma(0.5*vtheta) +
+//         pow(0.5, 2.0) * (R::trigamma(0.5*vtheta + ni.at(ii) - ni0.at(ii))) +
+//         (trvt - R::trigamma(vtheta + ni.at(ii)));;
+//       
+//       // pi*theta
+//       hess.at(0,1) += - pow(vtheta, 2.0) * 
+//         0.5*(R::digamma(0.5*vtheta + ni0.at(ii)) - 
+//         R::digamma(0.5*vtheta + ni.at(ii) - ni0.at(ii))) - 
+//         pow(vtheta, 3.0)*0.5*
+//         (R::trigamma(0.5*vtheta + ni0.at(ii)) +
+//         R::trigamma(0.5*vtheta + ni.at(ii) - ni0.at(ii)) - 
+//         2*R::trigamma(0.5*vtheta));
+//       
+//       }
+//     
+//   }
+//   hess.at(0,0) *= pow(vtheta, 2.0);
+//   //printR_obj(w);
+//   //printR_obj(dw_dtheta);
+//   hess.at(1,1) = -2.0*pow(vtheta, 3.0)*w + pow(vtheta, 4.0)*dw_dtheta;
+//   hess.at(1,0) = hess.at(0,1);
+//   
+//   return hess;
+// } // diagonal is not correct 
+
+// [[Rcpp::export]]
+Rcpp::List Rcpp_ase_BFGS(const arma::vec& ni, const arma::vec& ni0,
+                         const arma::vec& zeta, const bool& H0, 
+                         const arma::vec& params0, const arma::vec& lbc,
+                         const arma::uword& max_iter = 4e3,
+                         const double& eps = 1e-7, const bool& show = true){
+  
+  arma::uword num_params = H0 + 1;
+  arma::uword iter = 0;
+  arma::uword jj,uu;
+  arma::uword converge = 0;
+  
+  arma::vec xk = params0;
+  arma::mat inv_Bk = arma::eye<arma::mat>(num_params,num_params);
+  arma::vec curr_xk = arma::zeros<arma::vec>(num_params);
+  arma::mat I_num_params = arma::eye<arma::mat>(num_params,num_params);
+  arma::vec new_xk = arma::zeros<arma::vec>(num_params);
+  arma::vec gr_k = arma::zeros<arma::vec>(num_params);
+  arma::vec p_k = arma::zeros<arma::vec>(num_params);
+  arma::vec s_k = arma::zeros<arma::vec>(num_params);
+  arma::vec y_k = arma::zeros<arma::vec>(num_params);
+  arma::mat ISYT = arma::zeros<arma::mat>(num_params,num_params);
+  
+  double old_LL,new_LL,inv_norm_p_k,tmp_alpha,ys;
+  double fnscale = -1.0; // For maximization
+  double curr_LL = 0.0;
+  
+  while(iter < max_iter){
+    //calculate direction p_k
+    uu = 0;
+    if(H0){
+      old_LL = fnscale * Rcpp_loglikBB(ni, ni0, xk.at(0), xk.at(1), lbc, zeta);
+      gr_k   = fnscale * Rcpp_ase_grad(ni, ni0, xk.at(0), xk.at(1), zeta);
+    }else{
+      old_LL = fnscale * Rcpp_loglikBB(ni, ni0, 0.5, xk.at(0), lbc, zeta);
+      gr_k   = fnscale * Rcpp_ase_grad_H0(ni, ni0, 0.5, xk.at(0), zeta);
+      
+    }
+    p_k    = -1.0 * inv_Bk * gr_k;
+    inv_norm_p_k =  1.0 / std::max(1.0, Rcpp_norm(p_k));
+    
+    //line search for new xk
+    for(jj=0; jj<30; jj++){
+      tmp_alpha = inv_norm_p_k / std::pow(4, jj);
+      new_xk    = xk + tmp_alpha * p_k;
+      if(H0){
+        new_LL    = fnscale * Rcpp_loglikBB(ni, ni0, new_xk.at(0),
+                                            new_xk.at(1), lbc, zeta);
+      }else{
+        new_LL    = fnscale * Rcpp_loglikBB(ni, ni0,0.5,
+                                            new_xk.at(0), lbc, zeta);
+        
+      }
+      if(new_LL < old_LL){ //minimizing
+        s_k = tmp_alpha * p_k;
+        if(H0){
+          y_k = fnscale * Rcpp_ase_grad(ni, ni0, new_xk.at(0), 
+                                        new_xk.at(1), zeta) - gr_k;
+        }else{
+          y_k = fnscale * Rcpp_ase_grad_H0(ni, ni0, 0.5, 
+                                           new_xk.at(0), zeta) - gr_k;
+          
+        }
+        ys  = arma::dot(y_k, s_k);
+        
+        if(ys > 0.0){
+          if(show) printR_obj("Update xk and inv_Bk");
+          ISYT   = I_num_params - (s_k * y_k.t()) /ys;
+          inv_Bk = ISYT * inv_Bk * ISYT.t() + s_k * s_k.t() / ys;
+        }else{
+          if(show) printR_obj("Update xk only");
+        }
+        xk = new_xk; 
+        old_LL = new_LL;
+        uu = 1;
+        break;
+      }
+    }
+    //printR_obj(new_LL);
+    //printR_obj(xk);
+    
+    if(uu==0){
+      if(Rcpp_norm(gr_k) > 1.0){
+        if(show) printR_obj("Reset inv_Bk");
+        inv_Bk = I_num_params;
+      }else{
+        if(show) printR_obj("Failed in search");
+        break;
+      }
+    }
+    
+    //check convergence 
+    if(iter > 0){
+      if(std::abs(curr_LL - old_LL) < eps && 
+         Rcpp_norm(curr_xk - xk) < eps){
+        if(H0){
+          gr_k = Rcpp_ase_grad(ni, ni0, xk.at(0), xk.at(1), zeta);
+        }else{
+          gr_k = Rcpp_ase_grad_H0(ni, ni0, 0.5, xk.at(0), zeta);
+        }
+        if(Rcpp_norm(gr_k) < eps){
+          converge = 1;
+          break;
+        }
+      }
+    }
+    curr_xk = xk;
+    curr_LL = old_LL;
+    iter++;
+  }
+  if(H0){
+    old_LL = Rcpp_loglikBB(ni, ni0, xk.at(0), xk.at(1), lbc, zeta);
+  }else{
+    old_LL = Rcpp_loglikBB(ni, ni0, 0.5, xk.at(0), lbc, zeta);
+    
+  }
+  //gr_k = Rcpp_NB_reg_grad(y, X, mu, xk);
+  return Rcpp::List::create(
+    Rcpp::Named("converge", converge),
+    Rcpp::Named("LL", old_LL),
+    Rcpp::Named("iter", iter),
+    Rcpp::Named("norm_GRAD", Rcpp_norm(gr_k)),
+    Rcpp::Named("PAR", Rcpp::NumericVector(xk.begin(), xk.end()))
+  );
+}
+
+// [[Rcpp::export]]
+Rcpp::List Rcpp_ase(const arma::vec& ni, const arma::vec& ni0,
+                    const arma::vec& zeta, const arma::vec& lbc,
+                    const arma::uword& max_iter = 4e3,
+                    const double& eps = 1e-7, const bool& show = true){
+  
+  arma::vec par0 = arma::zeros<arma::vec>(1);
+  Rcpp::List opH0, opH1;
+  arma::vec par = arma::zeros<arma::vec>(2);
+
+  par0.at(0) = 0.1;
+  opH0 = Rcpp_ase_BFGS(ni, ni0, zeta, false, par0, lbc, max_iter, eps, show);
+
+  par.at(0) = 0.5; 
+  par.at(1) = 0.1;
+  
+  //printR_obj(par);
+  opH1 = Rcpp_ase_BFGS(ni, ni0, zeta, 1, par, lbc, max_iter, eps, show);
+
+  return Rcpp::List::create(
+    Rcpp::Named("par0", opH0["PAR"]),
+    Rcpp::Named("par", opH1["PAR"]),
+    Rcpp::Named("LL0", opH0["LL"]),
+    Rcpp::Named("LL", opH1["LL"])
+  );
+}
+                    
+/* ---------------------------
+ * TRECASE
+ ---------------------------*/
+
+// [[Rcpp::export]]
+double Rcpp_trecase_LL(const double& bxj, const arma::vec& y, 
+                       const arma::mat& X, const arma::vec& z,
+                       const arma::vec& BETA, const double& phi, 
+                       const bool& fam_nb,const arma::vec& lgy1,
+                       arma::vec& mu,
+                       const arma::vec& ni, const arma::vec& ni0, 
+                       const double& log_theta, const arma::vec& lbc,
+                       const arma::vec& zeta ){
+  double Pi1 = std::exp(bxj)/(1.0 + exp(bxj)); 
+  
+  return(Rcpp_logLTReC(bxj, y, X, z, BETA, phi, fam_nb, lgy1, mu) 
+  + Rcpp_loglikBB(ni, ni0, Pi1, log_theta, lbc, zeta));
+  
+}
+
+// [[Rcpp::export]]
+double Rcpp_trecase_grad_bxj(const double& bxj, const arma::vec& y, 
+                             const arma::mat& X, const arma::vec& z,
+                             const arma::vec& BETA, const double& phi, 
+                             const bool& fam_nb,const arma::vec& lgy1,
+                             const arma::vec& mu,
+                             const arma::vec& ni, const arma::vec& ni0, 
+                             const double& log_theta, 
+                             const arma::vec& lbc, const arma::vec& zeta){
+  double Pi1 = std::exp(bxj)/(1.0 + exp(bxj)); 
+  arma::vec trec_grad = arma::zeros<arma::vec>(2);
+  
+  trec_grad = Rcpp_grad_hess_bxj_trec(bxj, y, z, mu, phi, fam_nb);
+
+  return(trec_grad.at(0) + 
+    Rcpp_ase_grad_Pi(ni, ni0, Pi1, log_theta, zeta)*Pi1/(1.0+std::exp(bxj)));
+
+}
+
+// [[Rcpp::export]]
+Rcpp::List Rcpp_trecase_BFGS(const arma::vec& bxj0, const arma::vec& y, 
+                             const arma::mat& X, const arma::vec& z,
+                             const arma::vec& BETA, const double& phi, 
+                             const bool& fam_nb, const arma::vec& lgy1,
+                             const arma::vec& ni, const arma::vec& ni0, 
+                             const double& log_theta, 
+                             const arma::vec& lbc, const arma::vec& zeta,
+                             const arma::uword& max_iter = 4e3,
+                             const double& eps = 1e-7, const bool& show = true){
+  
+  arma::uword num_params = 1;
+  arma::uword iter = 0;
+  arma::uword jj,uu;
+  arma::uword converge = 0;
+  
+  arma::vec xk = bxj0;
+  arma::mat inv_Bk = arma::eye<arma::mat>(num_params,num_params);
+  arma::vec curr_xk = arma::zeros<arma::vec>(num_params);
+  arma::mat I_num_params = arma::eye<arma::mat>(num_params,num_params);
+  arma::vec new_xk = arma::zeros<arma::vec>(num_params);
+  arma::vec gr_k = arma::zeros<arma::vec>(num_params);
+  arma::vec p_k = arma::zeros<arma::vec>(num_params);
+  arma::vec s_k = arma::zeros<arma::vec>(num_params);
+  arma::vec y_k = arma::zeros<arma::vec>(num_params);
+  arma::mat ISYT = arma::zeros<arma::mat>(num_params,num_params);
+  arma::vec mu = arma::zeros<arma::vec>(y.n_elem);
+  
+  double old_LL,new_LL,inv_norm_p_k,tmp_alpha,ys;
+  double fnscale = -1.0; // For maximization
+  double curr_LL = 0.0;
+  
+ 
+  
+  while(iter < max_iter){
+    //calculate direction p_k
+    uu = 0;
+    old_LL = fnscale * Rcpp_trecase_LL(xk.at(0), y, X, z, BETA, phi, fam_nb, lgy1, 
+                                       mu, ni, ni0, log_theta, lbc, zeta);
+    gr_k   = fnscale * Rcpp_trecase_grad_bxj(xk.at(0), y, X, z, BETA, phi, fam_nb, 
+                                             lgy1, mu, ni, ni0, 
+                                             log_theta, lbc, zeta);
+    p_k    = -1.0 * inv_Bk * gr_k;
+    inv_norm_p_k =  1.0 / std::max(1.0, Rcpp_norm(p_k));
+    
+    //line search for new xk
+    for(jj=0; jj<30; jj++){
+      tmp_alpha = inv_norm_p_k / std::pow(4, jj);
+      new_xk    = xk + tmp_alpha * p_k;
+      new_LL    = fnscale * Rcpp_trecase_LL(new_xk.at(0), y, X, z, BETA, phi, fam_nb, 
+                                            lgy1, mu, ni, ni0, log_theta, lbc, zeta);
+      if(new_LL < old_LL){ //minimizing
+        s_k = tmp_alpha * p_k;
+        y_k = fnscale * Rcpp_trecase_grad_bxj(new_xk.at(0), y, X, z, BETA, phi, fam_nb, 
+                                              lgy1, mu, ni, ni0, 
+                                              log_theta, lbc, zeta) - gr_k;
+        ys  = arma::dot(y_k, s_k);
+        
+        if(ys > 0.0){
+          if(show) printR_obj("Update xk and inv_Bk");
+          ISYT   = I_num_params - (s_k * y_k.t()) /ys;
+          inv_Bk = ISYT * inv_Bk * ISYT.t() + s_k * s_k.t() / ys;
+        }else{
+          if(show) printR_obj("Update xk only");
+        }
+        xk = new_xk; 
+        old_LL = new_LL;
+        uu = 1;
+        break;
+      }
+    }
+    
+    if(uu==0){
+      if(Rcpp_norm(gr_k) > 1.0){
+        if(show) printR_obj("Reset inv_Bk");
+        inv_Bk = I_num_params;
+      }else{
+        if(show) printR_obj("Failed in search");
+        break;
+      }
+    }
+    
+    //check convergence 
+    if(iter > 0){
+      if(std::abs(curr_LL - old_LL) < eps && 
+         Rcpp_norm(curr_xk - xk) < eps){
+        gr_k = Rcpp_trecase_grad_bxj(xk.at(0), y, X, z, BETA, phi, fam_nb, 
+                                     lgy1, mu, ni, ni0, 
+                                     log_theta, lbc, zeta);
+        if(Rcpp_norm(gr_k) < eps){
+          converge = 1;
+          break;
+        }
+      }
+    }
+    curr_xk = xk;
+    curr_LL = old_LL;
+    iter++;
+  }
+  
+  old_LL = Rcpp_trecase_LL(new_xk.at(0), y, X, z, BETA, phi, fam_nb, 
+                           lgy1, mu, ni, ni0, log_theta, lbc, zeta);
+  //gr_k = Rcpp_NB_reg_grad(y, X, mu, xk);
+  return Rcpp::List::create(
+    Rcpp::Named("converge", converge),
+    Rcpp::Named("LL", old_LL),
+    Rcpp::Named("iter", iter),
+    Rcpp::Named("norm_GRAD", Rcpp_norm(gr_k)),
+    Rcpp::Named("PAR", xk.at(0))
+  );
 }

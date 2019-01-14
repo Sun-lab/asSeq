@@ -192,15 +192,18 @@ trecR <- function(y, X, z1, fam, nIter=100, plotIt=FALSE, trace=FALSE, yfit=FALS
                     g, parDiff, b0, phi0))
     }
     
-    if(parDiff < 5e-5) break
+    if(parDiff < 1e-7) break
     
   }
   
   if(yfit){
-    l1 = list(b=b0, phi=phi0, logLik=logLik, lrt=logLik1 - logLik0, fitted=g1$fitted)
+    l1 = list(b=b0, phi=phi0, logLik=logLik/2, lrt=logLik1 - logLik0, 
+              betas = summary(g1)$coef[,1], 
+              lgphi = log(1/g1$theta))
   }else{
     l1 = list(b=b0, phi=phi0, logLik=logLik, lrt=logLik1 - logLik0)
   }
   
   l1
 }
+
