@@ -132,7 +132,7 @@ grad.theta <- function(theta, nA, nTotal, zeta, pi)
 # joint model
 #-------------------------------------------------------------
 
-trecaseR <- function(y, y1, y2, X, z1, z2, plotIt=FALSE, traceIt=FALSE){
+trecaseR <- function(y, nA, nTotal, X, z1, plotIt=FALSE, traceIt=FALSE){
   
   #----------------------------------------------------------
   # initial model fitting
@@ -141,21 +141,21 @@ trecaseR <- function(y, y1, y2, X, z1, z2, plotIt=FALSE, traceIt=FALSE){
   g0 = glm.nb(y ~ X)
   g0
 
-  nTotal = as.numeric(y1 + y2)
-  nA     = as.numeric(y2)
-  nA[z2==3] = y1[z2==3]
-
-  wkp    = which(nTotal >=5)
-  if(length(wkp) < 5){
-    stop("no enough allele specific reads\n")  
-  }
-  
-  nTotal = nTotal[wkp]
-  nA     = nA[wkp]
-
-  wkp1   = which(abs(z2[wkp] - 2) < 1.5)      
-  zeta   = rep(0, length(nTotal))
-  zeta[wkp1] = 1
+  # nTotal = as.numeric(y1 + y2)
+  # nA     = as.numeric(y2)
+  # nA[z2==3] = y1[z2==3]
+  # 
+  # wkp    = which(nTotal >=5)
+  # if(length(wkp) < 5){
+  #   stop("no enough allele specific reads\n")  
+  # }
+  # 
+  # nTotal = nTotal[wkp]
+  # nA     = nA[wkp]
+  # 
+  # wkp1   = which(abs(z2[wkp] - 2) < 1.5)      
+  # zeta   = rep(0, length(nTotal))
+  # zeta[wkp1] = 1
 
   a1 = aseR(nA, nTotal, zeta)
   a1
@@ -328,5 +328,5 @@ trecaseR <- function(y, y1, y2, X, z1, z2, plotIt=FALSE, traceIt=FALSE){
   
   list(b=b0, theta=theta0, phi=phi0, logLik=logLik,
        lrt=logLik[length(logLik)] - logLikNULL, 
-       lrtASE=2.0*(a1$logLikH1 - a1$logLikH0))
+       lrtASE=2.0*(a1$logLikH1 - a1$logLikH0), iter = g)
 }
