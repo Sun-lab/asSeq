@@ -2,6 +2,9 @@ setwd('/fh/fast/sun_w/licai/_tumor_eQTL/GitHub/asSeq/asSeq2/_test')
 library(Rcpp)
 Rcpp::sourceCpp('../Rcpp/asSeq_test1.cpp')
 source("trecR.R")
+source("aseR.R")
+source("trecaseR.R")
+
 load('_test_func.Rdata')
 options(digits=10)
 
@@ -9,7 +12,7 @@ N
 dat[1:5,]
 bxj
 lgy1 = dat$LGX1
-zz = ZZ[,1]
+zz = ZZ[,5]
 table(zz)
 zz[which(zz == 2)] = 1
 zz[which(zz == 3)] = 2
@@ -19,6 +22,15 @@ betas = BETA
 phi = PHI 
 y = dat$total
 b0 = 0
+
+theta = PSI
+Pi = exp(bxj)/(exp(bxj) + 1)
+ind = which(dat$total_phased > 7)
+zz_AS = zz[ind]
+ni = dat$total_phased[ind]
+ni0 = dat$hapB[ind]
+lbc = dat$LBC[ind]
+zeta = zz_AS==1
 
 offsets = rep(0, N)
 mu = rep(0, N)
@@ -89,7 +101,6 @@ Rtrec$betas
 exp(Ctrec$reg_par[5])
 Rtrec$phi
 
-
 # q('no')
 
 
@@ -126,17 +137,6 @@ c(time2-time1, time3-time2)
 #-------------------------------------------------------------
 # ASE model
 #-------------------------------------------------------------
-source("aseR.R")
-
-theta = PSI
-Pi = exp(bxj)/(exp(bxj) + 1)
-ind = which(dat$total_phased > 7)
-zz_AS = zz[ind]
-ni = dat$total_phased[ind]
-ni0 = dat$hapB[ind]
-lbc = dat$LBC[ind]
-zeta = zz_AS==1
-
 mat = NULL
 
 for(pis in c(1:9*0.1)){
@@ -171,7 +171,7 @@ op0  = optim(par0, logH0, gr=gradLogH0, nA=ni0, nTotal=ni,
              control=list(fnscale=-1))
 op0
 
-Rcpp_ase_BFGS(ni, ni0, zeta, 1, c(0.5, -10), lbc, max_iter = 4000L, 
+Rcpp_ase_BFGS(ni, ni0, zeta, c(0.5, -2.7), lbc, max_iter = 4000L, 
               eps = 1e-4, show = TRUE)
 optim(c(op0$par, 0.5), logH1, gr=gradLogH1, nA=ni0, nTotal=ni, zeta=zeta, 
       method="L-BFGS-B", lower=c(0,0) + 1e-16, upper=c(Inf, 1-1e-16), 
@@ -183,7 +183,8 @@ optimize(loglikTheta, interval=c(0, 1000), pi=0.3, nA=ni0,
          nTotal=ni, zeta=zeta, maximum=TRUE)
 
 time1 = Sys.time()
-Rcpp_ase(ni, ni0, zeta, lbc, show = F) 
+Rcpp_ase(ni, ni0, zeta, lbc, max_iter = 4000L, 
+         eps = 1e-05, show = FALSE) 
 time2 = Sys.time()
 aseR(ni0, ni, zeta)
 time3 = Sys.time()
@@ -214,7 +215,7 @@ c(time2-time1, time3-time2)
 
 time1 = Sys.time()
 Ctrecase = Rcpp_trecase(y, X, zz, 1, lgy1, ni, ni0, zeta, lbc, max_iter = 4000L, 
-             eps = 1e-08, show = FALSE) 
+             eps = 1e-05, show = FALSE) 
 time2 = Sys.time()
 Rtrecase = trecaseR(y, ni0, ni, X, zz, plotIt=FALSE, traceIt=FALSE)
 time3 = Sys.time()
@@ -226,4 +227,42 @@ c(exp(Ctrecase$reg_par[5]), Rtrecase$phi)
 c((Ctrecase$lrt), Rtrecase$lrt)
 c((Ctrecase$LL), Rtrecase$logLik[length(Rtrecase$logLik)]/2)
 
-        
+#-------------------------------------------------------------
+# Rcpp wrapper
+#-------------------------------------------------------------
+geneloc = data.frame(geneID = paste0('gene', 1:2), chr = "1", start = c(1, 1e8),
+                     end = c(1, 1e8)+1000, stringsAsFactors = F)
+geneloc
+
+SNPloc = data.frame(name = paste0("SNP", 1:100), chr = "1", 
+                    pos = c(1:30*100, 31:100*100 + 1e8), stringsAsFactors = F)
+head(SNPloc)       
+
+load('_test_func.Rdata')
+Y = cbind(dat$total, dat$total)
+y1= dat$hapA
+y1[ZZ[,1]==3] = dat$hapB[ZZ[,1]==3]
+y2 = dat$total_phased - y1
+Y1 = cbind(y1,y1)
+Y2 = cbind(y2,y2)
+
+time1 = Sys.time()
+res = trecase(Y, Y1, Y2, ZZ, XX, SNPloc, geneloc, 1,
+        cis_window = 1e5, useASE = 1, 
+        min_ASE_total=8, min_nASE=10, eps=1e-5)
+time2 = Sys.time()
+res2 = trecase2(Y, Y1, Y2, ZZ, XX, SNPloc, geneloc, 1,
+              cis_window = 1e5, useASE = F, 
+              min_ASE_total=8, min_nASE=10, eps=1e-5)
+time3 = Sys.time()
+c(time2-time1, time3-time2)
+
+sort(unlist(res[[1]][,"trec.pvalue"]))[1:5]
+sapply(res, function(x) which.min(x[,"trec.pvalue"]))
+sapply(res, function(x) which.min(x[,"trecase.pvalue"]))
+
+length(res)
+res2[[1]][[1]][1:5,]
+res2[[2]]
+
+str(res)
