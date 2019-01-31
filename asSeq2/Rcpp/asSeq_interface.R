@@ -100,15 +100,15 @@ trecase <- function(Y, Y1, Y2, Z, X, SNPinfo, Geneinfo, fam_nb, file_out,
               next
             }
               ni  = ni[ind]
-              ni0 = y1
-              ni0[zz2 == 3] = y2[zz2 == 3]
+              ni0 = y2
+              ni0[zz2 == 2] = y1[zz2 == 2]
               ni0 = ni0[ind]
               
               zeta = zz2 %in% c(1,2)
               zeta = zeta[ind]
               lbc  = lchoose(ni, ni0)
               
-              res_ase = Rcpp_ase(ni, ni0, zeta, lbc, max_iter, eps, show) 
+              # res_ase = Rcpp_ase(ni, ni0, zeta, lbc, max_iter, eps, show) 
             
               res_trecase = Rcpp_trecase(y, X, zz, fam_nb, lgy1, ni, ni0, zeta, 
                                          lbc, max_iter, eps, show) 
@@ -118,7 +118,7 @@ trecase <- function(Y, Y1, Y2, Z, X, SNPinfo, Geneinfo, fam_nb, file_out,
           if(useASE)
             gene_snp_res = rbind(gene_snp_res, c(SNPname = SNPinfo[ss,1,drop =F],
                               trec = unlist(res_trec),
-                             ase = unlist(res_ase), 
+                             # ase = unlist(res_ase), 
                              trecase = unlist(res_trecase)))
           else
             gene_snp_res =  rbind(gene_snp_res, c(SNPname = SNPinfo[ss,1,drop =F],
@@ -237,22 +237,22 @@ trecase2 <- function(Y, Y1, Y2, Z, X, SNPinfo, Geneinfo, fam_nb, file_out,
         next
       }
       ni  = ni[ind]
-      ni0 = y1
-      ni0[zz2 == 3] = y2[zz2 == 3]
+      ni0 = y2
+      ni0[zz2 == 2] = y1[zz2 == 2]
       ni0 = ni0[ind]
       
       zeta = zz2 %in% c(1,2)
       zeta = zeta[ind]
       lbc  = lchoose(ni, ni0)
       
-      res_ase = Rcpp_ase(ni, ni0, zeta, lbc, max_iter, eps, show) 
+      # res_ase = Rcpp_ase(ni, ni0, zeta, lbc, max_iter, eps, show) 
       res_trecase = Rcpp_trecase(y, X, zz, fam_nb, lgy1, ni, ni0, zeta, 
                                  lbc, max_iter, eps, show) 
       
       minPtrecase =  rbind(minPtrecase, c(GeneName = Geneinfo[gg,1,drop=F],
                                     SNPname = SNPinfo[ssMin,1,drop =F],
-                                    trec = unlist(res_trecMin),
-                                    ase = unlist(res_ase), 
+                                    # trec = unlist(res_trecMin),
+                                    # # ase = unlist(res_ase), 
                                     trecase = unlist(res_trecase))) 
       
       GStrec[[genenamei]] = gene_snp_res

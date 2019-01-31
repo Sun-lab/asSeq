@@ -12,7 +12,7 @@ N
 dat[1:5,]
 bxj
 lgy1 = dat$LGX1
-zz = ZZ[,5]
+zz =zz2 = ZZ[,1]
 table(zz)
 zz[which(zz == 2)] = 1
 zz[which(zz == 3)] = 2
@@ -225,7 +225,6 @@ c(Ctrecase$bxj, Rtrecase$b)
 c(exp(Ctrecase$lg_theta), Rtrecase$theta)
 c(exp(Ctrecase$reg_par[5]), Rtrecase$phi)
 c((Ctrecase$lrt), Rtrecase$lrt)
-c((Ctrecase$LL), Rtrecase$logLik[length(Rtrecase$logLik)]/2)
 
 #-------------------------------------------------------------
 # Rcpp wrapper
@@ -241,19 +240,21 @@ head(SNPloc)
 load('_test_func.Rdata')
 Y = cbind(dat$total, dat$total)
 y1= dat$hapA
-y1[ZZ[,1]==3] = dat$hapB[ZZ[,1]==3]
+y1[ZZ[,1]==2] = dat$hapB[ZZ[,1]==2]
 y2 = dat$total_phased - y1
 Y1 = cbind(y1,y1)
 Y2 = cbind(y2,y2)
 
+
 time1 = Sys.time()
-res = trecase(Y, Y1, Y2, ZZ, XX, SNPloc, geneloc, 1,
-        cis_window = 1e5, useASE = 1, 
-        min_ASE_total=8, min_nASE=10, eps=1e-5)
+# res = trecase(Y, Y1, Y2, ZZ, XX, SNPloc, geneloc, 1,
+#         cis_window = 1e5, useASE = 1, 
+#         min_ASE_total=8, min_nASE=10, eps=1e-5, show = F)
 time2 = Sys.time()
-res2 = trecase2(Y, Y1, Y2, ZZ, XX, SNPloc, geneloc, 1,
+res2 = trecase2(Y, Y1, Y2, ZZ, 
+                XX, SNPloc, geneloc, 1,
               cis_window = 1e5, useASE = F, 
-              min_ASE_total=8, min_nASE=10, eps=1e-5)
+              min_ASE_total=8, min_nASE=10, eps=1e-5, show = F)
 time3 = Sys.time()
 c(time2-time1, time3-time2)
 
@@ -261,8 +262,23 @@ sort(unlist(res[[1]][,"trec.pvalue"]))[1:5]
 sapply(res, function(x) which.min(x[,"trec.pvalue"]))
 sapply(res, function(x) which.min(x[,"trecase.pvalue"]))
 
+res[[1]][1:5,]
 length(res)
 res2[[1]][[1]][1:5,]
 res2[[2]]
 
 str(res)
+
+
+Y = data.matrix(Y)
+Y1 =data.matrix(Y1)
+Y2 =data.matrix(Y2)
+ZZ =data.matrix(ZZ)
+XX = data.matrix(XX)
+
+time1 = Sys.time()
+Rcpp_trecase_mtest(Y, Y1, Y2, ZZ, XX, SNPloc[,3], T, "file_trec.txt",
+                   "trecase.txt", 
+                   geneloc[,3], geneloc[,4]) 
+time2 = Sys.time()
+time2-time1
