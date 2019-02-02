@@ -51,8 +51,9 @@ Rcpp_reg_grad(y, X, mu, PARAMS = c(betas, log(phi)), fam_nb = T)
 Rcpp_reg_Hess(y, X, mu, PARAMS = c(betas, log(phi)), fam_nb = T)
 Rcpp_reg(y, X, offsets, rep(0.1, 5),fam_nb = T, lgy1, max_iter = 4000L, 
          eps = 1e-5, show = TRUE)
-Rcpp_reg_BFGS(y, X, offsets, rep(0.1, 5),fam_nb = T, lgy1, max_iter = 4000L, 
+reg0 = Rcpp_reg_BFGS(y, X, offsets, rep(0, 5),fam_nb = T, lgy1, max_iter = 4000L, 
               eps = 1e-5, show = TRUE) 
+reg0
 library(MASS)
 
 g1  = glm.nb(y ~ X+offset(offsets))
@@ -83,7 +84,10 @@ grs = sapply(seq(Rop$par, Cop$PAR, by = 1e-6), Rcpp_trec_grad_bxj, y,
 grs
 
 time1 = Sys.time()
-Ctrec = Rcpp_trec(y, X, zz, T, lgy1)
+Ctrec3 = Rcpp_trec2(y, X, zz, T, lgy1, max_iter = 4000L, eps = 1e-07, show = T)
+Ctrec = Rcpp_trec2(y, X, zz, T, lgy1,ini_bxj = 0.0, LL_null=reg0$LL, 
+                   ini_reg_par = reg0$PAR,
+                   max_iter = 4000L, eps = 1e-07, show = T)
 time2 = Sys.time()
 Rtrec = trecR(y, X, zz, 'negbin', yfit = T)
 time3 = Sys.time()
@@ -128,7 +132,8 @@ optim(0, fn=logLTReC, gr=grad.bxj.trec, y=y, x=zz, mu=exp(X%*%BETA), b0=b0, phi=
       fam='poisson', method="BFGS", control=list(fnscale=-1.0, trace=0))
 
 time1 = Sys.time()
-Rcpp_trec(y, X, zz, F, lgy1)
+Rcpp_trec(y, X, zz, F, lgy1, max_iter = 4000L, eps = 1e-04, 
+          show = T)
 time2 = Sys.time()
 trecR(y, X, zz, 'poisson')
 time3 = Sys.time()
@@ -215,7 +220,7 @@ c(time2-time1, time3-time2)
 
 time1 = Sys.time()
 Ctrecase = Rcpp_trecase(y, X, zz, 1, lgy1, ni, ni0, zeta, lbc, max_iter = 4000L, 
-             eps = 1e-05, show = FALSE) 
+             eps = 1e-05, show = T) 
 time2 = Sys.time()
 Rtrecase = trecaseR(y, ni0, ni, X, zz, plotIt=FALSE, traceIt=FALSE)
 time3 = Sys.time()
@@ -229,11 +234,11 @@ c((Ctrecase$lrt), Rtrecase$lrt)
 #-------------------------------------------------------------
 # Rcpp wrapper
 #-------------------------------------------------------------
-geneloc = data.frame(geneID = paste0('gene', 1:2), chr = "1", start = c(1, 1e8),
+geneloc = data.frame(geneID = paste0('gene', 1:2), chr = 1:2, start = c(1, 1e8),
                      end = c(1, 1e8)+1000, stringsAsFactors = F)
 geneloc
 
-SNPloc = data.frame(name = paste0("SNP", 1:100), chr = "1", 
+SNPloc = data.frame(name = paste0("SNP", 1:100), chr = c(rep(1, 40), rep(2, 60)), 
                     pos = c(1:30*100, 31:100*100 + 1e8), stringsAsFactors = F)
 head(SNPloc)       
 
@@ -254,7 +259,7 @@ time2 = Sys.time()
 res2 = trecase2(Y, Y1, Y2, ZZ, 
                 XX, SNPloc, geneloc, 1,
               cis_window = 1e5, useASE = F, 
-              min_ASE_total=8, min_nASE=10, eps=1e-5, show = F)
+              min_ASE_total=8, min_nASE=10, eps=1e-4, show = F)
 time3 = Sys.time()
 c(time2-time1, time3-time2)
 
@@ -277,8 +282,8 @@ ZZ =data.matrix(ZZ)
 XX = data.matrix(XX)
 
 time1 = Sys.time()
-Rcpp_trecase_mtest(Y, Y1, Y2, ZZ, XX, SNPloc[,3], T, "file_trec.txt",
+Rcpp_trecase_mtest(Y, Y1, Y2, ZZ, XX, SNPloc[,3], SNPloc[,2], T, "file_trec.txt",
                    "trecase.txt", 
-                   geneloc[,3], geneloc[,4]) 
+                   geneloc[,3], geneloc[,4], geneloc[,2], eps = 1e-04) 
 time2 = Sys.time()
 time2-time1
