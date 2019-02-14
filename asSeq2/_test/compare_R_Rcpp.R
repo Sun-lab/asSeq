@@ -176,20 +176,20 @@ op0  = optim(par0, logH0, gr=gradLogH0, nA=ni0, nTotal=ni,
              control=list(fnscale=-1))
 op0
 
-Rcpp_ase_BFGS(ni, ni0, zeta, c(0.5, -2.7), lbc, max_iter = 4000L, 
-              eps = 1e-4, show = TRUE)
+Rcpp_ase_BFGS(ni, ni0, zeta, c(0.5, -2.705298513+0.2), lbc, max_iter = 4000L, 
+              eps = 5e-5, show = TRUE)
 optim(c(op0$par, 0.5), logH1, gr=gradLogH1, nA=ni0, nTotal=ni, zeta=zeta, 
       method="L-BFGS-B", lower=c(0,0) + 1e-16, upper=c(Inf, 1-1e-16), 
       control=list(fnscale=-1),  hessian = T)
 
-Rcpp_ase_theta_BFGS(ni, ni0, zeta, 0.3, -3, lbc, max_iter = 4000L, 
-                    eps = 1e-05, show = FALSE)
-optimize(loglikTheta, interval=c(0, 1000), pi=0.3, nA=ni0, 
+Rcpp_ase_theta_BFGS(ni, ni0, zeta, 0.5, -2, lbc, max_iter = 4000L, 
+                    eps = 5e-04, show = FALSE)
+optimize(loglikTheta, interval=c(0, 1000), pi=0.5, nA=ni0, 
          nTotal=ni, zeta=zeta, maximum=TRUE)
 
 time1 = Sys.time()
 Rcpp_ase(ni, ni0, zeta, lbc, max_iter = 4000L, 
-         eps = 1e-05, show = FALSE) 
+         eps = 5e-05, show = FALSE) 
 time2 = Sys.time()
 aseR(ni0, ni, zeta)
 time3 = Sys.time()
@@ -220,7 +220,7 @@ c(time2-time1, time3-time2)
 
 time1 = Sys.time()
 Ctrecase = Rcpp_trecase(y, X, zz, 1, lgy1, ni, ni0, zeta, lbc, max_iter = 4000L, 
-             eps = 1e-05, show = T) 
+             eps = 5e-05, show = T) 
 time2 = Sys.time()
 Rtrecase = trecaseR(y, ni0, ni, X, zz, plotIt=FALSE, traceIt=FALSE)
 time3 = Sys.time()
@@ -242,6 +242,8 @@ SNPloc = data.frame(name = paste0("SNP", 1:100), chr = c(rep(1, 40), rep(2, 60))
                     pos = c(1:30*100, 31:100*100 + 1e8), stringsAsFactors = F)
 head(SNPloc)       
 
+source("../Rcpp/asSeq_interface.R")
+
 load('_test_func.Rdata')
 Y = cbind(dat$total, dat$total)
 y1= dat$hapA
@@ -250,22 +252,15 @@ y2 = dat$total_phased - y1
 Y1 = cbind(y1,y1)
 Y2 = cbind(y2,y2)
 
-
-time1 = Sys.time()
-# res = trecase(Y, Y1, Y2, ZZ, XX, SNPloc, geneloc, 1,
-#         cis_window = 1e5, useASE = 1, 
-#         min_ASE_total=8, min_nASE=10, eps=1e-5, show = F)
+## R version
 time2 = Sys.time()
 res2 = trecase2(Y, Y1, Y2, ZZ, 
                 XX, SNPloc, geneloc, 1,
               cis_window = 1e5, useASE = F, 
               min_ASE_total=8, min_nASE=10, eps=1e-4, show = F)
 time3 = Sys.time()
-c(time2-time1, time3-time2)
+c( time3-time2)
 
-sort(unlist(res[[1]][,"trec.pvalue"]))[1:5]
-sapply(res, function(x) which.min(x[,"trec.pvalue"]))
-sapply(res, function(x) which.min(x[,"trecase.pvalue"]))
 
 res[[1]][1:5,]
 length(res)
@@ -281,9 +276,51 @@ Y2 =data.matrix(Y2)
 ZZ =data.matrix(ZZ)
 XX = data.matrix(XX)
 
+# new version
 time1 = Sys.time()
-Rcpp_trecase_mtest(Y, Y1, Y2, ZZ, XX, SNPloc[,3], SNPloc[,2], T, "file_trec.txt",
+Rcpp_trecase_mtest(Y, Y1, Y2, ZZ, XX, SNPloc[,3], SNPloc[,2], T, "trec.txt",
                    "trecase.txt", 
-                   geneloc[,3], geneloc[,4], geneloc[,2], eps = 1e-04) 
+                   geneloc[,3], geneloc[,4], geneloc[,2], eps = 5e-05, useASE = 1) 
 time2 = Sys.time()
 time2-time1
+
+# asSeq package
+library(asSeq)
+Z = ZZ
+Z[ZZ > 1] = Z[ZZ>1] + 1
+time1 = Sys.time()
+trecase(Y, Y1, Y2, XX[,-1], Z, "output_trecase",1, min.AS.reads=8, min.AS.sample=10,
+                eChr=geneloc[,2], ePos=geneloc[,4], mChr=SNPloc[,2], mPos=SNPloc[,3])
+time2 = Sys.time()
+time2-time1
+
+res= read.table("trec.txt", sep = "\t", header = T)
+res2= read.table("output_eqtl.txt", sep = "\t", header = T)
+dim(res)
+dim(res2)
+
+res[,"TReC_Pvalue"]
+res2[,"TReC_Pvalue"]
+summary(res[,"TReC_Pvalue"]- res2[,"TReC_Pvalue"])
+plot(res[,"TReC_Pvalue"], res2[,"TReC_Pvalue"])
+abline(0,1)
+dim(Rres)
+
+
+time1 = Sys.time()
+Rcpp_trecase_mtest(Y, Y1, Y2, ZZ, XX, SNPloc[,3], SNPloc[,2], T, "trec2.txt",
+                   "trecase2.txt", 
+                   geneloc[,3], geneloc[,4], geneloc[,2], eps = 5e-05, useASE = 0,
+                   show =F) 
+time2 = Sys.time()
+time2-time1
+
+ZZ3 = ZZ
+ZZ3[ZZ==2] = 1
+ZZ3[ZZ==3] = 2
+time1 = Sys.time()
+trec(Y, XX[,-1], ZZ3, "output_trec", 1, local.distance = 1e+05,
+      eChr=geneloc[,2], ePos=geneloc[,4], mChr=SNPloc[,2], mPos=SNPloc[,3])
+time2 = Sys.time()
+time2-time1
+
