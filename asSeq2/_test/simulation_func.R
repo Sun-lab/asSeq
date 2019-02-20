@@ -143,3 +143,34 @@ gen_gene_RC_SNPs = function(gene_name,XX,numSNPs,BETA,PHI,bxj,
   list(dat,ZZ)
 }
 
+
+## ---------------------------------------------------------------------
+## Simulation 
+## ---------------------------------------------------------------------
+
+
+set.seed(1)
+gene_name = "G1"
+NN = 300
+XX = smart_df(cbind(1,matrix(runif(NN*3),NN,3))); names(XX) = paste0("x",1:4)
+numSNPs = 100
+BETA = c(5,0.15,-0.5,0.25)
+PHI = 0.1
+PSI = 0.05
+MAF = 0.2
+prob_phased = 0.05
+corrSNPss = c(0, 0.3, 0.5)
+eQTL_index = 1
+
+
+
+simDat = list()
+for(exp_bxj in 1:2){
+  for(corrSNPs in corrSNPss){
+    simDat[[paste0("ratioPi_",exp_bxj,"_Cor_", corrSNPs)]] =  
+      gen_gene_RC_SNPs(paste0(bxj,"_", corrSNPs),XX,numSNPs,BETA,PHI,log(exp_bxj),PSI,
+                       MAF,prob_phased,corrSNPs,eQTL_index) 
+  }
+}
+
+
