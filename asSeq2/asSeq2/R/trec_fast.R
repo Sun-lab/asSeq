@@ -172,7 +172,7 @@ function(Y, X, Z, output.tag, p.cut, link="log", offset=NULL,
          as.integer(mPos), as.double(converge), as.double(convergeGLM),
          yFailBaselineModel = as.integer(yFailBaselineModel),
          as.double(scoreTestP), as.integer(trace),
-         succeed=as.integer(succeed))
+         succeed=as.integer(succeed), PACKAGE="asSeq2")
 
   list(succeed = W[["succeed"]], yFailBaselineModel=W[["yFailBaselineModel"]])
 
