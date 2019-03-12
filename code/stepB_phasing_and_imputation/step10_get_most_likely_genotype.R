@@ -28,10 +28,10 @@ options("scipen"=999,"digits"=4)
 # So, at SNP3 the two alleles are C and T so the set of 3 probabilities for each indvidual correspond to the genotypes CC, CT and TT respectively.
 
 root.folder = "."
-phased = "/fh/fast/sun_w/licai/_tumor_eQTL/data/phased"
-outdir = "/fh/fast/sun_w/licai/_tumor_eQTL/data_genotype"
+phased = "../../data/phased"
+outdir = "../../data/data_genotype"
 if(!dir.exists(outdir)) dir.create(outdir, recursive=TRUE)
-inputdir = "/fh/fast/sun_w/licai/_tumor_eQTL/data/imputed"
+inputdir = "../../data/imputed"
 setwd(inputdir)
 
 #the list of samples for which we will get snps
@@ -65,8 +65,6 @@ rownames(summ_het) = samples
 colnames(summ_het)=sprintf("p%s",probs)
 tot = rep(0,sample_count)
 
-#phe
-genotype_matAll = matrix(NA, nrow=nrow(hpj), ncol=sample_count)
 
 for(j in 1:length(fls)){   
   #j=match("phased_imputed_chr2_85e6_90e6",fls)+1
