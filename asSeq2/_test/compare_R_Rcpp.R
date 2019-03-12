@@ -257,7 +257,7 @@ head(SNPloc)
 
 source("../Rcpp/asSeq_interface.R")
 
-load('_test_func.Rdata')
+load('../_test/_test_func.Rdata')
 Y = cbind(dat$total, dat$total)
 y1= dat$hapA
 y1[ZZ[,1]==2] = dat$hapB[ZZ[,1]==2]
@@ -357,5 +357,7 @@ trecase(Y, Y1, Y2, ZZ, XX, SNPloc, geneloc, fam_nb = T)
 time2 = Sys.time()
 time2-time1
 
-asSeq2:::trec_fast(Y, XX[,-1], ZZ3, "output_trec", 1, local.distance = 1e+05,
+TrecFastTest:::trec_fast(Y, XX[,-1], ZZ3, "output_trec", 1, local.distance = 1e+05,
           eChr=geneloc[,2], ePos=geneloc[,4], mChr=SNPloc[,2], mPos=SNPloc[,3])
+
+

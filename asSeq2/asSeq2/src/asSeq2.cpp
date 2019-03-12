@@ -1939,7 +1939,7 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
                         const arma::uword& min_nASE=10, const double& eps=1e-5,
                         const arma::uword& max_iter=4000L,const bool& show=false){
   arma::uword gg, ss, ii, ssMin, xi;
-  arma::uword ssChr = 0;
+  arma::uword ssChr = 0, ssBegin = 0;
   double nSam = Y.n_rows;
   double pp = XX.n_cols+fam_nb;
   //arma::vec y  = arma::zeros<arma::vec>(nSam);
@@ -1987,8 +1987,6 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
 
     Rprintf("gene %d \n", gg);
     arma::vec y  = Y.col(gg);
-    arma::vec y1 = Y1.col(gg);
-    arma::vec y2 = Y2.col(gg);
 
     double ini_bxj = 0.0;
     double ptmp = 1.0;
@@ -2004,9 +2002,12 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
     Rcpp::NumericVector ini_reg_par = new_reg["PAR"];
     double LL_null     = as<double>(new_reg["LL"]);
 
-    for(ss = ssChr; ss < Z.n_cols ; ss++){
+    for(ss = ssBegin; ss < Z.n_cols ; ss++){
 
-      if(gChr.at(gg) != sChr.at(ss)) break; //geneInfo and SNPinfo have to be in order
+      if(gChr.at(gg) != sChr.at(ss)){
+        break; //chr : geneInfo and SNPinfo have to be in order 
+        ssBegin = ssChr;
+      }
       ssChr ++;
 
       if(SNP_pos.at(ss) > gene_start.at(gg) - cis_widow &&
@@ -2031,7 +2032,7 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
         //printR_obj(reg_pars);
 
         if(as<double>(res_trec["pvalue"]) < ptmp &&
-           as<int>(res_trec["converge"]) == 1){
+           as<int>(res_trec["converge"]) == 1 ){
           ptmp = as<double>(res_trec["pvalue"]);
           ssMin = ss;
         }
@@ -2063,6 +2064,9 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
 
       arma::vec zz2 = Z.col(ssMin);
       arma::vec zz = Z.col(ssMin);
+      arma::vec y1 = Y1.col(gg);
+      arma::vec y2 = Y2.col(gg);
+      
       for(ii=0;ii<nSam;ii++){
 
         double nTi = y1.at(ii) + y2.at(ii);
@@ -2152,5 +2156,9 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
     fclose(f2);
   }
 }
+
+/* ---------------------------
+ * C++ Wrapper for Trec
+ ---------------------------*/
 
 
