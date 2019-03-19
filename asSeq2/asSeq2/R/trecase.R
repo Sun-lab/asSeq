@@ -1,14 +1,31 @@
 trecase <-
-  function(Y, Y1, Y2, Z, XX, SNPloc, geneloc, fam_nb = T,
+  function(Y, Y1 = NULL, Y2 = NULL, Z, XX, SNPloc, geneloc, fam_nb = T,
            file_trec = "trec.txt", file_trecase = "trecase.txt",
-           cis_widow = 1e5L, useASE = 1L, min_ASE_total = 8L, min_nASE = 10L,
+           cis_window = 1e5L, useASE = 1L, min_ASE_total = 8L, min_nASE = 10L,
            eps = 5e-5, max_iter = 400L, show = FALSE)
   {
+    ## Y: matrix of total read count. Each row is a sample, and each column is a
+    ##    gene
+    ## Y1, Y2: matrix of allele-specific read count. Each row is a sample, and 
+    ##    each column is a gene 
+    ## Z: matrix of genotype data. Each row is a sample, and each column is a SNP
+    ## XX: covariates needs to be adjusted in Negtive Bionomial Regression
+    ## SNPloc/geneloc: data.frame of SNP location information, the column names 
+    ##    have to be c("snp", "chr", "pos") / c("gene", "chr", "start","end")
+    ## file_trec/file_trecase: output file name of trec/trecase 
+    ## cis_window:
+    ## useASE:
+    ## min_ASE_total:
+    ## min_nASE:
+    ## eps:
+    ## max_iter:
+    ## show:
     
     minVar = 1e-8
-    ##
-    # check the NAs in X, Y, and Z
-    #
+    
+    ## ----------------------------
+    ## check the NAs in X, Y, and Z
+    ## ----------------------------
     
     if(any(is.na(Y))){
       stop("NA values in Y\n")
@@ -22,22 +39,27 @@ trecase <-
       stop("NA values in Z\n")
     }
     
+    ## ----------------------------
+    ## change the format X, Y, and Z
+    ## ----------------------------
+    
     Y = data.matrix(Y)
     Z = data.matrix(Z)
     XX = data.matrix(XX)
     
-    
     nGene = ncol(Y)
     nSam  = nrow(Y)
+
+    ## ----------------------------
+    ## make sure the dims consistant
+    ## ----------------------------
     
-    
-    
-    # check dimension of Z
     if(nrow(Z) != nSam)
       stop("Z and Y have different sample size")
     
-    # check X, Y, Z
-    
+    ## ----------------------------
+    ## check the variance 
+    ## ----------------------------
     varY = apply(Y, 2, var)
     wVar = which(varY < minVar)
     
@@ -49,11 +71,16 @@ trecase <-
       stop(stpStr, "\n")
     }
     
+    # add intercept if there isn't
+    if(any(abs(XX[,1]-1) > 1e-8)){
+      XX = model.matrix( ~ XX)  
+    }
     
+    # check the variance of XX    
     varX  = apply(XX, 2, var)
     wVarX = which(varX < minVar)
     if(any(wVarX > 1)){
-      stop("X has tiny variance")
+      stop("XX has tiny variance")
     }
     
     varZ = apply(Z, 2, var)
@@ -71,17 +98,50 @@ trecase <-
       stop("Z must take values 0, 1, 2, or 3\n")
     }
     
-    ##
-    # check the length of chromosome location information
-    #
+    ## ----------------------------
+    ## check the SNP and gene location 
+    ## ----------------------------
     
     if(nrow(geneloc) != nGene)
       stop("number of Gene in GeneInfo doesn't match that in Y")
     if(nrow(SNPloc) != ncol(Z))
-      stop("number of Gene in GeneInfo doesn't match that in Y")
+      stop("number of SNP in GeneInfo doesn't match that in Z")
     
+    if(!all(colnames(SNPloc) == c("snp", "chr", "pos"))){
+      stop("colnames of SNPloc has to be c('snp', chr, 'pos')")
+    }
     
+    if(!all(colnames(geneloc) == c("gene", "chr", "start", 'end'))){
+      stop("colnames of SNPloc has to be c('gene', chr, 'start','end')")
+    }
+    
+    # sort geneloc and snploc by chr and pos 
+    geneloc$chr = gsub("chr", "", geneloc$chr)
+    geneloc$chr[which(geneloc$chr == "X")] = 23
+    geneloc$chr[which(geneloc$chr == "Y")] = 24
+
+    geneloc$chr   = as.integer(geneloc$chr)
+    geneloc$start = as.integer(geneloc$star)
+    geneloc$end   = as.integer(geneloc$end)
+
+    SNPloc$chr = gsub("chr", "", SNPloc$chr)
+    SNPloc$chr[which(SNPloc$chr == "X")] = 23
+    SNPloc$chr[which(SNPloc$chr == "Y")] = 24
+    SNPloc$chr = as.integer(SNPloc$chr)
+    SNPloc$pos = as.integer(SNPloc$pos)
+
+    # geneloc = geneloc[order(geneloc$chr, geneloc$start), ]
+    # SNPloc  = SNPloc[order(SNPloc$chr, SNPloc$pos), ]
+
     if(useASE){
+      
+      ## ----------------------------
+      ## make sure the dims consistant
+      ## ----------------------------
+      
+      if(is.null(Y1) | is.null(Y2)){
+        stop("Y1 or Y2 cannot be found\n")
+      }
       if(min_nASE < min_ASE_total){
         stop("min_nASE should not be smaller than min_ASE_total\n")
       }
@@ -94,6 +154,7 @@ trecase <-
       }
       Y1 = data.matrix(Y1)
       Y2 = data.matrix(Y2)
+      
       # check dimensions of Y, Y1, Y2
       if(ncol(Y2) != nGene | nrow(Y2) != nSam |
          ncol(Y1) != nGene | nrow(Y1) != nSam)
@@ -102,15 +163,10 @@ trecase <-
       Y2 = Y1 = Y
     }
     
-    # Zh = Z
-    # Z[Zh==2] = 1
-    # Z[Zh==3] = 2
-    
-    Rcpp_trecase_mtest(Y, Y1, Y2, Z, XX, as.numeric(SNPloc[,3]),
-                       as.numeric(SNPloc[,2]), fam_nb, as.numeric(geneloc[,3]),
-                       as.numeric(geneloc[,4]), as.numeric(geneloc[,2]),
+    Rcpp_trecase_mtest(Y, Y1, Y2, Z, XX, SNPloc$pos, SNPloc$chr, fam_nb, 
+                       geneloc$start, geneloc$end, geneloc$chr,
                        file_trec, file_trecase,
-                       cis_widow, useASE, min_ASE_total, min_nASE,
+                       cis_window, useASE, min_ASE_total, min_nASE,
                        eps, max_iter, show)
     
   }

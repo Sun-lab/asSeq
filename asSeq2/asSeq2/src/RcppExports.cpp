@@ -141,6 +141,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// Rcpp_grad_hess_bxj_trec
+arma::vec Rcpp_grad_hess_bxj_trec(const double& bxj, const arma::vec& y, const arma::vec& z, const arma::vec& mu, const double& phi, const bool& fam_nb);
+RcppExport SEXP _asSeq2_Rcpp_grad_hess_bxj_trec(SEXP bxjSEXP, SEXP ySEXP, SEXP zSEXP, SEXP muSEXP, SEXP phiSEXP, SEXP fam_nbSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const double& >::type bxj(bxjSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type z(zSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< const double& >::type phi(phiSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type fam_nb(fam_nbSEXP);
+    rcpp_result_gen = Rcpp::wrap(Rcpp_grad_hess_bxj_trec(bxj, y, z, mu, phi, fam_nb));
+    return rcpp_result_gen;
+END_RCPP
+}
 // Rcpp_trec_grad_bxj
 double Rcpp_trec_grad_bxj(const double& bxj, const arma::vec& y, const arma::vec& z, const arma::vec& mu, const double& phi, const bool& fam_nb);
 RcppExport SEXP _asSeq2_Rcpp_trec_grad_bxj(SEXP bxjSEXP, SEXP ySEXP, SEXP zSEXP, SEXP muSEXP, SEXP phiSEXP, SEXP fam_nbSEXP) {
@@ -175,6 +191,27 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const double& >::type eps(epsSEXP);
     Rcpp::traits::input_parameter< const bool& >::type show(showSEXP);
     rcpp_result_gen = Rcpp::wrap(Rcpp_trec_bxj_BFGS(bxj0, y, X, z, BETA, phi, fam_nb, lgy1, max_iter, eps, show));
+    return rcpp_result_gen;
+END_RCPP
+}
+// Rcpp_trec_bxj
+Rcpp::List Rcpp_trec_bxj(const arma::vec& y, const arma::mat& X, const double& bxj, const arma::vec& z, const arma::vec& BETA, double& phi, const bool& fam_nb, const arma::vec& lgy1, const arma::uword& max_iter, const double& eps, const bool& show);
+RcppExport SEXP _asSeq2_Rcpp_trec_bxj(SEXP ySEXP, SEXP XSEXP, SEXP bxjSEXP, SEXP zSEXP, SEXP BETASEXP, SEXP phiSEXP, SEXP fam_nbSEXP, SEXP lgy1SEXP, SEXP max_iterSEXP, SEXP epsSEXP, SEXP showSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const double& >::type bxj(bxjSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type z(zSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type BETA(BETASEXP);
+    Rcpp::traits::input_parameter< double& >::type phi(phiSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type fam_nb(fam_nbSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type lgy1(lgy1SEXP);
+    Rcpp::traits::input_parameter< const arma::uword& >::type max_iter(max_iterSEXP);
+    Rcpp::traits::input_parameter< const double& >::type eps(epsSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type show(showSEXP);
+    rcpp_result_gen = Rcpp::wrap(Rcpp_trec_bxj(y, X, bxj, z, BETA, phi, fam_nb, lgy1, max_iter, eps, show));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -606,8 +643,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // Rcpp_trecase_mtest
-void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1, const arma::mat& Y2, const arma::mat& Z, const arma::mat& XX, const arma::vec& SNP_pos, const arma::uvec& sChr, const bool& fam_nb, const arma::vec& gene_start, const arma::vec& gene_end, const arma::uvec& gChr, const char* file_trec, const char* file_trecase, const double& cis_widow, const bool& useASE, const arma::uword& min_ASE_total, const arma::uword& min_nASE, const double& eps, const arma::uword& max_iter, const bool& show);
-RcppExport SEXP _asSeq2_Rcpp_trecase_mtest(SEXP YSEXP, SEXP Y1SEXP, SEXP Y2SEXP, SEXP ZSEXP, SEXP XXSEXP, SEXP SNP_posSEXP, SEXP sChrSEXP, SEXP fam_nbSEXP, SEXP gene_startSEXP, SEXP gene_endSEXP, SEXP gChrSEXP, SEXP file_trecSEXP, SEXP file_trecaseSEXP, SEXP cis_widowSEXP, SEXP useASESEXP, SEXP min_ASE_totalSEXP, SEXP min_nASESEXP, SEXP epsSEXP, SEXP max_iterSEXP, SEXP showSEXP) {
+void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1, const arma::mat& Y2, const arma::mat& Z, const arma::mat& XX, const arma::vec& SNP_pos, const arma::uvec& sChr, const bool& fam_nb, const arma::vec& gene_start, const arma::vec& gene_end, const arma::uvec& gChr, const char* file_trec, const char* file_trecase, const double& cis_window, const bool& useASE, const arma::uword& min_ASE_total, const arma::uword& min_nASE, const double& eps, const arma::uword& max_iter, const bool& show);
+RcppExport SEXP _asSeq2_Rcpp_trecase_mtest(SEXP YSEXP, SEXP Y1SEXP, SEXP Y2SEXP, SEXP ZSEXP, SEXP XXSEXP, SEXP SNP_posSEXP, SEXP sChrSEXP, SEXP fam_nbSEXP, SEXP gene_startSEXP, SEXP gene_endSEXP, SEXP gChrSEXP, SEXP file_trecSEXP, SEXP file_trecaseSEXP, SEXP cis_windowSEXP, SEXP useASESEXP, SEXP min_ASE_totalSEXP, SEXP min_nASESEXP, SEXP epsSEXP, SEXP max_iterSEXP, SEXP showSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::mat& >::type Y(YSEXP);
@@ -623,14 +660,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::uvec& >::type gChr(gChrSEXP);
     Rcpp::traits::input_parameter< const char* >::type file_trec(file_trecSEXP);
     Rcpp::traits::input_parameter< const char* >::type file_trecase(file_trecaseSEXP);
-    Rcpp::traits::input_parameter< const double& >::type cis_widow(cis_widowSEXP);
+    Rcpp::traits::input_parameter< const double& >::type cis_window(cis_windowSEXP);
     Rcpp::traits::input_parameter< const bool& >::type useASE(useASESEXP);
     Rcpp::traits::input_parameter< const arma::uword& >::type min_ASE_total(min_ASE_totalSEXP);
     Rcpp::traits::input_parameter< const arma::uword& >::type min_nASE(min_nASESEXP);
     Rcpp::traits::input_parameter< const double& >::type eps(epsSEXP);
     Rcpp::traits::input_parameter< const arma::uword& >::type max_iter(max_iterSEXP);
     Rcpp::traits::input_parameter< const bool& >::type show(showSEXP);
-    Rcpp_trecase_mtest(Y, Y1, Y2, Z, XX, SNP_pos, sChr, fam_nb, gene_start, gene_end, gChr, file_trec, file_trecase, cis_widow, useASE, min_ASE_total, min_nASE, eps, max_iter, show);
+    Rcpp_trecase_mtest(Y, Y1, Y2, Z, XX, SNP_pos, sChr, fam_nb, gene_start, gene_end, gChr, file_trec, file_trecase, cis_window, useASE, min_ASE_total, min_nASE, eps, max_iter, show);
     return R_NilValue;
 END_RCPP
 }
@@ -646,8 +683,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_asSeq2_Rcpp_loglik_pois", (DL_FUNC) &_asSeq2_Rcpp_loglik_pois, 3},
     {"_asSeq2_Rcpp_logLTReC", (DL_FUNC) &_asSeq2_Rcpp_logLTReC, 9},
     {"_asSeq2_Rcpp_logLTReC_bxj", (DL_FUNC) &_asSeq2_Rcpp_logLTReC_bxj, 9},
+    {"_asSeq2_Rcpp_grad_hess_bxj_trec", (DL_FUNC) &_asSeq2_Rcpp_grad_hess_bxj_trec, 6},
     {"_asSeq2_Rcpp_trec_grad_bxj", (DL_FUNC) &_asSeq2_Rcpp_trec_grad_bxj, 6},
     {"_asSeq2_Rcpp_trec_bxj_BFGS", (DL_FUNC) &_asSeq2_Rcpp_trec_bxj_BFGS, 11},
+    {"_asSeq2_Rcpp_trec_bxj", (DL_FUNC) &_asSeq2_Rcpp_trec_bxj, 11},
     {"_asSeq2_Rcpp_NB_reg_LL", (DL_FUNC) &_asSeq2_Rcpp_NB_reg_LL, 6},
     {"_asSeq2_Rcpp_NB_reg_grad", (DL_FUNC) &_asSeq2_Rcpp_NB_reg_grad, 4},
     {"_asSeq2_Rcpp_NB_reg_Hess", (DL_FUNC) &_asSeq2_Rcpp_NB_reg_Hess, 4},

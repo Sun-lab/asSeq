@@ -41,12 +41,20 @@ Rcpp_logLTReC_bxj <- function(bxj, y, X, z, BETA, phi, fam_nb, lgy1, mu) {
     .Call(`_asSeq2_Rcpp_logLTReC_bxj`, bxj, y, X, z, BETA, phi, fam_nb, lgy1, mu)
 }
 
+Rcpp_grad_hess_bxj_trec <- function(bxj, y, z, mu, phi, fam_nb) {
+    .Call(`_asSeq2_Rcpp_grad_hess_bxj_trec`, bxj, y, z, mu, phi, fam_nb)
+}
+
 Rcpp_trec_grad_bxj <- function(bxj, y, z, mu, phi, fam_nb) {
     .Call(`_asSeq2_Rcpp_trec_grad_bxj`, bxj, y, z, mu, phi, fam_nb)
 }
 
 Rcpp_trec_bxj_BFGS <- function(bxj0, y, X, z, BETA, phi, fam_nb, lgy1, max_iter = 4e3L, eps = 1e-7, show = TRUE) {
     .Call(`_asSeq2_Rcpp_trec_bxj_BFGS`, bxj0, y, X, z, BETA, phi, fam_nb, lgy1, max_iter, eps, show)
+}
+
+Rcpp_trec_bxj <- function(y, X, bxj, z, BETA, phi, fam_nb, lgy1, max_iter = 4e3L, eps = 1e-7, show = TRUE) {
+    .Call(`_asSeq2_Rcpp_trec_bxj`, y, X, bxj, z, BETA, phi, fam_nb, lgy1, max_iter, eps, show)
 }
 
 Rcpp_NB_reg_LL <- function(y, X, offsets, PARAMS, lgy1, mu) {
@@ -145,7 +153,7 @@ Rcpp_trecase <- function(y, X, z, fam_nb, lgy1, ni, ni0, zeta, lbc, ini_bxj = 0.
     .Call(`_asSeq2_Rcpp_trecase`, y, X, z, fam_nb, lgy1, ni, ni0, zeta, lbc, ini_bxj, LL_null, ini_reg_par, max_iter, eps, show)
 }
 
-Rcpp_trecase_mtest <- function(Y, Y1, Y2, Z, XX, SNP_pos, sChr, fam_nb, gene_start, gene_end, gChr, file_trec = "trec.txt", file_trecase = "trecase.txt", cis_widow = 1e5, useASE = 1L, min_ASE_total = 8L, min_nASE = 10L, eps = 1e-5, max_iter = 4000L, show = FALSE) {
-    invisible(.Call(`_asSeq2_Rcpp_trecase_mtest`, Y, Y1, Y2, Z, XX, SNP_pos, sChr, fam_nb, gene_start, gene_end, gChr, file_trec, file_trecase, cis_widow, useASE, min_ASE_total, min_nASE, eps, max_iter, show))
+Rcpp_trecase_mtest <- function(Y, Y1, Y2, Z, XX, SNP_pos, sChr, fam_nb, gene_start, gene_end, gChr, file_trec = "trec.txt", file_trecase = "trecase.txt", cis_window = 1e5, useASE = 1L, min_ASE_total = 8L, min_nASE = 10L, eps = 1e-5, max_iter = 4000L, show = FALSE) {
+    invisible(.Call(`_asSeq2_Rcpp_trecase_mtest`, Y, Y1, Y2, Z, XX, SNP_pos, sChr, fam_nb, gene_start, gene_end, gChr, file_trec, file_trecase, cis_window, useASE, min_ASE_total, min_nASE, eps, max_iter, show))
 }
 

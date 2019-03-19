@@ -247,11 +247,11 @@ c((Ctrecase$lrt), Rtrecase$lrt)
 #-------------------------------------------------------------
 # Rcpp wrapper
 #-------------------------------------------------------------
-geneloc = data.frame(geneID = paste0('gene', 1:2), chr = 1:2, start = c(1, 1e8),
+geneloc = data.frame(gene = paste0('gene', 1:2), chr = 1:2, start = c(1, 1e8),
                      end = c(1, 1e8)+1000, stringsAsFactors = F)
 geneloc
 
-SNPloc = data.frame(name = paste0("SNP", 1:100), chr = c(rep(1, 40), rep(2, 60)),
+SNPloc = data.frame(snp = paste0("SNP", 1:100), chr = c(rep(1, 40), rep(2, 60)),
                     pos = c(1:30*100, 31:100*100 + 1e8), stringsAsFactors = F)
 head(SNPloc)
 
@@ -329,17 +329,6 @@ Rcpp_trecase_mtest(Y, Y1, Y2, ZZ, XX, as.numeric(SNPloc[,3]), as.numeric(SNPloc[
 time2 = Sys.time()
 time2-time1
 
-
-ZZ3 = ZZ
-ZZ3[ZZ==2] = 1
-ZZ3[ZZ==3] = 2
-time1 = Sys.time()
-trec(Y, XX[,-1], ZZ3, "output_trec", 1, local.distance = 1e+05,
-      eChr=geneloc[,2], ePos=geneloc[,4], mChr=SNPloc[,2], mPos=SNPloc[,3])
-time2 = Sys.time()
-time2-time1
-
-
 library(microbenchmark)
 microbenchmark(
   trec(Y, XX[,-1], ZZ3, "output_trec", 1, local.distance = 1e+05,
@@ -350,14 +339,41 @@ microbenchmark(
                      eps = 5e-05, useASE = 0),
   times = 30L
 )
+#-------------------------------------------------------------
+# Rcpp wrapper
+#-------------------------------------------------------------
+geneloc = data.frame(gene = paste0('gene', 1:2), chr = 1:2, start = c(1, 1e8),
+                     end = c(1, 1e8)+1000, stringsAsFactors = F)
+geneloc
+
+SNPloc = data.frame(snp = paste0("SNP", 1:100), chr = c(rep(1, 40), rep(2, 60)),
+                    pos = c(1:30*100, 31:100*100 + 1e8), stringsAsFactors = F)
+head(SNPloc)
+
+load('./_test/_test_func.Rdata')
+Y = cbind(dat$total, dat$total)
+y1= dat$hapA
+y1[ZZ[,1]==2] = dat$hapB[ZZ[,1]==2]
+y2 = dat$total_phased - y1
+Y1 = cbind(y1,y1)
+Y2 = cbind(y2,y2)
+
+
 
 library(asSeq2)
 time1 = Sys.time()
-trecase(Y, Y1, Y2, ZZ, XX, SNPloc, geneloc, fam_nb = T)
+trecase(Y, Y1, Y2, ZZ, XX, SNPloc, geneloc, fam_nb = T,eps=1e-4, show = T)
+time2 = Sys.time()
+time2-time1
+
+ZZ3 = ZZ
+ZZ3[ZZ==2] = 1
+ZZ3[ZZ==3] = 2
+time1 = Sys.time()
+trec(Y, XX[,-1], ZZ3, "output_trec", 1, local.distance = 1e+05,
+     eChr=geneloc[,2], ePos=geneloc[,4], mChr=SNPloc[,2], mPos=SNPloc[,3])
 time2 = Sys.time()
 time2-time1
 
 TrecFastTest:::trec_fast(Y, XX[,-1], ZZ3, "output_trec", 1, local.distance = 1e+05,
-          eChr=geneloc[,2], ePos=geneloc[,4], mChr=SNPloc[,2], mPos=SNPloc[,3])
-
-
+                         eChr=geneloc[,2], ePos=geneloc[,4], mChr=SNPloc[,2], mPos=SNPloc[,3])
