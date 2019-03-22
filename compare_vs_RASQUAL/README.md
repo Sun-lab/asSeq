@@ -5,7 +5,7 @@ the files in this folder is under active updating and please do not use them for
 
 ## to-do's
 
-1. Simulate data
+1. Simulate data, run analysis using two methods, TReCASE and TReCASE-RL (RASQUAL-like), which set the over-dispersion of NB and BB to be the same and model the ASReC of each fSNP by a beta-binomial distribution. 
 2. Regenerate Figure 4b for type I error evaluation using n=64, and a small number of replicates. 
 3. Using the same data, regenerate Figure 5(c) to evaluate the estimation of over-dispersion. 
 4. Using the same data, regenerate Figure 6(d) to evaluate the estimate of estimation of genetic effect, only consider the situation that true effect is 0. 
