@@ -1,5 +1,5 @@
 ase <-
-  function(Y1, Y2, Z, geneloc, SNPloc, file_ase, cis_window = 1e5L,
+  function(Y1, Y2, Z, geneloc, SNPloc, file_ase="ase.txt", cis_window = 1e5L,
            min_ASE_total = 8L, min_nASE = 10L,
            eps = 5e-5, max_iter = 400L, show = FALSE)
   {

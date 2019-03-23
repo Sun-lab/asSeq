@@ -1,6 +1,6 @@
 setwd('/fh/fast/sun_w/licai/_tumor_eQTL/GitHub/asSeq/asSeq2/_test')
 library(Rcpp)
-Rcpp::sourceCpp('../Rcpp/asSeq_test1.cpp')
+Rcpp::sourceCpp('../asSeq2/src/asSeq2.cpp')
 source("trecR.R")
 source("aseR.R")
 source("trecaseR.R")
@@ -350,7 +350,7 @@ SNPloc = data.frame(snp = paste0("SNP", 1:100), chr = c(rep(1, 40), rep(2, 60)),
                     pos = c(1:30*100, 31:100*100 + 1e8), stringsAsFactors = F)
 head(SNPloc)
 
-load('./_test/_test_func.Rdata')
+load('./_test_func.Rdata')
 Y = cbind(dat$total, dat$total)
 y1= dat$hapA
 y1[ZZ[,1]==2] = dat$hapB[ZZ[,1]==2]
@@ -363,6 +363,11 @@ Y2 = cbind(y2,y2)
 library(asSeq2)
 time1 = Sys.time()
 trecase(Y, Y1, Y2, ZZ, XX, SNPloc, geneloc, fam_nb = T,eps=1e-4, show = T)
+time2 = Sys.time()
+time2-time1
+
+time1 = Sys.time()
+ase(Y1, Y2, ZZ, geneloc,SNPloc, "ase.txt")
 time2 = Sys.time()
 time2-time1
 
