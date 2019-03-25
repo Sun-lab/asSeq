@@ -32,6 +32,8 @@ for multiple SNPs allele specific reads are uniformely split
 
 4. Using the same data, regenerate Figure 6(f) to evaluate the estimate of estimation of genetic effect, for the situation that true effect is 0, draw the distribution of estimated genetic effect. 
 
+5. Use the resutls of 500 replicates, to study what factors is associated with small p-values under the null. For example, a scatter plot of over-dispersion estiamte vs. -log10(p-value). 
+
 <<<<<<< HEAD
 1. Simulate data
 - added a clean simulation that allows to simulate panel by panel for panels (a)-(c) of Figure 4 (using 500 simulation 1 panel can be simulated in 15 minutes)
