@@ -324,10 +324,10 @@ Rcpp::List Rcpp_trec_bxj_BFGS(const double& bxj0, const arma::vec& y,
       if(std::abs(curr_LL - old_LL) < eps &&
          Rcpp_norm(curr_xk - xk) < eps){
         gr_k = Rcpp_trec_grad_bxj(xk.at(0), y, z, mu, phi, fam_nb);
-        if(Rcpp_norm(gr_k) <  std::min(0.01, 100*eps)){
+        if(Rcpp_norm(gr_k) < 0.01){
           converge = 1;
+          break;
         }
-        break;
       }
     }
     curr_xk = xk;
@@ -777,10 +777,10 @@ Rcpp::List Rcpp_reg_BFGS(const arma::vec& y, const arma::mat& X,
       if(std::abs(curr_LL - old_LL) < eps &&
          Rcpp_norm(curr_xk - xk) < eps){
         gr_k = Rcpp_reg_grad(y, X, mu, xk, fam_nb);
-        if(Rcpp_norm(gr_k) < std::min(0.01, 100*eps)){
+        if(Rcpp_norm(gr_k) < 0.01){
           converge = 1;
+          break;
         }
-        break;
       }
     }
     curr_xk = xk;
@@ -925,7 +925,7 @@ Rcpp::List Rcpp_trec(const arma::vec& y, const arma::mat& X,
 
   // initial regression fit
 
-  if(std::abs(LL_null) < eps){
+  if(std::abs(LL_null) < 1e-8 ){
     if(show){
       printR_obj("begin initial regression fit");
     }
@@ -969,14 +969,16 @@ Rcpp::List Rcpp_trec(const arma::vec& y, const arma::mat& X,
     //   break;
     // }
     if(show){
-      Rprintf("bxj updated after %d iter \n", as<int>(new_bxj_fit["iter"]));
+      Rprintf("TReC: bxj updated after %d iter \n",
+              as<int>(new_bxj_fit["iter"]));
       //printR_obj(new_LL);
       //printR_obj(curr_LL);
     }
 
-    if(new_LL < curr_LL) {
+    if(new_LL < curr_LL - eps){ 
+      // log-like decrease and magnitude of it larger than eps
       //printR_obj("likelihood decreased for bxj");
-      converge = 2;
+      converge = 0;
       break;
     }
 
@@ -992,26 +994,31 @@ Rcpp::List Rcpp_trec(const arma::vec& y, const arma::mat& X,
     phi  = std::exp(new_reg_par.at(pp-1));
 
     if(show){
-      Rprintf("BETA, PHI updated after %d iter \n", as<int>(new_reg["iter"]));
+      Rprintf("TReC: BETA, PHI updated after %d iter \n", 
+              as<int>(new_reg["iter"]));
     }
 
-    if(new_LL < curr_LL){
+    if(new_LL < curr_LL - eps){
       //printR_obj("likelihood decreased for betas");
-      converge = 2;
+      converge = 0;
       break;
     }
     //printR_obj(curr_LL);
 
     if(iter > 0){
-      if( std::abs(curr_LL - new_LL) < eps &&
-          Rcpp_norm(curr_reg_par - new_reg_par) < eps &&
-          std::abs(curr_bxj - new_bxj) < eps){
-        // if(as<double>(new_reg["norm_GRAD"]) < std::min(0.01, 100*eps)){
-        //   converge = 1;
-        // }
-         //converge = as<int>(new_reg["converge"]);
-         converge = 1;
+      if(abs(curr_LL - new_LL) < eps && 
+        Rcpp_norm(curr_reg_par - new_reg_par) < eps &&
+        std::abs(curr_bxj - new_bxj) < eps){
+        // convergence criteria 
+        if((curr_LL - new_LL > 0.0 && as<double>(new_reg["norm_GRAD"]) > 0.01)){
+          // magnitude of log-like decrease is samll but gradient is large
+          // still consider not converged
+          converge = 0;
+        }else{
+          converge = 1;
+        }
          break;
+         //
       }
 
 
@@ -1369,10 +1376,10 @@ Rcpp::List Rcpp_ase_BFGS(const arma::vec& ni, const arma::vec& ni0,
       if(std::abs(curr_LL - old_LL) < eps &&
          Rcpp_norm(curr_xk - xk) < eps){
         gr_k = Rcpp_ase_grad(ni, ni0, xk.at(0), xk.at(1), zeta);
-        if(Rcpp_norm(gr_k) < std::min(0.01, 100*eps)){
+        if(Rcpp_norm(gr_k) < 0.01){
           converge = 1;
+          break;
         }
-        break;
       }
     }
     curr_xk = xk;
@@ -1474,14 +1481,11 @@ Rcpp::List Rcpp_ase_theta_BFGS(const arma::vec& ni, const arma::vec& ni0,
     if(iter > 0){
       if(std::abs(curr_LL - old_LL) < eps &&
          Rcpp_norm(exp(curr_xk) - exp(xk)) < eps){
-
         gr_k = Rcpp_ase_grad_H0(ni, ni0, Pi1, xk.at(0), zeta);
-
-        if(Rcpp_norm(gr_k) <  std::min(0.01, 100*eps)){
+        if(Rcpp_norm(gr_k) < 0.01){
           converge = 1;
-          
+          break;
         }
-        break;
       }
     }
     curr_xk = xk;
@@ -1763,10 +1767,10 @@ Rcpp::List Rcpp_trecase_BFGS(const double& bxj0, const arma::vec& y,
         gr_k = Rcpp_trecase_grad_bxj(xk.at(0), y, X, z, BETA, phi, fam_nb,
                                      lgy1, mu, ni, ni0,
                                      log_theta, lbc, zeta);
-        if(Rcpp_norm(gr_k) <  std::min(0.01, 100*eps)){
+        if(Rcpp_norm(gr_k) < 0.01){
           converge = 1;
+          break;
         }
-        break;
       }
     }
     curr_xk = xk;
@@ -1891,13 +1895,15 @@ Rcpp::List Rcpp_trecase(const arma::vec& y, const arma::mat& X,
           Rcpp_norm(curr_reg_par - new_reg_par) < eps &&
           std::abs(curr_bxj - new_bxj) < eps &&
           std::abs(curr_lg_theta - new_lg_theta) < eps){
-        
-        // if(as<double>(new_reg["norm_GRAD"]) +
-        //    as<double>(new_theta_fit["norm_GRAD"]) <  min(0.01, 100*eps) ){
-        //   converge = 1;
-        // }
-        converge = 1;
+        if((curr_LL - new_LL > 0.0 && as<double>(new_reg["norm_GRAD"]) > 0.01)){
+          // magnitude of log-like decrease is samll but gradient is large
+          // still consider not converged
+          converge = 0;
+        }else{
+          converge = 1;
+        }
         break;
+
       }
     }
 
@@ -2014,9 +2020,10 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
                                        max_iter, eps, false);
     Rcpp::NumericVector ini_reg_par = new_reg["PAR"];
     double LL_null     = as<double>(new_reg["LL"]);
+    //Rprintf("LL_null %.4f \n", LL_null);
     
-    if(as<int>(new_reg["converge"]) == 2){
-        Rprintf("likelihood for baseline TReC for gene %d model decreased \n", 
+    if(as<int>(new_reg["converge"]) != 1){
+        Rprintf(" baseline TReC for gene %d model does not converge \n", 
                 gg+1);
         continue;
     }
@@ -2048,11 +2055,11 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
                              ini_reg_par, max_iter, eps, show);
         NumericVector reg_pars = res_trec["reg_par"];
         //ini_bxj = as<double>(res_trec["bxj"]); //initial value of next snp
-        if(as<int>(new_reg["converge"]) == 2){
-          Rprintf("baseline TReC model for snp %d does not converge \n", 
+        if(as<int>(new_reg["converge"]) != 1){
+          Rprintf("TReC model for snp %d does not converge \n", 
                   ss+1);
         }
-        //printR_obj(y.n_elem);
+        //printR_obj(as<double>(res_trec["LL"]));
         //printR_obj(reg_pars);
 
         if(as<double>(res_trec["pvalue"]) < ptmp &&
