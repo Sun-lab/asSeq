@@ -16,18 +16,21 @@ the files in this folder is under active updating and please do not use them for
 - added a simulation the same simulation setup, but with a subset of profiles matching figure 5
 Simulation setup:
 mean total read count 100
+
 gene level proportion of allele-specific counts 10%
+
 between sample NB and BB over-dispersion are provided (within sample is assumed to be binomial at simulation step)
+
 for multiple SNPs allele specific reads are uniformely split
- 
+
+
 2. Regenerate Figure 4b for type I error evaluation using n=64, and a small number of replicates. 
 - regenerated panels (a), (b) and (c) for figure 4 for 500 simulations and 
 
 3. Using the same data, regenerate Figure 5(c) to evaluate the estimation of over-dispersion. 
-- regenerated panel 5 (c) using RASQUAL style TReCASE model simulated above (generating such RASQUAL itself as shown in figure 5 (c) is quite longer)
+- regenerated panel 5 (c) using RASQUAL style TReCASE model simulated above (generating such RASQUAL itself as shown in figure 5 (c) is quite longer) Also plot the distribution of estimated over-dispersion. 
 
-4. Using the same data, regenerate Figure 6(d) to evaluate the estimate of estimation of genetic effect, only consider the situation that true effect is 0. 
-?
+4. Using the same data, regenerate Figure 6(f) to evaluate the estimate of estimation of genetic effect, for the situation that true effect is 0, draw the distribution of estimated genetic effect. 
 
 <<<<<<< HEAD
 1. Simulate data
