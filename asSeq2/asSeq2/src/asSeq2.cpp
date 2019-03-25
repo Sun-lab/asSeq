@@ -324,10 +324,10 @@ Rcpp::List Rcpp_trec_bxj_BFGS(const double& bxj0, const arma::vec& y,
       if(std::abs(curr_LL - old_LL) < eps &&
          Rcpp_norm(curr_xk - xk) < eps){
         gr_k = Rcpp_trec_grad_bxj(xk.at(0), y, z, mu, phi, fam_nb);
-        if(Rcpp_norm(gr_k) < 1e-3){
+        if(Rcpp_norm(gr_k) <  std::min(0.01, 100*eps)){
           converge = 1;
-          break;
         }
+        break;
       }
     }
     curr_xk = xk;
@@ -777,10 +777,10 @@ Rcpp::List Rcpp_reg_BFGS(const arma::vec& y, const arma::mat& X,
       if(std::abs(curr_LL - old_LL) < eps &&
          Rcpp_norm(curr_xk - xk) < eps){
         gr_k = Rcpp_reg_grad(y, X, mu, xk, fam_nb);
-        if(Rcpp_norm(gr_k) < 1e-3){
+        if(Rcpp_norm(gr_k) < std::min(0.01, 100*eps)){
           converge = 1;
-          break;
         }
+        break;
       }
     }
     curr_xk = xk;
@@ -935,9 +935,9 @@ Rcpp::List Rcpp_trec(const arma::vec& y, const arma::mat& X,
     LL0     = as<double>(new_reg["LL"]);
     curr_LL = LL0;
     
-    if(as<int>(new_reg["converge"]) != 1 ){
-      printR_obj("initial regression fit dose not converge");
-    }
+    // if(as<int>(new_reg["converge"]) != 1 ){
+    //   printR_obj("initial regression fit dose not converge");
+    // }
 
   }else{
     LL0 = LL_null;
@@ -1006,7 +1006,10 @@ Rcpp::List Rcpp_trec(const arma::vec& y, const arma::mat& X,
       if( std::abs(curr_LL - new_LL) < eps &&
           Rcpp_norm(curr_reg_par - new_reg_par) < eps &&
           std::abs(curr_bxj - new_bxj) < eps){
-         // converge = as<int>(new_reg["converge"]);
+        // if(as<double>(new_reg["norm_GRAD"]) < std::min(0.01, 100*eps)){
+        //   converge = 1;
+        // }
+         //converge = as<int>(new_reg["converge"]);
          converge = 1;
          break;
       }
@@ -1366,10 +1369,10 @@ Rcpp::List Rcpp_ase_BFGS(const arma::vec& ni, const arma::vec& ni0,
       if(std::abs(curr_LL - old_LL) < eps &&
          Rcpp_norm(curr_xk - xk) < eps){
         gr_k = Rcpp_ase_grad(ni, ni0, xk.at(0), xk.at(1), zeta);
-        if(Rcpp_norm(gr_k) < 1e-3){
+        if(Rcpp_norm(gr_k) < std::min(0.01, 100*eps)){
           converge = 1;
-          break;
         }
+        break;
       }
     }
     curr_xk = xk;
@@ -1474,10 +1477,11 @@ Rcpp::List Rcpp_ase_theta_BFGS(const arma::vec& ni, const arma::vec& ni0,
 
         gr_k = Rcpp_ase_grad_H0(ni, ni0, Pi1, xk.at(0), zeta);
 
-        if(Rcpp_norm(gr_k) < 1e-3){
+        if(Rcpp_norm(gr_k) <  std::min(0.01, 100*eps)){
           converge = 1;
-          break;
+          
         }
+        break;
       }
     }
     curr_xk = xk;
@@ -1759,10 +1763,10 @@ Rcpp::List Rcpp_trecase_BFGS(const double& bxj0, const arma::vec& y,
         gr_k = Rcpp_trecase_grad_bxj(xk.at(0), y, X, z, BETA, phi, fam_nb,
                                      lgy1, mu, ni, ni0,
                                      log_theta, lbc, zeta);
-        if(Rcpp_norm(gr_k) < 1e-3){
+        if(Rcpp_norm(gr_k) <  std::min(0.01, 100*eps)){
           converge = 1;
-          break;
         }
+        break;
       }
     }
     curr_xk = xk;
@@ -1889,7 +1893,7 @@ Rcpp::List Rcpp_trecase(const arma::vec& y, const arma::mat& X,
           std::abs(curr_lg_theta - new_lg_theta) < eps){
         
         // if(as<double>(new_reg["norm_GRAD"]) +
-        //    as<double>(new_theta_fit["norm_GRAD"]) <eps ){
+        //    as<double>(new_theta_fit["norm_GRAD"]) <  min(0.01, 100*eps) ){
         //   converge = 1;
         // }
         converge = 1;
@@ -2011,15 +2015,12 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
     Rcpp::NumericVector ini_reg_par = new_reg["PAR"];
     double LL_null     = as<double>(new_reg["LL"]);
     
-    if(as<int>(new_reg["converge"]) != 1){
-      if(as<int>(new_reg["converge"]) == 2){
-        Rprintf("likelihood for baseline TReC model decreased \n");
-      }
-      Rprintf("baseline TReC model for gene %d does not converge \n", 
-              gg+1);
-      continue;
+    if(as<int>(new_reg["converge"]) == 2){
+        Rprintf("likelihood for baseline TReC for gene %d model decreased \n", 
+                gg+1);
+        continue;
     }
-    
+
     for(ss = ssBegin; ss < Z.n_cols ; ss++){
 
       if(gChr.at(gg) != sChr.at(ss)){
@@ -2181,5 +2182,103 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
   }
 }
 
+// ase_test: TBC
+// [[Rcpp::export]]
+void Rcpp_ase_mtest(const arma::mat& Y1, const arma::mat& Y2,
+               const arma::mat& Z, const arma::vec& SNP_pos,
+               const arma::uvec& sChr,
+               const arma::vec& gene_start, const arma::vec& gene_end,
+               const arma::uvec& gChr,
+               const char* file_ase = "ase.txt", const double& cis_window=1e5,
+               const arma::uword& min_ASE_total=8,
+               const arma::uword& min_nASE=10, const double& eps=1e-5,
+               const arma::uword& max_iter=4000L,const bool& show=false){
+  arma::uword gg, ss, ii;
+  arma::uword ssBegin = 0;
+  Rcpp::List res_ase; 
+  FILE * f2;
+  double nSam  = Y1.n_rows;
+  double nGene = Y1.n_cols;
+  
+  f2 = fopen(file_ase, "w");
+  fprintf(f2,"GeneRowID\tMarkerRowID\tASE_b\tASE_theta\tASE_Chisq\tASE_Pvalue\tASE_Conv\n");
+
+  for(gg=0; gg<nGene; gg++){
+    Rprintf("gene %d \n", gg+1);
+
+    arma::vec y1 = Y1.col(gg);
+    arma::vec y2 = Y2.col(gg);
+
+    for(ss = ssBegin; ss < Z.n_cols ; ss++){
+
+      if(gChr.at(gg) != sChr.at(ss)){
+        ssBegin = ss;
+        break;
+      }
+      //chr : geneInfo and SNPinfo have to be in order
+      // ssChr ++;
+
+      if(SNP_pos.at(ss) > gene_start.at(gg) - cis_window &&
+         SNP_pos.at(ss) < gene_end.at(gg)   + cis_window){
+
+        arma::vec zz2 = Z.col(ss);
+
+        //Trecase
+        arma::vec ni = arma::zeros<arma::vec>(nSam);
+        arma::vec ni0 = arma::zeros<arma::vec>(nSam);
+        arma::vec lbc = arma::zeros<arma::vec>(nSam);
+        arma::vec zeta = arma::zeros<arma::vec>(nSam);
+        arma::uword h1 = 0, h0 = 0;
+
+        for(ii=0;ii<nSam;ii++){
+
+          double nTi = y1.at(ii) + y2.at(ii);
+
+          if(nTi < min_ASE_total){
+            continue;
+          }
+
+          ni.at(h0) = nTi;
+          if(zz2.at(ii)==0){
+            ni0.at(h0) = y2.at(ii);
+            zeta.at(h0) = 0;
+          }else if(zz2.at(ii)==1){
+            ni0.at(h0) = y2.at(ii);
+            zeta.at(h0) = 1;
+            h1++;
+          }else if(zz2.at(ii)==2){
+            ni0.at(h0) = y1.at(ii);
+            zeta.at(h0) = 1;
+            h1++;
+          }else{
+            ni0.at(h0) = y2.at(ii);
+            zeta.at(h0) = 0;
+          }
+
+          lbc.at(h0) = R::lchoose(ni.at(h0), ni0.at(h0));
+          h0++;
+        }
+        
+        if(h1 < min_nASE){
+          Rprintf("sample size of heterzygous genotype is not enoug \n", 
+                  ss+1);
+        }else{
+          //begin ase fit
+          res_ase = Rcpp_ase(ni, ni0, zeta, lbc, max_iter, eps, show);
+          NumericVector ase_pars = res_ase["par"];
+          fprintf(f2, "%d\t%d\t%.2e\t%.2e\t%.4e\t%.4e\t%d\n",
+                  gg+1,ss+1, ase_pars[0], ase_pars[1],
+                                                  as<double>(res_ase["lrt"]),
+                                                  as<double>(res_ase["pvalue"]), 
+                                                  as<int>(res_ase["converge"]));
+      
+        }
+
+      }
+    }
+  }
+  fclose(f2);
+  
+}
 
 
