@@ -40,7 +40,7 @@ if(nsnp==4){
   dat2 = simu2(niter, Xmatr=Xm$Xmatr, haplotype=Xm$thp, totmean=100, dblcnt = 0,  
      percase = percase, phiNB = th, phiBB = th/dv, b0 = b0, b1 = 0, betas = betas)  
      #dat0 - data split into 4 SNPS in each individual
-     #dat01 - one count per individual     
+     #dat1 - one count per individual     
      dat0 = dat2; 
      dat0$asn = dat0$asnA; dat0$asnp =dat0$asnpA; 
      dat0$haplotype = dat0$haplotypeA
