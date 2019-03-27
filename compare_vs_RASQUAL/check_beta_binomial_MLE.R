@@ -12,7 +12,7 @@ nrep = 500 # number of replicates
 nind = 200 # sample size
 mu0  = 20  # total number of allele-specific reads
 nSNP = 4   # split the allele-specific read counts tin nSNP SNPs.
-prob = 0.5 # success prob. of beta-binomial
+prob = 0.5 # success prob. of beta-binomial, i.e., pi in the model
 bbod = 0.5 # over-dispersion of beta-binomial theta = 1/(alpha + beta)
 rho0 = 1/(1/bbod + 1) # rho = 1/(1 + alpha + beta), hence theta = 1/(1/rho - 1)
 rho0
@@ -22,8 +22,6 @@ betaBB  = (1-prob)*(1-rho0)/rho0
 
 mus = theta0s = theta1s = logL0s = logL1s = matrix(nrow=nrep, ncol=2)
 
-for(i in 1:nrep){
-  if(i %% 100 == 0){ cat(i, " ", date(), "\n")}
   # asrecT is total ASReC per individaul for all individuals
   # total is the total ASReC per SNP and per individual
   asrecT = rnbinom(n=nind, size=1e6, mu=mu0)
@@ -37,6 +35,9 @@ for(i in 1:nrep){
     total2 = asrecT - (nSNP - 1)*total1
     total  = matrix(c(rep(total1, times=nSNP-1), total2), ncol=nSNP)
   }
+
+for(i in 1:nrep){
+  if(i %% 100 == 0){ cat(i, " ", date(), "\n")}
   
   # hap1 is the number of ASReC for haplotype 1
   hap1 = matrix(nrow=nind, ncol=nSNP)
@@ -46,6 +47,7 @@ for(i in 1:nrep){
     hap1[,k] = rbinom(nind, size=total[,k], prob=prb1)
   }
   
+  # use the total number of ASReC per gene
   nTotal = rowSums(total)
   nA     = rowSums(hap1)
   zeta   = rbinom(nind, 1, 0.5)
@@ -55,12 +57,9 @@ for(i in 1:nrep){
   theta1s[i,1] = fit1$parH1[1]
   mus[i,1]     = fit1$parH1[2]
   logL0s[i,1]  = fit1$logLikH0
-  logL1s[i,1]  = fit1$logLikH1
+  logL1s[i,1]  = fit1$logLikH1    
   
-  
-  grad1 = gradLogH1(fit1$parH1, nA, nTotal, zeta)
-    
-    
+  # use the ASReC per SNP
   nTotal = c(total)
   nA     = c(hap1)
   zeta1  = rep(zeta, each=nSNP)
