@@ -5,9 +5,10 @@ the files in this folder is under active updating and please do not use them for
 
 ## to-do's
 # compare with RASQUAL
-compare the methods of TReCASE vs. RASQUAL  
+1. compare the methods of TReCASE vs. RASQUAL. In the supplementary materials in google drive, add explicit definition of beta-binomialand negative binomials in TReCASE, i.e., define which parameter is over-dispersion parameter. Also explicitly define the two distributions used by RASQUAL. Make sure their assumption of over-dispersion parameters of NB and BB are the same is equivalent to our definition. 
 
-the files in this folder is under active updating and please do not use them for any anlaysis yet. 
+2. Finish the code check_beta_binomial_MLE.R in GitHub. Calculate Fisher's information matrix and summarize SE and SEE of \pi estimate. here \pi is the proportion of scucess. You can refer to page 3 of Paul et al. paper in google drive for Fisher information matirx. SE is standard error from empirical distribution of \pi estimates. SEE is an estimate based on Fisher information matrix. 
+
 
 ## to-do's
 
