@@ -2,8 +2,6 @@
 #about 8.5 seconds per iteration for all profiles
 #expect 71 minutes per 500 iterations
 #if you run only b0=0 - under 15 minutes
-workdir = "/pine/scr/z/h/zhabotyn/R01/2019_03_20"
-setwd(workdir)
 
 niter = 5e2
 queue = "general"
@@ -12,9 +10,8 @@ ss = 2
 #b0s = c(0, .125,.25,.5, 1)
 b0s = 0
 #div = c(.5, 1, 2, 4, 8, Inf)
-div = 1#a subset for figure (b)
+div = 0.5#a subset for figure (c)
 ods = c(0.01, 0.10, 0.5, 2)
-#if(!file.exists("rasq"))dir.create("rasq")
 if(!file.exists("checkrout"))dir.create("checkrout")
 
 days = 7

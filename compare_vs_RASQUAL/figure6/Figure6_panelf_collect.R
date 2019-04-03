@@ -9,16 +9,16 @@ niter = 5e2
 queue = "general"
 mem = 8000
 ss = 2
-#b0s = c(0, .125,.25,.5, 1)
-b0s = 0
+b0s = c(0, .125,.25,.5, 1)
 #div = c(.5, 1, 2, 4, 8, Inf)
-div = 0.5#a subset for figure (c)
+div = 1#a subset for figure (b)
 ods = c(0.01, 0.10, 0.5, 2)
 
 days = 7
 mem = 8
 b1 = 0
-nsnp = c(1, 2, 4)
+#nsnp = c(1, 2, 4)
+nsnp = c(4)
 nsim = length(ods)*length(div)*length(b0s)*length(ss)*length(nsnp)
 pars = matrix(NA, nrow=nsim, ncol=5)
 fule = matrix(NA, nrow=nsim, ncol=3)
@@ -62,4 +62,4 @@ for(nsnpi in nsnp){
 en = proc.time()
 en[3]-st[3]
 
-write.csv(cbind(pars, pows, fule, shoe), "figure4c_summary.csv", row.names=F)
+write.csv(cbind(pars, pows, fule, shoe), "figure6f_summary.csv", row.names=F)

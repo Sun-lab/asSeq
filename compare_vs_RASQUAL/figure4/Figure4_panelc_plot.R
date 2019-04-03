@@ -1,6 +1,6 @@
-workdir = "/pine/scr/z/h/zhabotyn/R01/2019_03_20"
+#workdir = "/pine/scr/z/h/zhabotyn/R01/2019_03_20"
 #workdir = "C:/research/R01/reqtl/2019_03_20/sim_ex/snp4/"
-setwd(workdir)
+#setwd(workdir)
 
 res = read.csv("figure4c_summary.csv")
 pars = res[,1:5]
