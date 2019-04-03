@@ -56,6 +56,7 @@ plotted vs
 
 6. Confirm the defintion of feature SNP. A SNP is a feature SNP if it is heterozygous in at least one sample? then the number of feature SNPs per gene should increase as sample size increases. 
 - there are some cutoffs for fSNPs which kept during the analysis: --min-coverage-depth 0.05
+
 7. Linear model fit to associate y=log10(TReCASE p-value)-log10(RASQUAL p-value) with all factors. Summarize the relation between y and each factor by scatter plot.
 
 ## to-do's with lower priority
