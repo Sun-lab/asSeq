@@ -1,12 +1,11 @@
 Package: asSeq2
 Type: Package
-Title: What the package does (short line)
-Version: 1.0
+Title: allele specific sequencing study
+Version: 0.99.1
 Date: 2019-02-26
-Author: Who wrote it
-Maintainer: Who to complain to <yourfault@somewhere.net>
-Description: More about what it does (maybe more than one
-      line)
-License: What license is it under?
+Author: Wei Sun, Licai Huang and Vasyl Zhabotynsky
+Maintainer: Wei Sun <wsun@fredhutch.org>
+Description: allele specific study of RNA-seq data.
+License: GPL (>= 2)
 Imports: Rcpp (>= 0.12.17)
 LinkingTo: Rcpp, RcppArmadillo
