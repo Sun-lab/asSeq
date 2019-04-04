@@ -2,8 +2,8 @@
 #about 8.5 seconds per iteration for all profiles
 #expect 71 minutes per 500 iterations
 #if you run only b0=0 - under 15 minutes
-workdir = "/pine/scr/z/h/zhabotyn/R01/2019_03_20"
-setwd(workdir)
+#workdir = "/pine/scr/z/h/zhabotyn/R01/2019_03_20"
+#setwd(workdir)
 
 niter = 5e2
 queue = "general"
@@ -53,7 +53,7 @@ for(nsnpi in nsnp){
           shoe[i,1] = -shoe[i,1]
           fule[i,1:2] = exp(fule[i,1:2])          
           shoe[i,1:2] = exp(shoe[i,1:2])
-          message(ss, " ", b0, " ", th, " ", odi, " ", nsnpi)      
+          message(ssi, " ", b0i, " ", dvi, " ", odi, " ", nsnpi)      
           }
         }
       }
