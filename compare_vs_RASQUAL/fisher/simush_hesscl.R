@@ -1,7 +1,4 @@
 args = commandArgs(trailingOnly = TRUE)
-#args = c("0", "0.1", "1", "10","4", 4)
-#args = c("0", "0.5", "1", "100","4", 4)
-#args = c("0", "0.5", "1", "2000","2", 4)
 percase = 0.1
 args
 b0 = as.numeric(args[1])
