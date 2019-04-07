@@ -5,8 +5,8 @@ the files in this folder is under active updating and please do not use them for
 
 ## to-do's
 # compare with RASQUAL
-1. compare the methods of TReCASE vs. RASQUAL. In the supplementary materials in google drive, add explicit definition of beta-binomialand negative binomials in TReCASE, i.e., define which parameter is over-dispersion parameter. Also explicitly define the two distributions used by RASQUAL. Make sure their assumption of over-dispersion parameters of NB and BB are the same is equivalent to our definition. 
-added to the supplementary materials
+1. In the supplementary materials in google drive, added explicit definition of beta-binomialand negative binomials in TReCASE, including definition which parameter is over-dispersion parameter. Also explicitly defined the two distributions used by RASQUAL. Described similarities and discrepancies in over-dispersion assumptions (in the google drive supplement)
+- added to the supplementary materials
 
 
 2. Added fisher directory in GitHub: it contains the code to calculate Fisher's information matrix and summarizes SE and SEE of \pi and \rho estimate. (\pi is the proportion of success and \rho is a version of over-dispersion parameter connected to \phi=\rho/(1-\rho)). 
