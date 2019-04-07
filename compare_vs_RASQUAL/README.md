@@ -11,12 +11,12 @@ the files in this folder is under active updating and please do not use them for
 
 2. Added fisher directory in GitHub: it contains the code to calculate Fisher's information matrix and summarizes SE and SEE of \pi and \rho estimate. (\pi is the proportion of success and \rho is a version of over-dispersion parameter connected to \phi=\rho/(1-\rho)). 
  Paul et al. paper was used for Fisher information matirx. 
-In this simulation we concentrate only on allele-specific counts since inflation of type 1 error was observed in splitting individuals into multiple-SNPs.
-a) SSE_vs_modelSE_an_100.png - observed vs model based standard error for simulation assuming on average 10 allele-specific reads per individual
+- In this simulation we concentrate only on allele-specific counts since inflation of type 1 error was observed in splitting individuals into multiple-SNPs.
+- SSE_vs_modelSE_an_100.png - observed vs model based standard error for simulation assuming on average 10 allele-specific reads per individual
 (I added two more for 20 and 40 reads - files anding with _200 and _400)
-b) It can be seen that for eQTL effect model based variation decreases when reads are split in multiple SNPs
+- It can be seen that for eQTL effect model based variation decreases when reads are split in multiple SNPs
 (for OD parameter estimate the picture is similar as long as counts get high enough - for low counts direction can be opposite)
-c) SSE_vs_modelSE_an_100.png with a brief description is added to the supplement in google drive
+- SSE_vs_modelSE_an_100.png with a brief description is added to the supplement in google drive
 
 2.1 I added another look at hessian by plotting how hessian component for both OD and eQTL effect are behaving depending on number of allele-specific counts in a null hypothesis scenario (\pi=0.5), plotted in two scenarios of \phi=0.1 and 0.5
 a) hess_relation1_0.1.png - plotting contribution to hessian
