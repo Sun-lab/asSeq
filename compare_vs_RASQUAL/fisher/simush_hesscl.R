@@ -112,6 +112,17 @@ en3 = proc.time()
 en3[3]-st3[3]
 res[1:4,]
 
+write.table(res,  sprintf("hess_1SNP_%s.csv",mn), row.names=F, col.names=F, quote=F, sep=",")
+write.table(res2, sprintf("hess_2SNP_%s.csv",mn), row.names=F, col.names=F, quote=F, sep=",")
+write.table(res4, sprintf("hess_4SNP_%s.csv",mn), row.names=F, col.names=F, quote=F, sep=",")
+write.table(res8, sprintf("hess_8SNP_%s.csv",mn), row.names=F, col.names=F, quote=F, sep=",")
+
+#mn = 500;rho=.33;b0=0;logiti = function(x){1/(1+exp(-x))}
+#mn = 100;rho=.33;b0=0;logiti = function(x){1/(1+exp(-x))}
+res =  read.csv(sprintf("hess_1SNP_%s.csv",mn))
+res2 = read.csv(sprintf("hess_2SNP_%s.csv",mn))
+res4 = read.csv(sprintf("hess_4SNP_%s.csv",mn))
+res8 = read.csv(sprintf("hess_8SNP_%s.csv",mn))
 
 png("SSE_vs_modelSE.png", height=8, width=8, res=300, units="in")
 par(mfrow=c(2,2))
@@ -162,6 +173,39 @@ c(var(res4[,1]), median(res4[,3]))
 c(var(res8[,1]), median(res8[,3]))
 
 
+
+
+
+cols = c("black", "blue", "goldenrod", "red")
+png("SSE_vs_modelSE_an2.png", height=4, width=8, res=300, units="in")
+par(mfrow=c(1,2))
+plot(density(res[,1]), bty="n", main="OD", xlab="observed rho")
+abline(v=rho, lty=3)
+lines(density(res2[,1]), col=cols[2])
+lines(density(res4[,1]), lty=1, col=cols[3])
+lines(density(res8[,1]), lty=1, col=cols[4])
+i = 6
+modelSE=c(sqrt(median(res[,i])), sqrt(median(res2[,i])),
+          sqrt(median(res4[,i])),sqrt(median(res8[,i])))
+obserSE=c(sd(res[,1]), sd(res2[,1]),
+          sd(res4[,1]),sd(res8[,1]))
+legend("topleft", legend=c("", "1 SNP", "2 SNP", "4 SNP", "8 SNP"), bty="n", text.col=c(cols[1], cols))
+legend("topright", legend=c("sd:mod, obs", sprintf("%s, %s", round(modelSE,3), round(obserSE,3))), bty="n", text.col=c(cols[1], cols))
+
+plot(density(res[,2]), bty="n", main="eQTL", xlab="observed pi")
+abline(v=logiti(b0), lty=3)
+lines(density(res2[,2]), col=cols[2])
+lines(density(res4[,2]), lty=1, col=cols[3])
+lines(density(res8[,2]), lty=1, col=cols[4])
+
+i = 7
+modelSE=c(sqrt(median(res[,i])), sqrt(median(res2[,i])),
+          sqrt(median(res4[,i])),sqrt(median(res8[,i])))
+obserSE=c(sd(res[,2]), sd(res2[,2]),
+          sd(res4[,2]),sd(res8[,2]))
+legend("topleft", legend=c("", "1 SNP", "2 SNP", "4 SNP", "8 SNP"), bty="n", text.col=c(cols[1], cols))
+legend("topright", legend=c("sd:mod, obs", sprintf("%s, %s", round(modelSE,3), round(obserSE,3))), bty="n", text.col=c(cols[1], cols))
+dev.off()
  
 
 q("no")
