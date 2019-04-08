@@ -1853,14 +1853,14 @@ Rcpp::List Rcpp_trecase(const arma::vec& y, const arma::mat& X,
     new_bxj     = as<double>(new_bxj_fit["PAR"]);
     new_LL      = new_bxj_fit["LL"];
 
-    if(new_LL < curr_LL - eps) {
-      printR_obj("likelihood decreased");
-      printR_obj(new_LL);
-      printR_obj(curr_LL);
-      printR_obj(as<int>(new_bxj_fit["converge"]));
-      converge = 0;
-      break;
-    }
+    // if(new_LL < curr_LL - eps) {
+    //   printR_obj("likelihood decreased");
+    //   printR_obj(new_LL);
+    //   printR_obj(curr_LL);
+    //   printR_obj(as<int>(new_bxj_fit["converge"]));
+    //   converge = 0;
+    //   break;
+    // }
 
     // if(show){
     //   Rprintf("bxj updated after %d iter \n", as<int>(new_bxj_fit["iter"]));
@@ -1894,8 +1894,8 @@ Rcpp::List Rcpp_trecase(const arma::vec& y, const arma::mat& X,
           Rcpp_norm(curr_reg_par - new_reg_par) < eps &&
           std::abs(curr_bxj - new_bxj) < eps &&
           std::abs(curr_lg_theta - new_lg_theta) < eps){
-        if((curr_LL - new_LL > 0.0 && as<double>(new_reg["norm_GRAD"]) > 0.01)
-             && as<int>(ase_fit["converge"]) != 1 ){
+        if(((curr_LL - new_LL > 0.0 && as<double>(new_reg["norm_GRAD"]) > 0.01))
+             | as<int>(ase_fit["converge"]) != 1 ){
           // magnitude of log-like decrease is samll but gradient is large
           // still consider not converged
           converge = 0;

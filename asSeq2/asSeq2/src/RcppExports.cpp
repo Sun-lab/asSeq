@@ -642,6 +642,30 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// Rcpp_ase_mtest
+void Rcpp_ase_mtest(const arma::mat& Y1, const arma::mat& Y2, const arma::mat& Z, const arma::vec& SNP_pos, const arma::uvec& sChr, const arma::vec& gene_start, const arma::vec& gene_end, const arma::uvec& gChr, const char* file_ase, const double& cis_window, const arma::uword& min_ASE_total, const arma::uword& min_nASE, const double& eps, const arma::uword& max_iter, const bool& show);
+RcppExport SEXP _asSeq2_Rcpp_ase_mtest(SEXP Y1SEXP, SEXP Y2SEXP, SEXP ZSEXP, SEXP SNP_posSEXP, SEXP sChrSEXP, SEXP gene_startSEXP, SEXP gene_endSEXP, SEXP gChrSEXP, SEXP file_aseSEXP, SEXP cis_windowSEXP, SEXP min_ASE_totalSEXP, SEXP min_nASESEXP, SEXP epsSEXP, SEXP max_iterSEXP, SEXP showSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type Y1(Y1SEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Y2(Y2SEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Z(ZSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type SNP_pos(SNP_posSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type sChr(sChrSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type gene_start(gene_startSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type gene_end(gene_endSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type gChr(gChrSEXP);
+    Rcpp::traits::input_parameter< const char* >::type file_ase(file_aseSEXP);
+    Rcpp::traits::input_parameter< const double& >::type cis_window(cis_windowSEXP);
+    Rcpp::traits::input_parameter< const arma::uword& >::type min_ASE_total(min_ASE_totalSEXP);
+    Rcpp::traits::input_parameter< const arma::uword& >::type min_nASE(min_nASESEXP);
+    Rcpp::traits::input_parameter< const double& >::type eps(epsSEXP);
+    Rcpp::traits::input_parameter< const arma::uword& >::type max_iter(max_iterSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type show(showSEXP);
+    Rcpp_ase_mtest(Y1, Y2, Z, SNP_pos, sChr, gene_start, gene_end, gChr, file_ase, cis_window, min_ASE_total, min_nASE, eps, max_iter, show);
+    return R_NilValue;
+END_RCPP
+}
 // Rcpp_trecase_mtest
 void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1, const arma::mat& Y2, const arma::mat& Z, const arma::mat& XX, const arma::vec& SNP_pos, const arma::uvec& sChr, const bool& fam_nb, const arma::vec& gene_start, const arma::vec& gene_end, const arma::uvec& gChr, const char* file_trec, const char* file_trecase, const double& cis_window, const bool& useASE, const arma::uword& min_ASE_total, const arma::uword& min_nASE, const double& eps, const arma::uword& max_iter, const bool& show);
 RcppExport SEXP _asSeq2_Rcpp_trecase_mtest(SEXP YSEXP, SEXP Y1SEXP, SEXP Y2SEXP, SEXP ZSEXP, SEXP XXSEXP, SEXP SNP_posSEXP, SEXP sChrSEXP, SEXP fam_nbSEXP, SEXP gene_startSEXP, SEXP gene_endSEXP, SEXP gChrSEXP, SEXP file_trecSEXP, SEXP file_trecaseSEXP, SEXP cis_windowSEXP, SEXP useASESEXP, SEXP min_ASE_totalSEXP, SEXP min_nASESEXP, SEXP epsSEXP, SEXP max_iterSEXP, SEXP showSEXP) {
@@ -668,30 +692,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::uword& >::type max_iter(max_iterSEXP);
     Rcpp::traits::input_parameter< const bool& >::type show(showSEXP);
     Rcpp_trecase_mtest(Y, Y1, Y2, Z, XX, SNP_pos, sChr, fam_nb, gene_start, gene_end, gChr, file_trec, file_trecase, cis_window, useASE, min_ASE_total, min_nASE, eps, max_iter, show);
-    return R_NilValue;
-END_RCPP
-}
-// Rcpp_ase_mtest
-void Rcpp_ase_mtest(const arma::mat& Y1, const arma::mat& Y2, const arma::mat& Z, const arma::vec& SNP_pos, const arma::uvec& sChr, const arma::vec& gene_start, const arma::vec& gene_end, const arma::uvec& gChr, const char* file_ase, const double& cis_window, const arma::uword& min_ASE_total, const arma::uword& min_nASE, const double& eps, const arma::uword& max_iter, const bool& show);
-RcppExport SEXP _asSeq2_Rcpp_ase_mtest(SEXP Y1SEXP, SEXP Y2SEXP, SEXP ZSEXP, SEXP SNP_posSEXP, SEXP sChrSEXP, SEXP gene_startSEXP, SEXP gene_endSEXP, SEXP gChrSEXP, SEXP file_aseSEXP, SEXP cis_windowSEXP, SEXP min_ASE_totalSEXP, SEXP min_nASESEXP, SEXP epsSEXP, SEXP max_iterSEXP, SEXP showSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type Y1(Y1SEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type Y2(Y2SEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type Z(ZSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type SNP_pos(SNP_posSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type sChr(sChrSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type gene_start(gene_startSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type gene_end(gene_endSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type gChr(gChrSEXP);
-    Rcpp::traits::input_parameter< const char* >::type file_ase(file_aseSEXP);
-    Rcpp::traits::input_parameter< const double& >::type cis_window(cis_windowSEXP);
-    Rcpp::traits::input_parameter< const arma::uword& >::type min_ASE_total(min_ASE_totalSEXP);
-    Rcpp::traits::input_parameter< const arma::uword& >::type min_nASE(min_nASESEXP);
-    Rcpp::traits::input_parameter< const double& >::type eps(epsSEXP);
-    Rcpp::traits::input_parameter< const arma::uword& >::type max_iter(max_iterSEXP);
-    Rcpp::traits::input_parameter< const bool& >::type show(showSEXP);
-    Rcpp_ase_mtest(Y1, Y2, Z, SNP_pos, sChr, gene_start, gene_end, gChr, file_ase, cis_window, min_ASE_total, min_nASE, eps, max_iter, show);
     return R_NilValue;
 END_RCPP
 }
@@ -735,8 +735,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_asSeq2_Rcpp_trecase_grad_bxj", (DL_FUNC) &_asSeq2_Rcpp_trecase_grad_bxj, 14},
     {"_asSeq2_Rcpp_trecase_BFGS", (DL_FUNC) &_asSeq2_Rcpp_trecase_BFGS, 16},
     {"_asSeq2_Rcpp_trecase", (DL_FUNC) &_asSeq2_Rcpp_trecase, 15},
-    {"_asSeq2_Rcpp_trecase_mtest", (DL_FUNC) &_asSeq2_Rcpp_trecase_mtest, 20},
     {"_asSeq2_Rcpp_ase_mtest", (DL_FUNC) &_asSeq2_Rcpp_ase_mtest, 15},
+    {"_asSeq2_Rcpp_trecase_mtest", (DL_FUNC) &_asSeq2_Rcpp_trecase_mtest, 20},
     {NULL, NULL, 0}
 };
 

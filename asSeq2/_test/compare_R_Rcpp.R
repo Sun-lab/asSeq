@@ -363,7 +363,7 @@ Y2 = cbind(y2,y2)
 
 library(asSeq2)
 time1 = Sys.time()
-trecase(Y, Y1, Y2, ZZ, XX, SNPloc, geneloc, fam_nb = T,eps=5e-5, show = T, useASE = 1)
+trecase(Y, Y1, Y2 , ZZ, XX, SNPloc, geneloc, fam_nb = T,eps=5e-5, show = F, useASE = 1)
 time2 = Sys.time()
 time2-time1
 
@@ -386,9 +386,20 @@ ZZ3[ZZ==3] = 4
 ZZ3[ZZ==2] = 3
 time1 = Sys.time()
 asSeq:::trecase(Y, Y1, Y2, XX[,-1], ZZ3, "output_trecase", 1, local.distance = 1e+05,
-     eChr=geneloc[,2], ePos=geneloc[,4], mChr=SNPloc[,2], mPos=SNPloc[,3])
+     eChr=geneloc[,2], ePos=geneloc[,4], mChr=SNPloc[,2], mPos=SNPloc[,3], 
+     min.AS.reads = 8, min.AS.sample = 10)
 time2 = Sys.time()
 time2-time1
 
 TrecFastTest:::trec_fast(Y, XX[,-1], ZZ3, "output_trec", 1, local.distance = 1e+05,
                          eChr=geneloc[,2], ePos=geneloc[,4], mChr=SNPloc[,2], mPos=SNPloc[,3])
+
+
+
+as2 = read.table("trecase.txt", header = T)
+table(as2$Converge)
+as1 = read.table("output_trecase_eqtl.txt", header = T)
+plot(as2$CisTrans_Pvalue, as1$trans_Pvalue)
+plot(as2$CisTrans_Chisq, as1$trans_Chisq)
+plot(as2$Joint_Pvalue, as1$Joint_Pvalue)
+as2[which(as2$CisTrans_Chisq > 30),]
