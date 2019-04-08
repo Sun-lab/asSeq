@@ -342,6 +342,8 @@ microbenchmark(
 #-------------------------------------------------------------
 # Rcpp wrapper
 #-------------------------------------------------------------
+setwd('/fh/fast/sun_w/licai/_tumor_eQTL/GitHub/asSeq/asSeq2/_test')
+
 geneloc = data.frame(gene = paste0('gene', 1:2), chr = 1:2, start = c(1, 1e8),
                      end = c(1, 1e8)+1000, stringsAsFactors = F)
 geneloc
@@ -359,10 +361,9 @@ Y1 = cbind(y1,y1)
 Y2 = cbind(y2,y2)
 
 
-
 library(asSeq2)
 time1 = Sys.time()
-trecase(Y, Y1, Y2, ZZ, XX, SNPloc, geneloc, fam_nb = T,eps=1e-8, show = F)
+trecase(Y, Y1, Y2, ZZ, XX, SNPloc, geneloc, fam_nb = T,eps=5e-5, show = T, useASE = 1)
 time2 = Sys.time()
 time2-time1
 
@@ -376,6 +377,15 @@ ZZ3[ZZ==2] = 1
 ZZ3[ZZ==3] = 2
 time1 = Sys.time()
 trec(Y, XX[,-1], ZZ3, "output_trec", 1, local.distance = 1e+05,
+     eChr=geneloc[,2], ePos=geneloc[,4], mChr=SNPloc[,2], mPos=SNPloc[,3])
+time2 = Sys.time()
+time2-time1
+
+ZZ3 = ZZ
+ZZ3[ZZ==3] = 4
+ZZ3[ZZ==2] = 3
+time1 = Sys.time()
+asSeq:::trecase(Y, Y1, Y2, XX[,-1], ZZ3, "output_trecase", 1, local.distance = 1e+05,
      eChr=geneloc[,2], ePos=geneloc[,4], mChr=SNPloc[,2], mPos=SNPloc[,3])
 time2 = Sys.time()
 time2-time1
