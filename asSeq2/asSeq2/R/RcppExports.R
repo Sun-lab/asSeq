@@ -105,32 +105,32 @@ Rcpp_trec <- function(y, X, z, fam_nb, lgy1, ini_bxj = 0.0, LL_null = 0.0, ini_r
     .Call(`_asSeq2_Rcpp_trec`, y, X, z, fam_nb, lgy1, ini_bxj, LL_null, ini_reg_par, max_iter, eps, show)
 }
 
-Rcpp_loglikBB <- function(ni, ni0, Pi1, log_theta, lbc, zeta) {
-    .Call(`_asSeq2_Rcpp_loglikBB`, ni, ni0, Pi1, log_theta, lbc, zeta)
+Rcpp_loglikBB <- function(ni, ni0, bxj, log_theta, lbc, zeta) {
+    .Call(`_asSeq2_Rcpp_loglikBB`, ni, ni0, bxj, log_theta, lbc, zeta)
 }
 
-Rcpp_ase_grad <- function(ni, ni0, Pi1, log_theta, zeta) {
-    .Call(`_asSeq2_Rcpp_ase_grad`, ni, ni0, Pi1, log_theta, zeta)
+Rcpp_ase_grad <- function(ni, ni0, bxj, log_theta, zeta) {
+    .Call(`_asSeq2_Rcpp_ase_grad`, ni, ni0, bxj, log_theta, zeta)
 }
 
-Rcpp_ase_grad_Pi <- function(ni, ni0, Pi1, log_theta, zeta) {
-    .Call(`_asSeq2_Rcpp_ase_grad_Pi`, ni, ni0, Pi1, log_theta, zeta)
+Rcpp_ase_grad_Pi <- function(ni, ni0, bxj, log_theta, zeta) {
+    .Call(`_asSeq2_Rcpp_ase_grad_Pi`, ni, ni0, bxj, log_theta, zeta)
 }
 
-Rcpp_ase_grad_H0 <- function(ni, ni0, Pi1, log_theta, zeta) {
-    .Call(`_asSeq2_Rcpp_ase_grad_H0`, ni, ni0, Pi1, log_theta, zeta)
+Rcpp_ase_grad_H0 <- function(ni, ni0, bxj, log_theta, zeta) {
+    .Call(`_asSeq2_Rcpp_ase_grad_H0`, ni, ni0, bxj, log_theta, zeta)
 }
 
 Rcpp_ase_BFGS <- function(ni, ni0, zeta, params0, lbc, max_iter = 4e3L, eps = 1e-7, show = TRUE) {
     .Call(`_asSeq2_Rcpp_ase_BFGS`, ni, ni0, zeta, params0, lbc, max_iter, eps, show)
 }
 
-Rcpp_ase_theta_BFGS <- function(ni, ni0, zeta, Pi1, lg_theta, lbc, max_iter = 4e3L, eps = 1e-7, show = TRUE) {
-    .Call(`_asSeq2_Rcpp_ase_theta_BFGS`, ni, ni0, zeta, Pi1, lg_theta, lbc, max_iter, eps, show)
+Rcpp_ase_theta_BFGS <- function(ni, ni0, zeta, bxj, lg_theta, lbc, max_iter = 4e3L, eps = 1e-7, show = TRUE) {
+    .Call(`_asSeq2_Rcpp_ase_theta_BFGS`, ni, ni0, zeta, bxj, lg_theta, lbc, max_iter, eps, show)
 }
 
-Rcpp_ase_theta_BFGS2 <- function(ni, ni0, zeta, Pi1, lg_theta, lbc, max_iter = 4e3L, eps = 1e-7, show = TRUE) {
-    .Call(`_asSeq2_Rcpp_ase_theta_BFGS2`, ni, ni0, zeta, Pi1, lg_theta, lbc, max_iter, eps, show)
+Rcpp_ase_theta_BFGS2 <- function(ni, ni0, zeta, bxj, lg_theta, lbc, max_iter = 4e3L, eps = 1e-7, show = TRUE) {
+    .Call(`_asSeq2_Rcpp_ase_theta_BFGS2`, ni, ni0, zeta, bxj, lg_theta, lbc, max_iter, eps, show)
 }
 
 Rcpp_ase <- function(ni, ni0, zeta, lbc, max_iter = 4e3L, eps = 1e-7, show = TRUE) {

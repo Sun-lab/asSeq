@@ -1049,12 +1049,13 @@ Rcpp::List Rcpp_trec(const arma::vec& y, const arma::mat& X,
 
 // [[Rcpp::export]]
 double Rcpp_loglikBB(const arma::vec& ni, const arma::vec& ni0,
-                     const double& Pi1, const double& log_theta,
+                     const double& bxj, const double& log_theta,
                      const arma::vec& lbc, const arma::vec& zeta){
 
   arma::uword ii;
   double loglik = 0.0;
   double vtheta = std::exp(-log_theta);
+  double Pi1 = std::exp(bxj)/(1.0 + std::exp(bxj));
   double aa = Pi1*vtheta;
   double bb = vtheta - aa;
   double lgvt = lgamma(vtheta);
@@ -1081,12 +1082,13 @@ double Rcpp_loglikBB(const arma::vec& ni, const arma::vec& ni0,
 
 // [[Rcpp::export]]
 arma::vec Rcpp_ase_grad(const arma::vec& ni, const arma::vec& ni0,
-                        const double& Pi1, const double& log_theta,
+                        const double& bxj, const double& log_theta,
                         const arma::vec& zeta){
 
   arma::uword ii;
   arma::vec grad = arma::zeros<arma::vec>(2);
   double vtheta = std::exp(-log_theta);
+  double Pi1 = std::exp(bxj)/(1.0 + std::exp(bxj));
   double aa     = Pi1*vtheta;
   double bb     = vtheta - aa;
   double diaa   = R::digamma(aa);
@@ -1122,7 +1124,7 @@ arma::vec Rcpp_ase_grad(const arma::vec& ni, const arma::vec& ni0,
     }
     //printR_obj(grad.at(1));
   }
-  grad.at(0) *= vtheta;
+  grad.at(0) *= vtheta * std::exp(bxj)/pow((1.0 + std::exp(bxj)), 2.0);
   grad.at(1) *= pow(vtheta, 2.0);
 
   return grad;
@@ -1130,12 +1132,13 @@ arma::vec Rcpp_ase_grad(const arma::vec& ni, const arma::vec& ni0,
 
 // [[Rcpp::export]]
 double Rcpp_ase_grad_Pi(const arma::vec& ni, const arma::vec& ni0,
-                        const double& Pi1, const double& log_theta,
+                        const double& bxj, const double& log_theta,
                         const arma::vec& zeta){
 
   arma::uword ii;
   double grad = 0.0;
   double vtheta = std::exp(-log_theta);
+  double Pi1 = std::exp(bxj)/(1.0 + std::exp(bxj));
   double aa     = Pi1*vtheta;
   double bb     = vtheta - aa;
   double diaa   = R::digamma(aa);
@@ -1161,19 +1164,20 @@ double Rcpp_ase_grad_Pi(const arma::vec& ni, const arma::vec& ni0,
     // }
     //printR_obj(grad.at(1));
   }
-  grad *= vtheta;
+  grad *= vtheta * std::exp(bxj)/pow((1.0 + std::exp(bxj)), 2.0);
 
   return grad;
 }
 
 // [[Rcpp::export]]
 double Rcpp_ase_grad_H0(const arma::vec& ni, const arma::vec& ni0,
-                        const double& Pi1, const double& log_theta,
+                        const double& bxj, const double& log_theta,
                         const arma::vec& zeta){
   //under H0 or only update theta
   arma::uword ii;
   double grad   = 0.0;
   double vtheta = std::exp(-log_theta);
+  double Pi1 = std::exp(bxj)/(1.0 + std::exp(bxj));
   double aa     = Pi1*vtheta;
   double bb     = vtheta - aa;
   double diaa   = R::digamma(aa);
@@ -1322,7 +1326,7 @@ Rcpp::List Rcpp_ase_BFGS(const arma::vec& ni, const arma::vec& ni0,
     //calculate direction p_k
     uu = 0;
 
-    if(xk.at(0) < 0 | xk.at(0) > 1) break ;
+    // if(xk.at(0) < 0 | xk.at(0) > 1) break ;
 
     old_LL = fnscale * Rcpp_loglikBB(ni, ni0, xk.at(0), xk.at(1), lbc, zeta);
     gr_k   = fnscale * Rcpp_ase_grad(ni, ni0, xk.at(0), xk.at(1), zeta);
@@ -1399,7 +1403,7 @@ Rcpp::List Rcpp_ase_BFGS(const arma::vec& ni, const arma::vec& ni0,
 
 // [[Rcpp::export]]
 Rcpp::List Rcpp_ase_theta_BFGS(const arma::vec& ni, const arma::vec& ni0,
-                               const arma::vec& zeta, const double& Pi1,
+                               const arma::vec& zeta, const double& bxj,
                                const double& lg_theta, const arma::vec& lbc,
                                const arma::uword& max_iter = 4e3,
                                const double& eps = 1e-7, const bool& show = true){
@@ -1423,18 +1427,19 @@ Rcpp::List Rcpp_ase_theta_BFGS(const arma::vec& ni, const arma::vec& ni0,
   double old_LL,new_LL,inv_norm_p_k,tmp_alpha,ys;
   double fnscale = -1.0; // For maximization
   double curr_LL = 0.0;
+
   xk.at(0) = lg_theta;
 
   while(iter < max_iter){
     //calculate direction p_k
     uu = 0;
 
-    old_LL = fnscale * Rcpp_loglikBB(ni, ni0, Pi1, xk.at(0), lbc, zeta);
+    old_LL = fnscale * Rcpp_loglikBB(ni, ni0, bxj, xk.at(0), lbc, zeta);
 
     if(old_LL < 0) break;
 
     //printR_obj(old_LL);
-    gr_k   = fnscale * Rcpp_ase_grad_H0(ni, ni0, Pi1, xk.at(0), zeta);
+    gr_k   = fnscale * Rcpp_ase_grad_H0(ni, ni0, bxj, xk.at(0), zeta);
     p_k    = -1.0 * inv_Bk * gr_k;
     inv_norm_p_k =  1.0 / std::max(1.0, Rcpp_norm(p_k));
 
@@ -1442,12 +1447,12 @@ Rcpp::List Rcpp_ase_theta_BFGS(const arma::vec& ni, const arma::vec& ni0,
     for(jj=0; jj<15; jj++){
       tmp_alpha = inv_norm_p_k / std::pow(4, jj);
       new_xk    = xk + tmp_alpha * p_k;
-      new_LL    = fnscale * Rcpp_loglikBB(ni, ni0,Pi1,
+      new_LL    = fnscale * Rcpp_loglikBB(ni, ni0,bxj,
                                           new_xk.at(0), lbc, zeta);
 
       if(new_LL < old_LL){ //minimizing
         s_k = tmp_alpha * p_k;
-        y_k = fnscale * Rcpp_ase_grad_H0(ni, ni0, Pi1,
+        y_k = fnscale * Rcpp_ase_grad_H0(ni, ni0, bxj,
                                          new_xk.at(0), zeta) - gr_k;
         ys  = arma::dot(y_k, s_k);
 
@@ -1481,7 +1486,7 @@ Rcpp::List Rcpp_ase_theta_BFGS(const arma::vec& ni, const arma::vec& ni0,
     if(iter > 0){
       if(std::abs(curr_LL - old_LL) < eps &&
          Rcpp_norm(exp(curr_xk) - exp(xk)) < eps){
-        gr_k = Rcpp_ase_grad_H0(ni, ni0, Pi1, xk.at(0), zeta);
+        gr_k = Rcpp_ase_grad_H0(ni, ni0, bxj, xk.at(0), zeta);
         if(Rcpp_norm(gr_k) < 0.01){
           converge = 1;
           break;
@@ -1493,7 +1498,7 @@ Rcpp::List Rcpp_ase_theta_BFGS(const arma::vec& ni, const arma::vec& ni0,
     iter++;
   }
 
-  old_LL = Rcpp_loglikBB(ni, ni0, Pi1, xk.at(0), lbc, zeta);
+  old_LL = Rcpp_loglikBB(ni, ni0, bxj, xk.at(0), lbc, zeta);
 
   return Rcpp::List::create(
     Rcpp::Named("converge", converge),
@@ -1506,7 +1511,7 @@ Rcpp::List Rcpp_ase_theta_BFGS(const arma::vec& ni, const arma::vec& ni0,
 
 // [[Rcpp::export]]
 Rcpp::List Rcpp_ase_theta_BFGS2(const arma::vec& ni, const arma::vec& ni0,
-                               const arma::vec& zeta, const double& Pi1,
+                               const arma::vec& zeta, const double& bxj,
                                const double& lg_theta, const arma::vec& lbc,
                                const arma::uword& max_iter = 4e3,
                                const double& eps = 1e-7, const bool& show = true){
@@ -1535,12 +1540,12 @@ Rcpp::List Rcpp_ase_theta_BFGS2(const arma::vec& ni, const arma::vec& ni0,
     //calculate direction p_k
     uu = 0;
 
-    old_LL = fnscale * Rcpp_loglikBB(ni, ni0, Pi1, xk, lbc, zeta);
+    old_LL = fnscale * Rcpp_loglikBB(ni, ni0, bxj, xk, lbc, zeta);
 
     if(old_LL < 0) break;
 
     //printR_obj(old_LL);
-    gr_k   = fnscale * Rcpp_ase_grad_H0(ni, ni0, Pi1, xk, zeta);
+    gr_k   = fnscale * Rcpp_ase_grad_H0(ni, ni0, bxj, xk, zeta);
     p_k    = -1.0 * inv_Bk * gr_k;
     inv_norm_p_k =  1.0 / std::max(1.0, std::abs(p_k));
 
@@ -1548,12 +1553,12 @@ Rcpp::List Rcpp_ase_theta_BFGS2(const arma::vec& ni, const arma::vec& ni0,
     for(jj=0; jj<15; jj++){
       tmp_alpha = inv_norm_p_k / std::pow(4, jj);
       new_xk    = xk + tmp_alpha * p_k;
-      new_LL    = fnscale * Rcpp_loglikBB(ni, ni0,Pi1,
+      new_LL    = fnscale * Rcpp_loglikBB(ni, ni0,bxj,
                                           new_xk, lbc, zeta);
 
       if(new_LL < old_LL){ //minimizing
         s_k = tmp_alpha * p_k;
-        y_k = fnscale * Rcpp_ase_grad_H0(ni, ni0, Pi1,
+        y_k = fnscale * Rcpp_ase_grad_H0(ni, ni0, bxj,
                                          new_xk, zeta) - gr_k;
         ys  = y_k * s_k;
 
@@ -1588,7 +1593,7 @@ Rcpp::List Rcpp_ase_theta_BFGS2(const arma::vec& ni, const arma::vec& ni0,
       if(std::abs(curr_LL - old_LL) < eps &&
          std::abs(curr_xk - xk) < eps){
 
-        gr_k = Rcpp_ase_grad_H0(ni, ni0, Pi1, xk, zeta);
+        gr_k = Rcpp_ase_grad_H0(ni, ni0, bxj, xk, zeta);
 
         if(std::abs(gr_k) < eps){
           converge = 1;
@@ -1601,7 +1606,7 @@ Rcpp::List Rcpp_ase_theta_BFGS2(const arma::vec& ni, const arma::vec& ni0,
     iter++;
   }
 
-  old_LL = Rcpp_loglikBB(ni, ni0, Pi1, xk, lbc, zeta);
+  old_LL = Rcpp_loglikBB(ni, ni0, bxj, xk, lbc, zeta);
 
   return Rcpp::List::create(
     Rcpp::Named("converge", converge),
@@ -1622,10 +1627,10 @@ Rcpp::List Rcpp_ase(const arma::vec& ni, const arma::vec& ni0,
   Rcpp::List opH0, opH1;
   arma::vec par = arma::zeros<arma::vec>(2);
 
-  opH0 = Rcpp_ase_theta_BFGS(ni, ni0, zeta, 0.5, par0, lbc, max_iter, eps, show);
+  opH0 = Rcpp_ase_theta_BFGS(ni, ni0, zeta, 0.0, par0, lbc, max_iter, eps, show);
 
-  par.at(0) = 0.5;
-  par.at(1) = -2;
+  par.at(0) = 0.0;
+  par.at(1) = as<double>(opH0["PAR"]);
 
   //printR_obj(par);
   opH1 = Rcpp_ase_BFGS(ni, ni0, zeta, par, lbc, max_iter, eps, show);
@@ -1655,10 +1660,10 @@ double Rcpp_trecase_LL(const double& bxj, const arma::vec& y,
                        const arma::vec& ni, const arma::vec& ni0,
                        const double& log_theta, const arma::vec& lbc,
                        const arma::vec& zeta ){
-  double Pi1 = std::exp(bxj)/(1.0 + exp(bxj));
+  // double Pi1 = std::exp(bxj)/(1.0 + exp(bxj));
 
   return(Rcpp_logLTReC(bxj, y, X, z, BETA, phi, fam_nb, lgy1, mu)
-           + Rcpp_loglikBB(ni, ni0, Pi1, log_theta, lbc, zeta));
+           + Rcpp_loglikBB(ni, ni0, bxj, log_theta, lbc, zeta));
 
 }
 
@@ -1671,11 +1676,11 @@ double Rcpp_trecase_grad_bxj(const double& bxj, const arma::vec& y,
                              const arma::vec& ni, const arma::vec& ni0,
                              const double& log_theta,
                              const arma::vec& lbc, const arma::vec& zeta){
-  double Pi1 = std::exp(bxj)/(1.0 + exp(bxj));
+  // double Pi1 = std::exp(bxj)/(1.0 + exp(bxj));
   arma::vec trec_grad = arma::zeros<arma::vec>(2);
   //trec_grad = Rcpp_grad_hess_bxj_trec(bxj, y, z, mu, phi, fam_nb);
   return(Rcpp_trec_grad_bxj(bxj, y, z, mu, phi, fam_nb)+
-         Rcpp_ase_grad_Pi(ni, ni0, Pi1, log_theta, zeta)*Pi1/(1.0+std::exp(bxj)));
+         Rcpp_ase_grad_Pi(ni, ni0, bxj, log_theta, zeta));
 
 }
 
@@ -1867,9 +1872,9 @@ Rcpp::List Rcpp_trecase(const arma::vec& y, const arma::mat& X,
     // }
 
     // update theta
-    double Pi1 = std::exp(new_bxj)/(1.0 + std::exp(new_bxj));
+    // double Pi1 = std::exp(new_bxj)/(1.0 + std::exp(new_bxj));
 
-    new_theta_fit = Rcpp_ase_theta_BFGS(ni, ni0, zeta, Pi1, new_lg_theta,
+    new_theta_fit = Rcpp_ase_theta_BFGS(ni, ni0, zeta, new_bxj, new_lg_theta,
                                         lbc, max_iter, eps, false);
     new_lg_theta =  as<double>(new_theta_fit["PAR"]);
 
@@ -2388,7 +2393,7 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
         ssBegin = ss;
         break;
       }
-      if(ss % 50 == 0 | show){
+      if(ss % 5000 == 0 & show){
         Rprintf("Begin analysis for SNP %d  \n", ss+1);
       }
       //chr : geneInfo and SNPinfo have to be in order
