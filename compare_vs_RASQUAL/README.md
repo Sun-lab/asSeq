@@ -13,14 +13,9 @@ the files in this folder is under active updating and please do not use them for
 
 4. Add description of simulaiton setup in Supplementary materails. 
 
-## to-do's with lower priority
-
-1. share the code for RQSQUAL (and TReCASE) analysis in the GitHub.
-
-2. compare resutls of matrix eQTL and TReCASE in asSeq2 in real data. Use 200kb is fine. 
+5. Compare matrixEQTL vs. TReCASE in asSeq2 in real data. Use 200kb is fine.  For real data anlaysis pipeline, we may consider a screening step using matrixEQTL. We do not want to run TReCASE for every gene and every SNP since it is time consuming. So first run matrixEQTL and only keep the asossocaitons with p-value < 0.1, and run TReCASE for those cases. To evaluate whehter such screening step makes sense, we will actualy run matirxEQTL and TReCASE for all gene,SNP pairs and compare results. When running matrixEQTL, first quantile normalize gene expression gene by gene, and thus matrixEQTL results is somewhat a rubust version of linear regression that use data quantiles rather than the raw data. Use the code in asSeq/pipeline_1KGP/quantile_transformation.R. We will see sometime TReCASE give significant association, but matrixEQTL does not. This is often the case with outlier. So we should discard those associaitons. 
 
 ## to-do's (mostly finished)
-# compare with RASQUAL
 
 1. Compare the density of NB and BB used by TReCASE and RASQUAL. 
 
