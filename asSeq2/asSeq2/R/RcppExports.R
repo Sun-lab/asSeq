@@ -105,32 +105,32 @@ Rcpp_trec <- function(y, X, z, fam_nb, lgy1, ini_bxj = 0.0, LL_null = 0.0, ini_r
     .Call(`_asSeq2_Rcpp_trec`, y, X, z, fam_nb, lgy1, ini_bxj, LL_null, ini_reg_par, max_iter, eps, show)
 }
 
-Rcpp_loglikBB <- function(ni, ni0, Pi1, log_theta, lbc, zeta) {
-    .Call(`_asSeq2_Rcpp_loglikBB`, ni, ni0, Pi1, log_theta, lbc, zeta)
+Rcpp_loglikBB <- function(ni, ni0, bxj, log_theta, lbc, zeta) {
+    .Call(`_asSeq2_Rcpp_loglikBB`, ni, ni0, bxj, log_theta, lbc, zeta)
 }
 
-Rcpp_ase_grad <- function(ni, ni0, Pi1, log_theta, zeta) {
-    .Call(`_asSeq2_Rcpp_ase_grad`, ni, ni0, Pi1, log_theta, zeta)
+Rcpp_ase_grad <- function(ni, ni0, bxj, log_theta, zeta) {
+    .Call(`_asSeq2_Rcpp_ase_grad`, ni, ni0, bxj, log_theta, zeta)
 }
 
-Rcpp_ase_grad_Pi <- function(ni, ni0, Pi1, log_theta, zeta) {
-    .Call(`_asSeq2_Rcpp_ase_grad_Pi`, ni, ni0, Pi1, log_theta, zeta)
+Rcpp_ase_grad_Pi <- function(ni, ni0, bxj, log_theta, zeta) {
+    .Call(`_asSeq2_Rcpp_ase_grad_Pi`, ni, ni0, bxj, log_theta, zeta)
 }
 
-Rcpp_ase_grad_H0 <- function(ni, ni0, Pi1, log_theta, zeta) {
-    .Call(`_asSeq2_Rcpp_ase_grad_H0`, ni, ni0, Pi1, log_theta, zeta)
+Rcpp_ase_grad_H0 <- function(ni, ni0, bxj, log_theta, zeta) {
+    .Call(`_asSeq2_Rcpp_ase_grad_H0`, ni, ni0, bxj, log_theta, zeta)
 }
 
 Rcpp_ase_BFGS <- function(ni, ni0, zeta, params0, lbc, max_iter = 4e3L, eps = 1e-7, show = TRUE) {
     .Call(`_asSeq2_Rcpp_ase_BFGS`, ni, ni0, zeta, params0, lbc, max_iter, eps, show)
 }
 
-Rcpp_ase_theta_BFGS <- function(ni, ni0, zeta, Pi1, lg_theta, lbc, max_iter = 4e3L, eps = 1e-7, show = TRUE) {
-    .Call(`_asSeq2_Rcpp_ase_theta_BFGS`, ni, ni0, zeta, Pi1, lg_theta, lbc, max_iter, eps, show)
+Rcpp_ase_theta_BFGS <- function(ni, ni0, zeta, bxj, lg_theta, lbc, max_iter = 4e3L, eps = 1e-7, show = TRUE) {
+    .Call(`_asSeq2_Rcpp_ase_theta_BFGS`, ni, ni0, zeta, bxj, lg_theta, lbc, max_iter, eps, show)
 }
 
-Rcpp_ase_theta_BFGS2 <- function(ni, ni0, zeta, Pi1, lg_theta, lbc, max_iter = 4e3L, eps = 1e-7, show = TRUE) {
-    .Call(`_asSeq2_Rcpp_ase_theta_BFGS2`, ni, ni0, zeta, Pi1, lg_theta, lbc, max_iter, eps, show)
+Rcpp_ase_theta_BFGS2 <- function(ni, ni0, zeta, bxj, lg_theta, lbc, max_iter = 4e3L, eps = 1e-7, show = TRUE) {
+    .Call(`_asSeq2_Rcpp_ase_theta_BFGS2`, ni, ni0, zeta, bxj, lg_theta, lbc, max_iter, eps, show)
 }
 
 Rcpp_ase <- function(ni, ni0, zeta, lbc, max_iter = 4e3L, eps = 1e-7, show = TRUE) {
@@ -153,11 +153,11 @@ Rcpp_trecase <- function(y, X, z, fam_nb, lgy1, ni, ni0, zeta, lbc, ini_bxj = 0.
     .Call(`_asSeq2_Rcpp_trecase`, y, X, z, fam_nb, lgy1, ni, ni0, zeta, lbc, ini_bxj, LL_null, ini_reg_par, max_iter, eps, show)
 }
 
-Rcpp_trecase_mtest <- function(Y, Y1, Y2, Z, XX, SNP_pos, sChr, fam_nb, gene_start, gene_end, gChr, file_trec = "trec.txt", file_trecase = "trecase.txt", cis_window = 1e5, useASE = 1L, min_ASE_total = 8L, min_nASE = 10L, eps = 1e-5, max_iter = 4000L, show = FALSE) {
-    invisible(.Call(`_asSeq2_Rcpp_trecase_mtest`, Y, Y1, Y2, Z, XX, SNP_pos, sChr, fam_nb, gene_start, gene_end, gChr, file_trec, file_trecase, cis_window, useASE, min_ASE_total, min_nASE, eps, max_iter, show))
-}
-
 Rcpp_ase_mtest <- function(Y1, Y2, Z, SNP_pos, sChr, gene_start, gene_end, gChr, file_ase = "ase.txt", cis_window = 1e5, min_ASE_total = 8L, min_nASE = 10L, eps = 1e-5, max_iter = 4000L, show = FALSE) {
     invisible(.Call(`_asSeq2_Rcpp_ase_mtest`, Y1, Y2, Z, SNP_pos, sChr, gene_start, gene_end, gChr, file_ase, cis_window, min_ASE_total, min_nASE, eps, max_iter, show))
+}
+
+Rcpp_trecase_mtest <- function(Y, Y1, Y2, Z, XX, SNP_pos, sChr, fam_nb, gene_start, gene_end, gChr, file_trec = "trec.txt", file_trecase = "trecase.txt", cis_window = 1e5, useASE = 1L, min_ASE_total = 8L, min_nASE = 10L, eps = 1e-5, max_iter = 4000L, show = FALSE) {
+    invisible(.Call(`_asSeq2_Rcpp_trecase_mtest`, Y, Y1, Y2, Z, XX, SNP_pos, sChr, fam_nb, gene_start, gene_end, gChr, file_trec, file_trecase, cis_window, useASE, min_ASE_total, min_nASE, eps, max_iter, show))
 }
 

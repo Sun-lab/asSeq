@@ -14,6 +14,10 @@ trecase(Y, Y1 = NULL, Y2 = NULL, Z, XX, SNPloc, geneloc, fam_nb = T,
     file_trec = "trec.txt", file_trecase = "trecase.txt", cis_window = 100000L,
     useASE = 1L, min_ASE_total = 8L, min_nASE = 10L, eps = 5e-05,
     max_iter = 400L, show = FALSE)
+
+ase(Y1, Y2, Z, geneloc, SNPloc, file_ase="ase.txt", cis_window = 1e5L,
+           min_ASE_total = 8L, min_nASE = 10L,
+           eps = 5e-5, max_iter = 400L, show = FALSE)
 }
 
 %- maybe also 'usage' for other objects documented here.
@@ -74,7 +78,8 @@ trecase(Y, Y1 = NULL, Y2 = NULL, Z, XX, SNPloc, geneloc, fam_nb = T,
 
 }
 \details{
-  Joint model of both total expression and allele-specific expression will only. If useASE = 0, only model of total expression will be fitted. When useASE = 1, we only run TReCASE model for the SNP with smallest p-value in each gene.
+  Joint model of both total expression and allele-specific expression will only. If useASE = 0, model of total expression (TReC) will be fitted. When useASE = 1,  Total Read Count (TReC) 
+  and Allele Specific Expression (TReCASE) model for the SNP with smallest p-value in each gene. We will recommend use Matrix eQTL as a screening process for gene-snp pairs before running TReCASE.
 }
 \value{
 All output is stored in the file specified in file_trec and/or file_trecase in tab-delimited format. 
@@ -104,6 +109,8 @@ file_trecase:
 TReC_* means values for TReC model.
 
 Joint_* means values for TReCASE model.
+
+ASE_*  means values for ASE model.
 
 Joint_theta: The overdispersion parameter in Beta-Binomial regression.
 

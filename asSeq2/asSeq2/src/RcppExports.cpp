@@ -410,63 +410,63 @@ BEGIN_RCPP
 END_RCPP
 }
 // Rcpp_loglikBB
-double Rcpp_loglikBB(const arma::vec& ni, const arma::vec& ni0, const double& Pi1, const double& log_theta, const arma::vec& lbc, const arma::vec& zeta);
-RcppExport SEXP _asSeq2_Rcpp_loglikBB(SEXP niSEXP, SEXP ni0SEXP, SEXP Pi1SEXP, SEXP log_thetaSEXP, SEXP lbcSEXP, SEXP zetaSEXP) {
+double Rcpp_loglikBB(const arma::vec& ni, const arma::vec& ni0, const double& bxj, const double& log_theta, const arma::vec& lbc, const arma::vec& zeta);
+RcppExport SEXP _asSeq2_Rcpp_loglikBB(SEXP niSEXP, SEXP ni0SEXP, SEXP bxjSEXP, SEXP log_thetaSEXP, SEXP lbcSEXP, SEXP zetaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::vec& >::type ni(niSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type ni0(ni0SEXP);
-    Rcpp::traits::input_parameter< const double& >::type Pi1(Pi1SEXP);
+    Rcpp::traits::input_parameter< const double& >::type bxj(bxjSEXP);
     Rcpp::traits::input_parameter< const double& >::type log_theta(log_thetaSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type lbc(lbcSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type zeta(zetaSEXP);
-    rcpp_result_gen = Rcpp::wrap(Rcpp_loglikBB(ni, ni0, Pi1, log_theta, lbc, zeta));
+    rcpp_result_gen = Rcpp::wrap(Rcpp_loglikBB(ni, ni0, bxj, log_theta, lbc, zeta));
     return rcpp_result_gen;
 END_RCPP
 }
 // Rcpp_ase_grad
-arma::vec Rcpp_ase_grad(const arma::vec& ni, const arma::vec& ni0, const double& Pi1, const double& log_theta, const arma::vec& zeta);
-RcppExport SEXP _asSeq2_Rcpp_ase_grad(SEXP niSEXP, SEXP ni0SEXP, SEXP Pi1SEXP, SEXP log_thetaSEXP, SEXP zetaSEXP) {
+arma::vec Rcpp_ase_grad(const arma::vec& ni, const arma::vec& ni0, const double& bxj, const double& log_theta, const arma::vec& zeta);
+RcppExport SEXP _asSeq2_Rcpp_ase_grad(SEXP niSEXP, SEXP ni0SEXP, SEXP bxjSEXP, SEXP log_thetaSEXP, SEXP zetaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::vec& >::type ni(niSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type ni0(ni0SEXP);
-    Rcpp::traits::input_parameter< const double& >::type Pi1(Pi1SEXP);
+    Rcpp::traits::input_parameter< const double& >::type bxj(bxjSEXP);
     Rcpp::traits::input_parameter< const double& >::type log_theta(log_thetaSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type zeta(zetaSEXP);
-    rcpp_result_gen = Rcpp::wrap(Rcpp_ase_grad(ni, ni0, Pi1, log_theta, zeta));
+    rcpp_result_gen = Rcpp::wrap(Rcpp_ase_grad(ni, ni0, bxj, log_theta, zeta));
     return rcpp_result_gen;
 END_RCPP
 }
 // Rcpp_ase_grad_Pi
-double Rcpp_ase_grad_Pi(const arma::vec& ni, const arma::vec& ni0, const double& Pi1, const double& log_theta, const arma::vec& zeta);
-RcppExport SEXP _asSeq2_Rcpp_ase_grad_Pi(SEXP niSEXP, SEXP ni0SEXP, SEXP Pi1SEXP, SEXP log_thetaSEXP, SEXP zetaSEXP) {
+double Rcpp_ase_grad_Pi(const arma::vec& ni, const arma::vec& ni0, const double& bxj, const double& log_theta, const arma::vec& zeta);
+RcppExport SEXP _asSeq2_Rcpp_ase_grad_Pi(SEXP niSEXP, SEXP ni0SEXP, SEXP bxjSEXP, SEXP log_thetaSEXP, SEXP zetaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::vec& >::type ni(niSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type ni0(ni0SEXP);
-    Rcpp::traits::input_parameter< const double& >::type Pi1(Pi1SEXP);
+    Rcpp::traits::input_parameter< const double& >::type bxj(bxjSEXP);
     Rcpp::traits::input_parameter< const double& >::type log_theta(log_thetaSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type zeta(zetaSEXP);
-    rcpp_result_gen = Rcpp::wrap(Rcpp_ase_grad_Pi(ni, ni0, Pi1, log_theta, zeta));
+    rcpp_result_gen = Rcpp::wrap(Rcpp_ase_grad_Pi(ni, ni0, bxj, log_theta, zeta));
     return rcpp_result_gen;
 END_RCPP
 }
 // Rcpp_ase_grad_H0
-double Rcpp_ase_grad_H0(const arma::vec& ni, const arma::vec& ni0, const double& Pi1, const double& log_theta, const arma::vec& zeta);
-RcppExport SEXP _asSeq2_Rcpp_ase_grad_H0(SEXP niSEXP, SEXP ni0SEXP, SEXP Pi1SEXP, SEXP log_thetaSEXP, SEXP zetaSEXP) {
+double Rcpp_ase_grad_H0(const arma::vec& ni, const arma::vec& ni0, const double& bxj, const double& log_theta, const arma::vec& zeta);
+RcppExport SEXP _asSeq2_Rcpp_ase_grad_H0(SEXP niSEXP, SEXP ni0SEXP, SEXP bxjSEXP, SEXP log_thetaSEXP, SEXP zetaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::vec& >::type ni(niSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type ni0(ni0SEXP);
-    Rcpp::traits::input_parameter< const double& >::type Pi1(Pi1SEXP);
+    Rcpp::traits::input_parameter< const double& >::type bxj(bxjSEXP);
     Rcpp::traits::input_parameter< const double& >::type log_theta(log_thetaSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type zeta(zetaSEXP);
-    rcpp_result_gen = Rcpp::wrap(Rcpp_ase_grad_H0(ni, ni0, Pi1, log_theta, zeta));
+    rcpp_result_gen = Rcpp::wrap(Rcpp_ase_grad_H0(ni, ni0, bxj, log_theta, zeta));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -489,40 +489,40 @@ BEGIN_RCPP
 END_RCPP
 }
 // Rcpp_ase_theta_BFGS
-Rcpp::List Rcpp_ase_theta_BFGS(const arma::vec& ni, const arma::vec& ni0, const arma::vec& zeta, const double& Pi1, const double& lg_theta, const arma::vec& lbc, const arma::uword& max_iter, const double& eps, const bool& show);
-RcppExport SEXP _asSeq2_Rcpp_ase_theta_BFGS(SEXP niSEXP, SEXP ni0SEXP, SEXP zetaSEXP, SEXP Pi1SEXP, SEXP lg_thetaSEXP, SEXP lbcSEXP, SEXP max_iterSEXP, SEXP epsSEXP, SEXP showSEXP) {
+Rcpp::List Rcpp_ase_theta_BFGS(const arma::vec& ni, const arma::vec& ni0, const arma::vec& zeta, const double& bxj, const double& lg_theta, const arma::vec& lbc, const arma::uword& max_iter, const double& eps, const bool& show);
+RcppExport SEXP _asSeq2_Rcpp_ase_theta_BFGS(SEXP niSEXP, SEXP ni0SEXP, SEXP zetaSEXP, SEXP bxjSEXP, SEXP lg_thetaSEXP, SEXP lbcSEXP, SEXP max_iterSEXP, SEXP epsSEXP, SEXP showSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::vec& >::type ni(niSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type ni0(ni0SEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type zeta(zetaSEXP);
-    Rcpp::traits::input_parameter< const double& >::type Pi1(Pi1SEXP);
+    Rcpp::traits::input_parameter< const double& >::type bxj(bxjSEXP);
     Rcpp::traits::input_parameter< const double& >::type lg_theta(lg_thetaSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type lbc(lbcSEXP);
     Rcpp::traits::input_parameter< const arma::uword& >::type max_iter(max_iterSEXP);
     Rcpp::traits::input_parameter< const double& >::type eps(epsSEXP);
     Rcpp::traits::input_parameter< const bool& >::type show(showSEXP);
-    rcpp_result_gen = Rcpp::wrap(Rcpp_ase_theta_BFGS(ni, ni0, zeta, Pi1, lg_theta, lbc, max_iter, eps, show));
+    rcpp_result_gen = Rcpp::wrap(Rcpp_ase_theta_BFGS(ni, ni0, zeta, bxj, lg_theta, lbc, max_iter, eps, show));
     return rcpp_result_gen;
 END_RCPP
 }
 // Rcpp_ase_theta_BFGS2
-Rcpp::List Rcpp_ase_theta_BFGS2(const arma::vec& ni, const arma::vec& ni0, const arma::vec& zeta, const double& Pi1, const double& lg_theta, const arma::vec& lbc, const arma::uword& max_iter, const double& eps, const bool& show);
-RcppExport SEXP _asSeq2_Rcpp_ase_theta_BFGS2(SEXP niSEXP, SEXP ni0SEXP, SEXP zetaSEXP, SEXP Pi1SEXP, SEXP lg_thetaSEXP, SEXP lbcSEXP, SEXP max_iterSEXP, SEXP epsSEXP, SEXP showSEXP) {
+Rcpp::List Rcpp_ase_theta_BFGS2(const arma::vec& ni, const arma::vec& ni0, const arma::vec& zeta, const double& bxj, const double& lg_theta, const arma::vec& lbc, const arma::uword& max_iter, const double& eps, const bool& show);
+RcppExport SEXP _asSeq2_Rcpp_ase_theta_BFGS2(SEXP niSEXP, SEXP ni0SEXP, SEXP zetaSEXP, SEXP bxjSEXP, SEXP lg_thetaSEXP, SEXP lbcSEXP, SEXP max_iterSEXP, SEXP epsSEXP, SEXP showSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::vec& >::type ni(niSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type ni0(ni0SEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type zeta(zetaSEXP);
-    Rcpp::traits::input_parameter< const double& >::type Pi1(Pi1SEXP);
+    Rcpp::traits::input_parameter< const double& >::type bxj(bxjSEXP);
     Rcpp::traits::input_parameter< const double& >::type lg_theta(lg_thetaSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type lbc(lbcSEXP);
     Rcpp::traits::input_parameter< const arma::uword& >::type max_iter(max_iterSEXP);
     Rcpp::traits::input_parameter< const double& >::type eps(epsSEXP);
     Rcpp::traits::input_parameter< const bool& >::type show(showSEXP);
-    rcpp_result_gen = Rcpp::wrap(Rcpp_ase_theta_BFGS2(ni, ni0, zeta, Pi1, lg_theta, lbc, max_iter, eps, show));
+    rcpp_result_gen = Rcpp::wrap(Rcpp_ase_theta_BFGS2(ni, ni0, zeta, bxj, lg_theta, lbc, max_iter, eps, show));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -642,6 +642,30 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// Rcpp_ase_mtest
+void Rcpp_ase_mtest(const arma::mat& Y1, const arma::mat& Y2, const arma::mat& Z, const arma::vec& SNP_pos, const arma::uvec& sChr, const arma::vec& gene_start, const arma::vec& gene_end, const arma::uvec& gChr, const char* file_ase, const double& cis_window, const arma::uword& min_ASE_total, const arma::uword& min_nASE, const double& eps, const arma::uword& max_iter, const bool& show);
+RcppExport SEXP _asSeq2_Rcpp_ase_mtest(SEXP Y1SEXP, SEXP Y2SEXP, SEXP ZSEXP, SEXP SNP_posSEXP, SEXP sChrSEXP, SEXP gene_startSEXP, SEXP gene_endSEXP, SEXP gChrSEXP, SEXP file_aseSEXP, SEXP cis_windowSEXP, SEXP min_ASE_totalSEXP, SEXP min_nASESEXP, SEXP epsSEXP, SEXP max_iterSEXP, SEXP showSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type Y1(Y1SEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Y2(Y2SEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Z(ZSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type SNP_pos(SNP_posSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type sChr(sChrSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type gene_start(gene_startSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type gene_end(gene_endSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type gChr(gChrSEXP);
+    Rcpp::traits::input_parameter< const char* >::type file_ase(file_aseSEXP);
+    Rcpp::traits::input_parameter< const double& >::type cis_window(cis_windowSEXP);
+    Rcpp::traits::input_parameter< const arma::uword& >::type min_ASE_total(min_ASE_totalSEXP);
+    Rcpp::traits::input_parameter< const arma::uword& >::type min_nASE(min_nASESEXP);
+    Rcpp::traits::input_parameter< const double& >::type eps(epsSEXP);
+    Rcpp::traits::input_parameter< const arma::uword& >::type max_iter(max_iterSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type show(showSEXP);
+    Rcpp_ase_mtest(Y1, Y2, Z, SNP_pos, sChr, gene_start, gene_end, gChr, file_ase, cis_window, min_ASE_total, min_nASE, eps, max_iter, show);
+    return R_NilValue;
+END_RCPP
+}
 // Rcpp_trecase_mtest
 void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1, const arma::mat& Y2, const arma::mat& Z, const arma::mat& XX, const arma::vec& SNP_pos, const arma::uvec& sChr, const bool& fam_nb, const arma::vec& gene_start, const arma::vec& gene_end, const arma::uvec& gChr, const char* file_trec, const char* file_trecase, const double& cis_window, const bool& useASE, const arma::uword& min_ASE_total, const arma::uword& min_nASE, const double& eps, const arma::uword& max_iter, const bool& show);
 RcppExport SEXP _asSeq2_Rcpp_trecase_mtest(SEXP YSEXP, SEXP Y1SEXP, SEXP Y2SEXP, SEXP ZSEXP, SEXP XXSEXP, SEXP SNP_posSEXP, SEXP sChrSEXP, SEXP fam_nbSEXP, SEXP gene_startSEXP, SEXP gene_endSEXP, SEXP gChrSEXP, SEXP file_trecSEXP, SEXP file_trecaseSEXP, SEXP cis_windowSEXP, SEXP useASESEXP, SEXP min_ASE_totalSEXP, SEXP min_nASESEXP, SEXP epsSEXP, SEXP max_iterSEXP, SEXP showSEXP) {
@@ -668,30 +692,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::uword& >::type max_iter(max_iterSEXP);
     Rcpp::traits::input_parameter< const bool& >::type show(showSEXP);
     Rcpp_trecase_mtest(Y, Y1, Y2, Z, XX, SNP_pos, sChr, fam_nb, gene_start, gene_end, gChr, file_trec, file_trecase, cis_window, useASE, min_ASE_total, min_nASE, eps, max_iter, show);
-    return R_NilValue;
-END_RCPP
-}
-// Rcpp_ase_mtest
-void Rcpp_ase_mtest(const arma::mat& Y1, const arma::mat& Y2, const arma::mat& Z, const arma::vec& SNP_pos, const arma::uvec& sChr, const arma::vec& gene_start, const arma::vec& gene_end, const arma::uvec& gChr, const char* file_ase, const double& cis_window, const arma::uword& min_ASE_total, const arma::uword& min_nASE, const double& eps, const arma::uword& max_iter, const bool& show);
-RcppExport SEXP _asSeq2_Rcpp_ase_mtest(SEXP Y1SEXP, SEXP Y2SEXP, SEXP ZSEXP, SEXP SNP_posSEXP, SEXP sChrSEXP, SEXP gene_startSEXP, SEXP gene_endSEXP, SEXP gChrSEXP, SEXP file_aseSEXP, SEXP cis_windowSEXP, SEXP min_ASE_totalSEXP, SEXP min_nASESEXP, SEXP epsSEXP, SEXP max_iterSEXP, SEXP showSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type Y1(Y1SEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type Y2(Y2SEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type Z(ZSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type SNP_pos(SNP_posSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type sChr(sChrSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type gene_start(gene_startSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type gene_end(gene_endSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type gChr(gChrSEXP);
-    Rcpp::traits::input_parameter< const char* >::type file_ase(file_aseSEXP);
-    Rcpp::traits::input_parameter< const double& >::type cis_window(cis_windowSEXP);
-    Rcpp::traits::input_parameter< const arma::uword& >::type min_ASE_total(min_ASE_totalSEXP);
-    Rcpp::traits::input_parameter< const arma::uword& >::type min_nASE(min_nASESEXP);
-    Rcpp::traits::input_parameter< const double& >::type eps(epsSEXP);
-    Rcpp::traits::input_parameter< const arma::uword& >::type max_iter(max_iterSEXP);
-    Rcpp::traits::input_parameter< const bool& >::type show(showSEXP);
-    Rcpp_ase_mtest(Y1, Y2, Z, SNP_pos, sChr, gene_start, gene_end, gChr, file_ase, cis_window, min_ASE_total, min_nASE, eps, max_iter, show);
     return R_NilValue;
 END_RCPP
 }
@@ -735,8 +735,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_asSeq2_Rcpp_trecase_grad_bxj", (DL_FUNC) &_asSeq2_Rcpp_trecase_grad_bxj, 14},
     {"_asSeq2_Rcpp_trecase_BFGS", (DL_FUNC) &_asSeq2_Rcpp_trecase_BFGS, 16},
     {"_asSeq2_Rcpp_trecase", (DL_FUNC) &_asSeq2_Rcpp_trecase, 15},
-    {"_asSeq2_Rcpp_trecase_mtest", (DL_FUNC) &_asSeq2_Rcpp_trecase_mtest, 20},
     {"_asSeq2_Rcpp_ase_mtest", (DL_FUNC) &_asSeq2_Rcpp_ase_mtest, 15},
+    {"_asSeq2_Rcpp_trecase_mtest", (DL_FUNC) &_asSeq2_Rcpp_trecase_mtest, 20},
     {NULL, NULL, 0}
 };
 

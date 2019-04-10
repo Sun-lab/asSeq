@@ -152,39 +152,41 @@ c(time2-time1, time3-time2)
 #-------------------------------------------------------------
 mat = NULL
 
-for(pis in c(1:9*0.1)){
-  aa  = Rcpp_loglikBB(ni, ni0, pis, log(theta),lbc, zeta)
+for(bxj in c(-1, -5, -10, 5, 10, 20)){
+  pis = exp(bxj)/(1+exp(bxj))
+  aa  = Rcpp_loglikBB(ni, ni0, bxj, log(theta),lbc, zeta)
   bb  = logH1(c(theta, pis), ni0, ni, zeta)
   mat = rbind(mat, c(aa,bb))
 }
 mat
 mat[,2] - mat[,1]
 
-Rcpp_loglikBB(ni, ni0, 0.5, log(theta),lbc, zeta)
+Rcpp_loglikBB(ni, ni0, 0.0, log(theta),lbc, zeta)
 logH0(c(theta, pis), ni0, ni)
 logH1(c(theta, 0.5), ni0, ni, zeta)
 
-Rcpp_ase_grad(ni, ni0, Pi, log(theta), zeta)
-Rcpp_ase_grad_H0(ni, ni0, Pi, log(theta), zeta)
+bxj = 0.5; Pi = exp(bxj)/(1+exp(bxj)) 
+Rcpp_ase_grad(ni, ni0, bxj, log(theta), zeta)
+Rcpp_ase_grad_H0(ni, ni0,bxj, log(theta), zeta)
 gradLogH1(c(theta, Pi), ni0, ni, zeta)
-Rcpp_ase_grad_Pi(ni, ni0, Pi, log(theta), zeta)
+Rcpp_ase_grad_Pi(ni, ni0, bxj, log(theta), zeta)
 
-Rcpp_ase_grad_H0(ni, ni0, 0.5, log(theta), zeta)
+Rcpp_ase_grad_H0(ni, ni0, 0.0, log(theta), zeta)
 gradLogH0(c(theta, 0.5), ni0, ni)
 
 # Rcpp_ase_hess(ni, ni0, 0.51602267, 0.06677156, zeta)
 
 par0 = 0.1
-Rcpp_ase_BFGS(ni, ni0, zeta, log(par0), lbc, max_iter = 4000L,
-              eps = 1e-5, show = TRUE)
-Rcpp_ase_theta_BFGS(ni, ni0, zeta, 0.5, log(par0), lbc, max_iter = 4000L,
+# Rcpp_ase_BFGS(ni, ni0, zeta, log(par0), lbc, max_iter = 4000L,
+#               eps = 1e-5, show = TRUE)
+Rcpp_ase_theta_BFGS(ni, ni0, zeta, 0.0, log(par0), lbc, max_iter = 4000L,
               eps = 1e-5, show = TRUE)
 op0  = optim(par0, logH0, gr=gradLogH0, nA=ni0, nTotal=ni,
              method="L-BFGS-B", lower=1e-16, upper=Inf,
              control=list(fnscale=-1))
-op0
+log(op0$par)
 
-Rcpp_ase_BFGS(ni, ni0, zeta, c(0.5, -2.705298513+0.2), lbc, max_iter = 4000L,
+Rcpp_ase_BFGS(ni, ni0, zeta, c(0.0, -2.705298513+0.2), lbc, max_iter = 4000L,
               eps = 5e-5, show = TRUE)
 optim(c(op0$par, 0.5), logH1, gr=gradLogH1, nA=ni0, nTotal=ni, zeta=zeta,
       method="L-BFGS-B", lower=c(0,0) + 1e-16, upper=c(Inf, 1-1e-16),
@@ -342,6 +344,8 @@ microbenchmark(
 #-------------------------------------------------------------
 # Rcpp wrapper
 #-------------------------------------------------------------
+setwd('/fh/fast/sun_w/licai/_tumor_eQTL/GitHub/asSeq/asSeq2/_test')
+
 geneloc = data.frame(gene = paste0('gene', 1:2), chr = 1:2, start = c(1, 1e8),
                      end = c(1, 1e8)+1000, stringsAsFactors = F)
 geneloc
@@ -359,10 +363,9 @@ Y1 = cbind(y1,y1)
 Y2 = cbind(y2,y2)
 
 
-
 library(asSeq2)
 time1 = Sys.time()
-trecase(Y, Y1, Y2, ZZ, XX, SNPloc, geneloc, fam_nb = T,eps=1e-8, show = F)
+trecase(Y, Y1, Y2 , ZZ, XX, SNPloc, geneloc, fam_nb = T,eps=5e-5, show = F, useASE = 1)
 time2 = Sys.time()
 time2-time1
 
@@ -380,5 +383,26 @@ trec(Y, XX[,-1], ZZ3, "output_trec", 1, local.distance = 1e+05,
 time2 = Sys.time()
 time2-time1
 
+ZZ3 = ZZ
+ZZ3[ZZ==3] = 4
+ZZ3[ZZ==2] = 3
+time1 = Sys.time()
+asSeq:::trecase(Y, Y1, Y2, XX[,-1], ZZ3, "output_trecase", 1, local.distance = 1e+05,
+     eChr=geneloc[,2], ePos=geneloc[,4], mChr=SNPloc[,2], mPos=SNPloc[,3], 
+     min.AS.reads = 8, min.AS.sample = 10)
+time2 = Sys.time()
+time2-time1
+
 TrecFastTest:::trec_fast(Y, XX[,-1], ZZ3, "output_trec", 1, local.distance = 1e+05,
                          eChr=geneloc[,2], ePos=geneloc[,4], mChr=SNPloc[,2], mPos=SNPloc[,3])
+
+
+
+as2 = read.table("trecase.txt", header = T)
+table(as2$Converge)
+as1 = read.table("output_trecase_eqtl.txt", header = T)
+plot(as2$CisTrans_Pvalue, as1$trans_Pvalue)
+plot(as2$CisTrans_Chisq, as1$trans_Chisq)
+plot(as2$Joint_Pvalue, as1$Joint_Pvalue)
+as1[which(as2$CisTrans_Chisq > 30),]
+as2[which(as2$CisTrans_Chisq > 30),]
