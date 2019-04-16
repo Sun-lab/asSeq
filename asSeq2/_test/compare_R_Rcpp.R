@@ -370,7 +370,7 @@ time2 = Sys.time()
 time2-time1
 
 time1 = Sys.time()
-ase(Y1, Y2, ZZ, geneloc,SNPloc, "ase.txt")
+ase(Y1, Y2, ZZ, geneloc,SNPloc, "ase.txt", eps=5e-5)
 time2 = Sys.time()
 time2-time1
 
@@ -401,6 +401,7 @@ TrecFastTest:::trec_fast(Y, XX[,-1], ZZ3, "output_trec", 1, local.distance = 1e+
 as2 = read.table("trecase.txt", header = T)
 table(as2$Converge)
 as1 = read.table("output_trecase_eqtl.txt", header = T)
+dim(as1)
 plot(as2$CisTrans_Pvalue, as1$trans_Pvalue)
 plot(as2$CisTrans_Chisq, as1$trans_Chisq)
 plot(as2$Joint_Pvalue, as1$Joint_Pvalue)
