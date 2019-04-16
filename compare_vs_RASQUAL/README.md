@@ -7,13 +7,22 @@ the files in this folder is under active updating and please do not use them for
 
 1. Add code to run RASQUAL for simulaiton 
 
+- added this code to rasqual_simu folder
+
 2. Add simulation code to simulate data with beta-binomial variation within individual. 
+
+- updated the package to allow simuX function to simulate within individual over-dispersion provided as an extra parameter (old code should still work)
 
 3. Add the code to real data anlaysis, such as orginal data and permutated data in folder asSeq/pipeline_1KGP/
 
+- finishing uploading real data analysis using RASQUAL
+
 4. Add description of simulaiton setup in Supplementary materails. Refine the writting in simulation sections, particular the last two sections. 
 
+- added some simulation setup and extended next sections, will look at it again and add one more iteration
+
 5. For figures of Fisher information matrix, add the code to generate data, modify the figures to replace “as-cnt” with ASReC, and for the panel with OD as title while you are actually looking at rho, you can use OD (rho) instead of OD.
+- changed, also changed "hessian" label to "information"
 
 6. Compare matrixEQTL vs. TReCASE in asSeq2 in real data. Use 200kb is fine.  For real data anlaysis pipeline, we may consider a screening step using matrixEQTL. We do not want to run TReCASE for every gene and every SNP since it is time consuming. So first run matrixEQTL and only keep the asossocaitons with p-value < 0.1, and run TReCASE for those cases. To evaluate whehter such screening step makes sense, we will actualy run matirxEQTL and TReCASE for all gene,SNP pairs and compare results. When running matrixEQTL, first quantile normalize gene expression gene by gene, and thus matrixEQTL results is somewhat a rubust version of linear regression that use data quantiles rather than the raw data. Use the code in asSeq/pipeline_1KGP/quantile_transformation.R. We will see sometime TReCASE give significant association, but matrixEQTL does not. This is often the case with outlier. So we should discard those associaitons. 
 
