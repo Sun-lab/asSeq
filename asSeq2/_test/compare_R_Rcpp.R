@@ -401,9 +401,11 @@ TrecFastTest:::trec_fast(Y, XX[,-1], ZZ3, "output_trec", 1, local.distance = 1e+
 as2 = read.table("trecase.txt", header = T)
 table(as2$Converge)
 as1 = read.table("output_trecase_eqtl.txt", header = T)
+head(as1)
 dim(as1)
+table(is.na(as1$Joint_Pvalue))
 plot(as2$CisTrans_Pvalue, as1$trans_Pvalue)
 plot(as2$CisTrans_Chisq, as1$trans_Chisq)
 plot(as2$Joint_Pvalue, as1$Joint_Pvalue)
-as1[which(as2$CisTrans_Chisq > 30),]
-as2[which(as2$CisTrans_Chisq > 30),]
+plot(as2$ASE_Pvalue, as1$ASE_Pvalue)
+plot(as2$TReC_Pvalue, as1$TReC_Pvalue)
