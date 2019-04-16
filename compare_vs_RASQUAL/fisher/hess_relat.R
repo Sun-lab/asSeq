@@ -1,4 +1,3 @@
-library(numDeriv)
 library(VGAM)
 source("fishercl.R")
 
@@ -46,6 +45,7 @@ par4[1:5,]
 #par3[par3<0]=0
 #par3[par3>10]=10
 par3[1,4]=1e10
+cols = c("black", "blue", "goldenrod", "red")
 png(sprintf("sd_by_asc_1ind_%s.png", phi), height=4, width=8, units="in", res=300)
 par(mfrow=c(1,2))
 ind1 = 1:nas
@@ -155,7 +155,7 @@ par(mfrow=c(1,2))
 ylim=range(c(log10(par1[ind1,])), na.rm=T);ylim[ylim<0]=0
 i = 1
 x = log10(par1[ind1,i]); x[x < 0] = 0
-plot(ind1, x, type="l", col=cols[i], bty="n", main="OD(rho)", ylab="hessian", xlab="ASReC/SNP @ 8 SNP scenario", ylim=ylim, xlim=c(1,20)) 
+plot(ind1, x, type="l", col=cols[i], bty="n", main="OD(rho)", ylab="information", xlab="ASReC/SNP @ 8 SNP scenario", ylim=ylim, xlim=c(1,20)) 
 axis(1, at=c(1,5), labels=c(1,5))
 abline(v=1, lty=3, col="grey")
 for(i in 2:4){
@@ -167,7 +167,7 @@ legend("bottomright", legend=c("1 SNP", "2 SNP", "4 SNP", "8 SNP"), bty="n", tex
 i = 1
 ylim=range(c(log10(par2[ind1,])), na.rm=T)
 x = log10(par2[ind1,i]); x[x < 0] = 0
-plot(ind1, x, type="l", col=cols[i], bty="n", main="eQTL(prop)", ylab="hessian", xlab="ASReC/SNP @ 8 SNP scenario", ylim=ylim, xlim=c(1,20)) 
+plot(ind1, x, type="l", col=cols[i], bty="n", main="eQTL(prop)", ylab="information", xlab="ASReC/SNP @ 8 SNP scenario", ylim=ylim, xlim=c(1,20)) 
 axis(1, at=c(1,5), labels=c(1,5))
 abline(v=1, lty=3, col="grey")
 for(i in 2:4){
@@ -183,7 +183,7 @@ par(mfrow=c(1,2))
 i = 1
 ylim=range(c((par1[ind1,])), na.rm=T)
 x = (par1[ind1,i]); x[x < 0] = 0
-plot(ind1, x, type="l", col=cols[i], bty="n", main="OD(rho)", ylab="hessian", xlab="ASReC", ylim=ylim, xlim=c(1,20)) 
+plot(ind1, x, type="l", col=cols[i], bty="n", main="OD(rho)", ylab="information", xlab="ASReC/SNP @ 8 SNP scenario", ylim=ylim, xlim=c(1,20)) 
 axis(1, at=c(1,5), labels=c(1,5))
 abline(v=1, lty=3, col="grey")
 for(i in 2:4){
@@ -195,7 +195,7 @@ legend("topleft", legend=c("1 SNP", "2 SNP", "4 SNP", "8 SNP"), bty="n", text.co
 i = 1
 ylim=range(c((par2[ind1,])), na.rm=T)
 x = (par2[ind1,i]); x[x < 0] = 0
-plot(ind1, x, type="l", col=cols[i], bty="n", main="eQTL(prop)", ylab="hessian", xlab="ASReC/SNP @ 8 SNP scenario", ylim=ylim, xlim=c(1,20)) 
+plot(ind1, x, type="l", col=cols[i], bty="n", main="eQTL(prop)", ylab="information", xlab="ASReC/SNP @ 8 SNP scenario", ylim=ylim, xlim=c(1,20)) 
 axis(1, at=c(1,5), labels=c(1,5))
 abline(v=1, lty=3, col="grey")
 for(i in 2:4){
