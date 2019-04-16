@@ -1094,7 +1094,8 @@ arma::vec Rcpp_ase_grad(const arma::vec& ni, const arma::vec& ni0,
   double diaa   = R::digamma(aa);
   double dibb   = R::digamma(bb);
   double divt   = R::digamma(vtheta);
-
+  double divt2  = R::digamma(0.5*vtheta);
+  
   //Pi = 0.5
   double diaa_ni0, dibb_ni1;
 
@@ -1119,12 +1120,11 @@ arma::vec Rcpp_ase_grad(const arma::vec& ni, const arma::vec& ni0,
       //dlase_theta
       grad.at(1) += - 0.5 * R::digamma(0.5*vtheta + ni0.at(ii))
       - 0.5 * R::digamma(0.5*vtheta + ni.at(ii) - ni0.at(ii)) +
-        R::digamma(0.5*vtheta) -
-        (divt - R::digamma(vtheta + ni.at(ii)));
+        divt2 - (divt - R::digamma(vtheta + ni.at(ii)));
     }
     //printR_obj(grad.at(1));
   }
-  grad.at(0) *= vtheta * std::exp(bxj)/pow((1.0 + std::exp(bxj)), 2.0);
+  grad.at(0) *= vtheta * Pi1/(1.0 + std::exp(bxj)) ;
   grad.at(1) *= pow(vtheta, 2.0);
 
   return grad;
@@ -1164,7 +1164,7 @@ double Rcpp_ase_grad_Pi(const arma::vec& ni, const arma::vec& ni0,
     // }
     //printR_obj(grad.at(1));
   }
-  grad *= vtheta * std::exp(bxj)/pow((1.0 + std::exp(bxj)), 2.0);
+  grad *= vtheta * Pi1/(1.0 + std::exp(bxj)) ;
 
   return grad;
 }
@@ -1183,7 +1183,7 @@ double Rcpp_ase_grad_H0(const arma::vec& ni, const arma::vec& ni0,
   double diaa   = R::digamma(aa);
   double dibb   = R::digamma(bb);
   double divt   = R::digamma(vtheta);
-
+  double divt2  = R::digamma(0.5*vtheta);
   //Pi = 0.5
   double diaa_ni0, dibb_ni1;
 
@@ -1202,8 +1202,7 @@ double Rcpp_ase_grad_H0(const arma::vec& ni, const arma::vec& ni0,
       //dlase_theta
       grad += - 0.5 * R::digamma(0.5*vtheta + ni0.at(ii))
       - 0.5 * R::digamma(0.5*vtheta + ni.at(ii) - ni0.at(ii)) +
-        R::digamma(0.5*vtheta) -
-        (divt - R::digamma(vtheta + ni.at(ii)));
+        divt2 - (divt - R::digamma(vtheta + ni.at(ii)));
     }
 
   }
