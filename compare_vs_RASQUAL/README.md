@@ -8,14 +8,20 @@ the files in this folder is under active updating and please do not use them for
 1. Add code to run RASQUAL for simulaiton 
 
 - added this code to rasqual_simu folder
+- Add some more comments to explain the code rasqual_simu/simur.R. For example, what does it mean for the three options to run rasqual
+- Add a readme file for how to use RASQUAL, for example, add the basic explanaion of RASQUAL parameters and eplain the choice of parameteration for each type of run, e.g., using total read count or both TReC and ASE. 
 
 2. Add simulation code to simulate data with beta-binomial variation within individual. 
 
 - updated the package to allow simuX function to simulate within individual over-dispersion provided as an extra parameter (old code should still work)
+- Should add the explanation of simuX function to readme of simulation and vignette of rcppeqtl. 
 
 3. Add the code to real data anlaysis, such as orginal data and permutated data in folder asSeq/pipeline_1KGP/
 
 - finishing uploading real data analysis using RASQUAL
+- add a readme in folder asSeq/pipeline_1KGP/runRASQUAL/ to explain the purpose of each R file. For example, mention that it is better to run RASQUAL gene by gene. 
+- add the code to generate vcf file.
+- try to add some (pseudo) input file, i.e., a complete vcf file and a bam file of a few genes
 
 4. Add description of simulaiton setup in Supplementary materails. Refine the writting in simulation sections, particular the last two sections. 
 
