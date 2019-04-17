@@ -1825,7 +1825,7 @@ Rcpp::List Rcpp_trecase(const arma::vec& y, const arma::mat& X,
   // }
   //ase fit (initial theta fit)
   ase_fit = Rcpp_ase(ni, ni0, zeta, lbc, max_iter, eps, false);
-
+  double aselrt = as<double>(ase_fit["lrt"]);
   curr_lg_theta = as<double>(ase_fit["par0"]);
   LL0 = as<double>(ase_fit["LL0"]);
 
@@ -1843,10 +1843,21 @@ Rcpp::List Rcpp_trecase(const arma::vec& y, const arma::mat& X,
   BETA    = curr_reg_par.subvec(0, X.n_cols-1);
   phi     = std::exp(curr_reg_par.at(pp-1));
   
-  // if(as<int>(ase_fit["converge"]) !=1 && show){
-  //   printR_obj("ase fit dose not converge");
-  // }
-  
+  if(as<int>(ase_fit["converge"]) !=1 | as<int>(trec_fit["converge"]) !=1){
+    return Rcpp::List::create(
+      Rcpp::Named("ASE_par", ase_fit["par"]),
+      Rcpp::Named("ASE_lrt", aselrt),
+      Rcpp::Named("ASE_pval", R::pchisq(aselrt, 1, 0, 0)),
+      Rcpp::Named("ASE_converge", as<int>(ase_fit["converge"]) ),
+      Rcpp::Named("Trec_converge", as<int>(trec_fit["converge"])),
+      Rcpp::Named("reg_par", Rcpp::NumericVector(new_reg_par.begin(), new_reg_par.end())),
+      Rcpp::Named("converge", 0),
+      Rcpp::Named("Trec_lrt", trec_fit["lrt"]),
+      Rcpp::Named("Trec_pval", trec_fit["pvalue"]),
+      Rcpp::Named("Trec_bxj", curr_bxj),
+      Rcpp::Named("Trec_reg_par", trec_fit["reg_par"]));
+  }
+
   //printR_obj(curr_reg_par);
   while(iter1 < max_iter){
 
@@ -1898,8 +1909,8 @@ Rcpp::List Rcpp_trecase(const arma::vec& y, const arma::mat& X,
           Rcpp_norm(curr_reg_par - new_reg_par) < eps &&
           std::abs(curr_bxj - new_bxj) < eps &&
           std::abs(curr_lg_theta - new_lg_theta) < eps){
-        if(((curr_LL - new_LL > 0.0 && as<double>(new_reg["norm_GRAD"]) > 0.01))
-             | as<int>(ase_fit["converge"]) != 1 ){
+        if(((curr_LL - new_LL > 0.0 && 
+           as<double>(new_reg["norm_GRAD"]) > 0.01)) ){
           // magnitude of log-like decrease is samll but gradient is large
           // still consider not converged
           converge = 0;
@@ -1924,11 +1935,11 @@ Rcpp::List Rcpp_trecase(const arma::vec& y, const arma::mat& X,
     Rprintf("TReCASE done after %d iter \n", iter1);
   }  
   return Rcpp::List::create(
-    //Rcpp::Named("ase_par", ase_fit["PAR"]),
-    //Rcpp::Named("ASE_lrt", ase_fit["lrt"]),
-    //Rcpp::Named("ASE_pval", R::pchisq(aseLrt, 1, 0, 0)),
+    Rcpp::Named("ASE_par", ase_fit["par"]),
+    Rcpp::Named("ASE_lrt", aselrt),
+    Rcpp::Named("ASE_pval", R::pchisq(aselrt, 1, 0, 0)),
     Rcpp::Named("ASE_converge", as<int>(ase_fit["converge"]) ),
-    Rcpp::Named("converge", converge),
+    Rcpp::Named("Trec_converge", as<int>(trec_fit["converge"])),
     Rcpp::Named("bxj", new_bxj),
     Rcpp::Named("lg_theta", new_lg_theta),
     Rcpp::Named("reg_par", Rcpp::NumericVector(new_reg_par.begin(), new_reg_par.end())),
@@ -2300,6 +2311,8 @@ void Rcpp_ase_mtest(const arma::mat& Y1, const arma::mat& Y2,
 
 /*
  * run all gene-snp pair for trec / trecase 
+ * Fail code: 2: ASE does not converge, 4 TReC does not converge, 
+ * 6 both ASE and TReC do not converge. 0 TReCASE does not converge.
  */
 // [[Rcpp::export]]
 void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
@@ -2337,6 +2350,7 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
     if(fam_nb){
       fprintf(f2, "TReC_phi\t");
     }
+    fprintf(f2,"ASE_b\tASE_theta\tASE_Chisq\tASE_Pvalue\t");
     fprintf(f2, "Joint_b\tJoint_Chisq\tJoint_Pvalue\t");
     for(xi=0;xi<XX.n_cols;xi++){
       fprintf(f2, "Joint_beta%d\t", xi);
@@ -2350,7 +2364,7 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
     
     f1 = fopen(file_trec, "w");
     
-    fprintf(f1, "GeneRowID\tMarkerRowID\tTReC_b\tTReC_Chisq\tTReC_Pvalue\tTreC_Conv\t");
+    fprintf(f1, "GeneRowID\tMarkerRowID\tTReC_b\tTReC_Chisq\tTReC_Pvalue\tTReC_Conv\t");
     for(xi=0;xi<XX.n_cols;xi++){
       fprintf(f1, "beta%d\t", xi);
     }
@@ -2467,22 +2481,26 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
                                    ini_reg_par, max_iter, eps, show) ;
         NumericVector Trec_reg_pars = res_trecase["Trec_reg_par"];
         NumericVector Trecase_reg_pars = res_trecase["reg_par"];
-        
-        if(as<int>(res_trecase["converge"]) != 1){
-          if(as<int>(res_trecase["ASE_converge"]) != 1){
-            Rprintf("ASE model for snp %d does not converge \n",
-                    ss+1);
-          }else{
-            Rprintf("TReCASE model for snp %d does not converge \n",
+        NumericVector ase_par = res_trecase["ASE_par"];
+        int trecase_conver = as<int>(res_trecase["converge"]);
+        // if(trecase_conver != 1){
+        //   Rprintf("TReCASE model for snp %d does not converge \n",
+        //           ss+1);
+        //   }
+        if(as<int>(res_trecase["ASE_converge"]) != 1){
+          Rprintf("ASE model for snp %d does not converge \n",
                   ss+1);
+          trecase_conver += 2;
           }
-
+        if(as<int>(res_trecase["Trec_converge"]) != 1){
+          Rprintf("TReC model for snp %d does not converge \n",
+                  ss+1);
+          trecase_conver += 4;
+          
         }
-
         // write out trec result
         // printR_obj(as<int>(res_trecase["converge"]));
         // printR_obj("TRECASE");
-        
         fprintf(f2, "%d\t%d\t%.2e\t%.2e\t%.4e\t",
                 gg+1,ss+1, as<double>(res_trecase["Trec_bxj"]),
                 as<double>(res_trecase["Trec_lrt"]),
@@ -2493,6 +2511,20 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
         if(fam_nb){
           fprintf(f2, "%.2e\t", exp(Trec_reg_pars[XX.n_cols]));
         }
+        fprintf(f2,"%.2e\t%.2e\t%.2e\t%.4e\t", 
+                ase_par[0], exp(ase_par[1]), 
+                as<double>(res_trecase["ASE_lrt"]), 
+                as<double>(res_trecase["ASE_pval"]) );
+        if(trecase_conver != 1){
+          fprintf(f2, "NA\tNA\tNA\t");
+          for(xi=0;xi<XX.n_cols;xi++){
+            fprintf(f2, "NA\t");
+          }
+          if(fam_nb){
+            fprintf(f2, "NA\t");
+          }
+          fprintf(f2, "NA\t%d\tNA\tNA\n", trecase_conver);
+        }else{        
         fprintf(f2, "%.2e\t%.2e\t%.4e\t",
                 as<double>(res_trecase["bxj"]),
                 as<double>(res_trecase["lrt"]),
@@ -2505,11 +2537,11 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
         }
         fprintf(f2, "%.2e\t%d\t%.2e\t%.4e\n",
                 exp(as<double>(res_trecase["lg_theta"])),
-                as<int>(res_trecase["converge"]),
+                trecase_conver,
                 as<double>(res_trecase["CisTrans_lrt"]),
                 as<double>(res_trecase["CisTrans_pval"]) );
         
-      }
+      }}
       
     }else{
       for(ii=0;ii<nSam;ii++){
