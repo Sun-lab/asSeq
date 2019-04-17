@@ -1,11 +1,4 @@
-#module add tabix;module add gcc;module add gsl;module add r;
-#export PATH=/nas/longleaf/home/zhabotyn/progs/rasqual-master/bin/:$PATH
-#module remove gcc
-#module add gcc/4.8.1
-#b0 = 1;b1 = 2; sz = 1
-
-#niter = 1e3
-queue = "general"
+#niter = 1e1
 niter=1e4
 ssi = c(3:1)
 b0i = c(0, .125,.25,.5, 1)
@@ -14,6 +7,7 @@ od = c(0.01, 0.10, 0.5, 2)
 #b0i = c(0, .5, 1);div=c(1, Inf); od=c(0.01, 0.5)
 if(!file.exists("rasq"))dir.create("rasq")
 if(!file.exists("rout"))dir.create("rout")
+queue = "general"
 
 days = 7
 mem = 8
