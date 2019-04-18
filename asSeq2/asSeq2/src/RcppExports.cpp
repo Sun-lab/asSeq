@@ -507,28 +507,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// Rcpp_ase_theta_BFGS2
-Rcpp::List Rcpp_ase_theta_BFGS2(const arma::vec& ni, const arma::vec& ni0, const arma::vec& zeta, const double& bxj, const double& lg_theta, const arma::vec& lbc, const arma::uword& max_iter, const double& eps, const bool& show);
-RcppExport SEXP _asSeq2_Rcpp_ase_theta_BFGS2(SEXP niSEXP, SEXP ni0SEXP, SEXP zetaSEXP, SEXP bxjSEXP, SEXP lg_thetaSEXP, SEXP lbcSEXP, SEXP max_iterSEXP, SEXP epsSEXP, SEXP showSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::vec& >::type ni(niSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type ni0(ni0SEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type zeta(zetaSEXP);
-    Rcpp::traits::input_parameter< const double& >::type bxj(bxjSEXP);
-    Rcpp::traits::input_parameter< const double& >::type lg_theta(lg_thetaSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type lbc(lbcSEXP);
-    Rcpp::traits::input_parameter< const arma::uword& >::type max_iter(max_iterSEXP);
-    Rcpp::traits::input_parameter< const double& >::type eps(epsSEXP);
-    Rcpp::traits::input_parameter< const bool& >::type show(showSEXP);
-    rcpp_result_gen = Rcpp::wrap(Rcpp_ase_theta_BFGS2(ni, ni0, zeta, bxj, lg_theta, lbc, max_iter, eps, show));
-    return rcpp_result_gen;
-END_RCPP
-}
 // Rcpp_ase
-Rcpp::List Rcpp_ase(const arma::vec& ni, const arma::vec& ni0, const arma::vec& zeta, const arma::vec& lbc, const arma::uword& max_iter, const double& eps, const bool& show);
-RcppExport SEXP _asSeq2_Rcpp_ase(SEXP niSEXP, SEXP ni0SEXP, SEXP zetaSEXP, SEXP lbcSEXP, SEXP max_iterSEXP, SEXP epsSEXP, SEXP showSEXP) {
+Rcpp::List Rcpp_ase(const arma::vec& ni, const arma::vec& ni0, const arma::vec& zeta, const arma::vec& lbc, const double& theta0, const double& LL_null_ase, const arma::uword& max_iter, const double& eps, const bool& show);
+RcppExport SEXP _asSeq2_Rcpp_ase(SEXP niSEXP, SEXP ni0SEXP, SEXP zetaSEXP, SEXP lbcSEXP, SEXP theta0SEXP, SEXP LL_null_aseSEXP, SEXP max_iterSEXP, SEXP epsSEXP, SEXP showSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -536,10 +517,12 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::vec& >::type ni0(ni0SEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type zeta(zetaSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type lbc(lbcSEXP);
+    Rcpp::traits::input_parameter< const double& >::type theta0(theta0SEXP);
+    Rcpp::traits::input_parameter< const double& >::type LL_null_ase(LL_null_aseSEXP);
     Rcpp::traits::input_parameter< const arma::uword& >::type max_iter(max_iterSEXP);
     Rcpp::traits::input_parameter< const double& >::type eps(epsSEXP);
     Rcpp::traits::input_parameter< const bool& >::type show(showSEXP);
-    rcpp_result_gen = Rcpp::wrap(Rcpp_ase(ni, ni0, zeta, lbc, max_iter, eps, show));
+    rcpp_result_gen = Rcpp::wrap(Rcpp_ase(ni, ni0, zeta, lbc, theta0, LL_null_ase, max_iter, eps, show));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -618,8 +601,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // Rcpp_trecase
-Rcpp::List Rcpp_trecase(const arma::vec& y, const arma::mat& X, const arma::vec& z, const bool& fam_nb, const arma::vec& lgy1, const arma::vec& ni, const arma::vec& ni0, const arma::vec& zeta, const arma::vec& lbc, const double& ini_bxj, const double& LL_null, Rcpp::Nullable<Rcpp::NumericVector> ini_reg_par, const arma::uword& max_iter, const double& eps, const bool& show);
-RcppExport SEXP _asSeq2_Rcpp_trecase(SEXP ySEXP, SEXP XSEXP, SEXP zSEXP, SEXP fam_nbSEXP, SEXP lgy1SEXP, SEXP niSEXP, SEXP ni0SEXP, SEXP zetaSEXP, SEXP lbcSEXP, SEXP ini_bxjSEXP, SEXP LL_nullSEXP, SEXP ini_reg_parSEXP, SEXP max_iterSEXP, SEXP epsSEXP, SEXP showSEXP) {
+Rcpp::List Rcpp_trecase(const arma::vec& y, const arma::mat& X, const arma::vec& z, const bool& fam_nb, const arma::vec& lgy1, const arma::vec& ni, const arma::vec& ni0, const arma::vec& zeta, const arma::vec& lbc, const double& ini_bxj, const double& LL_null, Rcpp::Nullable<Rcpp::NumericVector> ini_reg_par, const double& theta0, const double& LL_null_ase, const arma::uword& max_iter, const double& eps, const bool& show);
+RcppExport SEXP _asSeq2_Rcpp_trecase(SEXP ySEXP, SEXP XSEXP, SEXP zSEXP, SEXP fam_nbSEXP, SEXP lgy1SEXP, SEXP niSEXP, SEXP ni0SEXP, SEXP zetaSEXP, SEXP lbcSEXP, SEXP ini_bxjSEXP, SEXP LL_nullSEXP, SEXP ini_reg_parSEXP, SEXP theta0SEXP, SEXP LL_null_aseSEXP, SEXP max_iterSEXP, SEXP epsSEXP, SEXP showSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -635,10 +618,12 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const double& >::type ini_bxj(ini_bxjSEXP);
     Rcpp::traits::input_parameter< const double& >::type LL_null(LL_nullSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type ini_reg_par(ini_reg_parSEXP);
+    Rcpp::traits::input_parameter< const double& >::type theta0(theta0SEXP);
+    Rcpp::traits::input_parameter< const double& >::type LL_null_ase(LL_null_aseSEXP);
     Rcpp::traits::input_parameter< const arma::uword& >::type max_iter(max_iterSEXP);
     Rcpp::traits::input_parameter< const double& >::type eps(epsSEXP);
     Rcpp::traits::input_parameter< const bool& >::type show(showSEXP);
-    rcpp_result_gen = Rcpp::wrap(Rcpp_trecase(y, X, z, fam_nb, lgy1, ni, ni0, zeta, lbc, ini_bxj, LL_null, ini_reg_par, max_iter, eps, show));
+    rcpp_result_gen = Rcpp::wrap(Rcpp_trecase(y, X, z, fam_nb, lgy1, ni, ni0, zeta, lbc, ini_bxj, LL_null, ini_reg_par, theta0, LL_null_ase, max_iter, eps, show));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -729,12 +714,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_asSeq2_Rcpp_ase_grad_H0", (DL_FUNC) &_asSeq2_Rcpp_ase_grad_H0, 5},
     {"_asSeq2_Rcpp_ase_BFGS", (DL_FUNC) &_asSeq2_Rcpp_ase_BFGS, 8},
     {"_asSeq2_Rcpp_ase_theta_BFGS", (DL_FUNC) &_asSeq2_Rcpp_ase_theta_BFGS, 9},
-    {"_asSeq2_Rcpp_ase_theta_BFGS2", (DL_FUNC) &_asSeq2_Rcpp_ase_theta_BFGS2, 9},
-    {"_asSeq2_Rcpp_ase", (DL_FUNC) &_asSeq2_Rcpp_ase, 7},
+    {"_asSeq2_Rcpp_ase", (DL_FUNC) &_asSeq2_Rcpp_ase, 9},
     {"_asSeq2_Rcpp_trecase_LL", (DL_FUNC) &_asSeq2_Rcpp_trecase_LL, 14},
     {"_asSeq2_Rcpp_trecase_grad_bxj", (DL_FUNC) &_asSeq2_Rcpp_trecase_grad_bxj, 14},
     {"_asSeq2_Rcpp_trecase_BFGS", (DL_FUNC) &_asSeq2_Rcpp_trecase_BFGS, 16},
-    {"_asSeq2_Rcpp_trecase", (DL_FUNC) &_asSeq2_Rcpp_trecase, 15},
+    {"_asSeq2_Rcpp_trecase", (DL_FUNC) &_asSeq2_Rcpp_trecase, 17},
     {"_asSeq2_Rcpp_ase_mtest", (DL_FUNC) &_asSeq2_Rcpp_ase_mtest, 15},
     {"_asSeq2_Rcpp_trecase_mtest", (DL_FUNC) &_asSeq2_Rcpp_trecase_mtest, 20},
     {NULL, NULL, 0}

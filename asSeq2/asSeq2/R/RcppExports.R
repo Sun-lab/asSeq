@@ -129,12 +129,8 @@ Rcpp_ase_theta_BFGS <- function(ni, ni0, zeta, bxj, lg_theta, lbc, max_iter = 4e
     .Call(`_asSeq2_Rcpp_ase_theta_BFGS`, ni, ni0, zeta, bxj, lg_theta, lbc, max_iter, eps, show)
 }
 
-Rcpp_ase_theta_BFGS2 <- function(ni, ni0, zeta, bxj, lg_theta, lbc, max_iter = 4e3L, eps = 1e-7, show = TRUE) {
-    .Call(`_asSeq2_Rcpp_ase_theta_BFGS2`, ni, ni0, zeta, bxj, lg_theta, lbc, max_iter, eps, show)
-}
-
-Rcpp_ase <- function(ni, ni0, zeta, lbc, max_iter = 4e3L, eps = 1e-7, show = TRUE) {
-    .Call(`_asSeq2_Rcpp_ase`, ni, ni0, zeta, lbc, max_iter, eps, show)
+Rcpp_ase <- function(ni, ni0, zeta, lbc, theta0 = 0.0, LL_null_ase = 0.0, max_iter = 4e3L, eps = 1e-7, show = TRUE) {
+    .Call(`_asSeq2_Rcpp_ase`, ni, ni0, zeta, lbc, theta0, LL_null_ase, max_iter, eps, show)
 }
 
 Rcpp_trecase_LL <- function(bxj, y, X, z, BETA, phi, fam_nb, lgy1, mu, ni, ni0, log_theta, lbc, zeta) {
@@ -149,8 +145,8 @@ Rcpp_trecase_BFGS <- function(bxj0, y, X, z, BETA, phi, fam_nb, lgy1, ni, ni0, l
     .Call(`_asSeq2_Rcpp_trecase_BFGS`, bxj0, y, X, z, BETA, phi, fam_nb, lgy1, ni, ni0, log_theta, lbc, zeta, max_iter, eps, show)
 }
 
-Rcpp_trecase <- function(y, X, z, fam_nb, lgy1, ni, ni0, zeta, lbc, ini_bxj = 0.0, LL_null = 0.0, ini_reg_par = NULL, max_iter = 4e3L, eps = 1e-7, show = FALSE) {
-    .Call(`_asSeq2_Rcpp_trecase`, y, X, z, fam_nb, lgy1, ni, ni0, zeta, lbc, ini_bxj, LL_null, ini_reg_par, max_iter, eps, show)
+Rcpp_trecase <- function(y, X, z, fam_nb, lgy1, ni, ni0, zeta, lbc, ini_bxj = 0.0, LL_null = 0.0, ini_reg_par = NULL, theta0 = 0.0, LL_null_ase = 0.0, max_iter = 4e3L, eps = 1e-7, show = FALSE) {
+    .Call(`_asSeq2_Rcpp_trecase`, y, X, z, fam_nb, lgy1, ni, ni0, zeta, lbc, ini_bxj, LL_null, ini_reg_par, theta0, LL_null_ase, max_iter, eps, show)
 }
 
 Rcpp_ase_mtest <- function(Y1, Y2, Z, SNP_pos, sChr, gene_start, gene_end, gChr, file_ase = "ase.txt", cis_window = 1e5, min_ASE_total = 8L, min_nASE = 10L, eps = 1e-5, max_iter = 4000L, show = FALSE) {
