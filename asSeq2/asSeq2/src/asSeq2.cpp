@@ -1856,21 +1856,21 @@ Rcpp::List Rcpp_trecase(const arma::vec& y, const arma::mat& X,
   BETA    = curr_reg_par.subvec(0, X.n_cols-1);
   phi     = std::exp(curr_reg_par.at(pp-1));
   
-  if(as<int>(ase_fit["converge"]) !=1 | as<int>(trec_fit["converge"]) !=1){
-    return Rcpp::List::create(
-      Rcpp::Named("ASE_par", ase_fit["par"]),
-      Rcpp::Named("ASE_lrt", aselrt),
-      Rcpp::Named("ASE_pval", R::pchisq(aselrt, 1, 0, 0)),
-      Rcpp::Named("ASE_converge", as<int>(ase_fit["converge"]) ),
-      Rcpp::Named("Trec_converge", as<int>(trec_fit["converge"])),
-      Rcpp::Named("reg_par", Rcpp::NumericVector(new_reg_par.begin(), new_reg_par.end())),
-      Rcpp::Named("converge", 0),
-      Rcpp::Named("Trec_lrt", trec_fit["lrt"]),
-      Rcpp::Named("Trec_pval", trec_fit["pvalue"]),
-      Rcpp::Named("Trec_bxj", curr_bxj),
-      Rcpp::Named("Trec_reg_par", trec_fit["reg_par"]));
-  }
-  
+  // if(as<int>(ase_fit["converge"]) !=1 | as<int>(trec_fit["converge"]) !=1){
+  //   return Rcpp::List::create(
+  //     Rcpp::Named("ASE_par", ase_fit["par"]),
+  //     Rcpp::Named("ASE_lrt", aselrt),
+  //     Rcpp::Named("ASE_pval", R::pchisq(aselrt, 1, 0, 0)),
+  //     Rcpp::Named("ASE_converge", as<int>(ase_fit["converge"]) ),
+  //     Rcpp::Named("Trec_converge", as<int>(trec_fit["converge"])),
+  //     Rcpp::Named("reg_par", Rcpp::NumericVector(new_reg_par.begin(), new_reg_par.end())),
+  //     Rcpp::Named("converge", 0),
+  //     Rcpp::Named("Trec_lrt", trec_fit["lrt"]),
+  //     Rcpp::Named("Trec_pval", trec_fit["pvalue"]),
+  //     Rcpp::Named("Trec_bxj", curr_bxj),
+  //     Rcpp::Named("Trec_reg_par", trec_fit["reg_par"]));
+  // }
+  // 
   //printR_obj(curr_reg_par);
   while(iter1 < max_iter){
     
@@ -2339,8 +2339,9 @@ void Rcpp_ase_mtest(const arma::mat& Y1, const arma::mat& Y2,
 
 /*
  * run all gene-snp pair for trec / trecase 
- * Fail code: 2: ASE does not converge, 4 TReC does not converge, 
- * 6 both ASE and TReC do not converge. 0 TReCASE does not converge.
+ * Fail code: 2: ASE does not converge, 4: TReC does not converge, 
+ * 6: both ASE and TReC do not converge. 0: TReCASE does not converge.
+ * 7: ASE NULL does not converge. 8: ASE NULL + TReC does not converge
  */
 // [[Rcpp::export]]
 void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
@@ -2360,6 +2361,7 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
   double nSam = Y.n_rows;
   double pp = XX.n_cols+fam_nb;
   double theta0, LL_null, LL_null_ase, ini_bxj;
+  int aseNull_conv;
   arma::vec y       = arma::zeros<arma::vec>(nSam);
   arma::vec y1      = arma::zeros<arma::vec>(nSam);
   arma::vec y2      = arma::zeros<arma::vec>(nSam);
@@ -2456,16 +2458,20 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
           h0++;
         }
       }
+      if(h0 < min_nASE){
+        aseNull_conv = 0;
+      }else{
+        Rcpp::List ase_Null = Rcpp_ase_theta_BFGS(ni.subvec(0, h0-1),
+                                                  ni0.subvec(0, h0-1), 
+                                                  zeta.subvec(0, h0-1),
+                                                  0.0, -2.0, lbc.subvec(0, h0-1), 
+                                                  max_iter, eps, show);
+        theta0 = exp(as<double>(ase_Null["PAR"]));
+        LL_null_ase = as<double>(ase_Null["LL"]);
+        aseNull_conv = as<int>(ase_Null["converge"]) ;
+      }
       
-      Rcpp::List ase_Null = Rcpp_ase_theta_BFGS(ni.subvec(0, h0-1),
-                                                ni0.subvec(0, h0-1), 
-                                                zeta.subvec(0, h0-1),
-                                                0.0, -2.0, lbc.subvec(0, h0-1), 
-                                                max_iter, eps, show);
-      theta0 = exp(as<double>(ase_Null["PAR"]));
-      LL_null_ase = as<double>(ase_Null["LL"]);
-      
-      if(as<int>(ase_Null["converge"]) != 1){
+      if(aseNull_conv != 1){
         Rprintf("baseline ASE for gene %d model does not converge \n",
                 gg+1);
         //continue;
@@ -2490,7 +2496,7 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
         arma::vec zz2 = Z.col(ss);
         arma::vec zz  = Z.col(ss);
         
-        if(useASE){
+        if(useASE & aseNull_conv){
           
           arma::vec zz2 = Z.col(ss);
           zeta.zeros();
@@ -2517,9 +2523,39 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
             }
           }
           
-          if(h1 < min_nASE){
-            Rprintf("sample size of heterzygous genotype is not enough for SNP %d\n",
-                    ss+1);
+          if(h1 < min_nASE){ // can still run trec model
+            // Rprintf("sample size of heterzygous genotype is not enough for SNP %d\n",
+            //         ss+1);
+            
+            res_trec = Rcpp_trec(y, XX, zz, fam_nb, lgy1, ini_bxj, LL_null,
+                                 ini_reg_par, max_iter, eps, show);
+            NumericVector reg_pars = res_trec["reg_par"];
+            // if(as<int>(new_reg["converge"]) != 1){
+            //   Rprintf("TReC model for snp %d does not converge \n",
+            //           ss+1);
+            // }
+            
+            fprintf(f2, "%d\t%d\t%.2e\t%.2e\t%.4e\t",
+                    gg+1,ss+1, as<double>(res_trec["bxj"]),
+                    as<double>(res_trec["lrt"]),
+                    as<double>(res_trec["pvalue"]));
+            for(xi=0;xi<(pp-1);xi++){
+              fprintf(f2, "%.2e\t", reg_pars[xi]);
+            }
+            if(fam_nb){
+              fprintf(f2, "%.2e\t", exp(reg_pars[pp-1]));
+            }
+            fprintf(f2,"NA\tNA\tNA\tNA\t");
+            fprintf(f2, "NA\tNA\tNA\t");
+            for(xi=0;xi<XX.n_cols;xi++){
+              fprintf(f2, "NA\t");
+            }
+            if(fam_nb){
+              fprintf(f2, "NA\t");
+            }
+            fprintf(f2, "NA\t%d\tNA\tNA\n", as<int>(res_trec["converge"]));
+            
+            
           }else{
             res_trecase = Rcpp_trecase(y, XX, zz, fam_nb, lgy1, ni.subvec(0, h0-1),
                                        ni0.subvec(0, h0-1), zeta.subvec(0, h0-1),
@@ -2607,17 +2643,41 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
           //printR_obj(as<double>(res_trec["LL"]));
           //printR_obj(reg_pars);
           
-          //write out trec result
-          fprintf(f1, "%d\t%d\t%.2e\t%.2e\t%.4e\t%d\t",
-                  gg+1,ss+1, as<double>(res_trec["bxj"]),
-                  as<double>(res_trec["lrt"]),
-                  as<double>(res_trec["pvalue"]),as<int>(res_trec["converge"]));
-          for(xi=0;xi<(pp-1);xi++){
-            fprintf(f1, "%.2e\t", reg_pars[xi]);
+          if(useASE){ //write out trecase result 
+            // (when ase null model is not coverged)
+            fprintf(f2, "%d\t%d\t%.2e\t%.2e\t%.4e\t",
+                    gg+1,ss+1, as<double>(res_trec["bxj"]),
+                    as<double>(res_trec["lrt"]),
+                    as<double>(res_trec["pvalue"]));
+            for(xi=0;xi<(pp-1);xi++){
+              fprintf(f2, "%.2e\t", reg_pars[xi]);
+            }
+            if(fam_nb){
+              fprintf(f2, "%.2e\t", exp(reg_pars[pp-1]));
+            }
+            fprintf(f2,"NA\tNA\tNA\tNA\t");
+            fprintf(f2, "NA\tNA\tNA\t");
+            for(xi=0;xi<XX.n_cols;xi++){
+              fprintf(f2, "NA\t");
+            }
+            if(fam_nb){
+              fprintf(f2, "NA\t");
+            }
+            fprintf(f2, "NA\t%d\tNA\tNA\n", 8 - as<int>(res_trec["converge"]));
+            
+          }else{ //write out trec result
+            fprintf(f1, "%d\t%d\t%.2e\t%.2e\t%.4e\t%d\t",
+                    gg+1,ss+1, as<double>(res_trec["bxj"]),
+                    as<double>(res_trec["lrt"]),
+                    as<double>(res_trec["pvalue"]),as<int>(res_trec["converge"]));
+            for(xi=0;xi<(pp-1);xi++){
+              fprintf(f1, "%.2e\t", reg_pars[xi]);
+            }
+            if(fam_nb){
+              fprintf(f1, "%.2e\n", exp(reg_pars[pp-1]));
+            }
           }
-          if(fam_nb){
-            fprintf(f1, "%.2e\n", exp(reg_pars[pp-1]));
-          }
+          
           
           //printR_obj(as<int>(res_trec["converge"]));
           //printR_obj("TREC");
