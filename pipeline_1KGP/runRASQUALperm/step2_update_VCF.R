@@ -46,6 +46,7 @@ af = apply(vcf.in[,-(1:9)], 1, count.ref)
 vcf.in[,8] = af
 
 #if too many reads of wrong bases - may skip this count
+#also add a permutation step for VCF
 frac = 0.1
 samples = unlist(strsplit(vcf.hd[4,1], split="\t"))[-(1:9)]
 for(i in 1:length(samples)){
@@ -59,7 +60,7 @@ for(i in 1:length(samples)){
   asc = ref[na.omit(m)]+alt[na.omit(m)]
   rma = rasc$otherBases/asc>frac
   ref[na.omit(m)][rma] = alt[na.omit(m)][rma] = 0
-  vcf.in[,i+9] = sprintf("%s:%s,%s", vcf.in[,i+9], ref, alt)
+  vcf.in[,i+9] = sprintf("%s:%s,%s", sample(vcf.in[,i+9]), ref, alt)
   message("individual ", i, " has been processed")
 }
 
