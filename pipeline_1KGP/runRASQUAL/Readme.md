@@ -64,3 +64,7 @@ k. --force - force running the code even if it takes many SNPs.
 l. --posterior-genotype - do posterior genotype update
 
 m. other options to consider (were used in simulations): --min-coverage-depth 0.0, --as-only, --population-only
+
+
+note. initial VCF can be created form imputed data according to pipeline presented in step8 and step9 in:
+https://github.com/Sun-lab/eQTL-PoO-analysis-pipeline/tree/master/parents/block2_phasining_imputation
