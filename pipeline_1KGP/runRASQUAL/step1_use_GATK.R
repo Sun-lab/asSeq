@@ -1,5 +1,6 @@
-#module add samtools; module remove java; module add java; module add r;module add tabix
+#module add samtools; module add r;module add tabix
 options(digits=22)
+mem = 7
 data.dir = "../data"
 bam.dir = sprintf("%s/bam", data.dir)
 geno.dir = "../datagen" 
@@ -58,8 +59,8 @@ snps[,-(1:9)] = apply(snps[,-(1:9)], 1:2, get_block, split=":")
 #write in the resulting file
 write.table(hdr, snp2, quote=F, row.names=F, col.names=F, sep="\t")
 write.table(snps, snp2, quote=F, row.names=F, col.names=F, sep="\t", append=T)
-system(sprintf("bgzip -f %s", snp2))
 snpt = sprintf("%s.gz", snp2)
+system(sprintf("bgzip -fc %s > %s", snp2, snpt))
 system(sprintf("tabix %s", snpt))
 
 #getting sample ids for which we want to do allele-specific counts
@@ -70,6 +71,7 @@ length(samp)
 for(k in 1:length(fls)){
 #k = 1
   if(nms[k] %in% samp){
+  #k = 1
     fil.inp = sprintf("%s/%s", bam.dir, fls[k])
     #first we had to do several fixes to bam files to make GATK run smoothly    
     fil.out = sprintf("%s/%s.bam", dir.out, nms[k])
@@ -91,7 +93,7 @@ for(k in 1:length(fls)){
     scom0 = sprintf("samtools sort -n -o %s %s", fil.out, fil.inp)
     scom1 = sprintf("samtools fixmate -r %s %s", fil.out, fil.out1)
     scom2 = sprintf("samtools sort -o %s %s", fil.out, fil.out1)    
-    scom3 = sprintf("rm %s", fil.out1)
+    scom3 = sprintf("rm %s; samtools index %s", fil.out1, fil.out)
     com0 = sprintf("%s && %s && %s && %s", scom0, scom1, scom2, scom3)
     system(com0)
     
@@ -102,9 +104,10 @@ for(k in 1:length(fls)){
     rst = "VALIDATION_STRINGENCY=SILENT "
     #rst = "VALIDATION_STRINGENCY=STRICT "
     fil.out2 = sprintf("%s/ob_%s", dir.out, fls[k])
+    if(file.exists(fil.out2))file.remove(fil.out2)
     com1 = sprintf("java -jar %s ReorderSam I=%s O=%s R=%s %s", 
                         pic, fil.out, fil.out2, ref, rst)
-    #system(com1)
+    system(com1)
 
     #
     #d. need to add "group name" - sample id and index
@@ -112,8 +115,11 @@ for(k in 1:length(fls)){
     rst = "SO=coordinate VALIDATION_STRINGENCY=SILENT RGLB=lib1 RGPL=illumina RGPU=unit1" 
     com2 = sprintf("java -jar %s AddOrReplaceReadGroups I=%s O=%s %s RGSM=%s", 
                                              pic, fil.out2, fil.out, rst, nms[k])
+    system(com2)
     com3 = sprintf("rm %s", fil.out2) 
+    system(com3)
     com4 = sprintf("samtools index %s", fil.out)
+    system(com4)
       
 
     #
@@ -121,15 +127,15 @@ for(k in 1:length(fls)){
     #
     rst = "-U ALLOW_N_CIGAR_READS -minDepth 1 --minMappingQuality 10 --minBaseQuality 20"
     fil.out3 = gsub("\\.bam","\\.txt", fil.out)
-
-    com5 = sprintf("java -Xmx7g -jar %s -T ASEReadCounter -R %s -I %s -o %s -sites %s %s", 
-                   gat, ref, fil.out, fil.out3, snpt, rst)
+    com5 = sprintf("java -Xmx%sg -jar %s -T ASEReadCounter -R %s -I %s -o %s -sites %s %s", 
+                   mem, gat, ref, fil.out, fil.out3, snpt, rst)
+    #system(com5)
     com = sprintf("%s && %s && %s && %s && %s", com1, com2, com3, com4, com5)
+    system(com)
+    #can add this command, but may start keeping the file at the beginning
+    com6 = sprintf("rm -f %s*", fil.out)
+    #if(file.exists(fil.out))system(com6)
   }
-  #can add this command, but may start keeping the file at the beginning
-  com6 = sprintf("rm -f %s*", fil.out)
-  #com = sprintf("%s;%s", com, com6)
-  system(com)
   #note, test example is short so it is possible just to run them as one command
   #in real dataset it is better to submit each sample separately in a bcom style:
   #bcom = sprintf("sbatch --output %s --mem=16G --wrap='%s'",boup, com)
