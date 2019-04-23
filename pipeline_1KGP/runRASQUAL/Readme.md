@@ -62,6 +62,5 @@ j. -z - convert genome imputation quality score (R^2 or I^2) into allelic probab
 k. --force - force running the code even if it takes many SNPs.
 
 l. --posterior-genotype - do posterior genotype update
-  rasBASE = sprintf("rasqual -y %s -k %s -x %s -p %s -n %s", totb, kbin, xbin, np, nsam)
-  rasPOSj = sprintf("-j %s -l %s -m %s -s %s -e %s", gnj, nl, nm, stj, enj)
-  rasOPT = "-z --force --posterior-genotype"# --population-only --min-coverage-depth 0.0 --as-only 
+
+m. other options to consider (were used in simulations): --min-coverage-depth 0.0, --as-only, --population-only
