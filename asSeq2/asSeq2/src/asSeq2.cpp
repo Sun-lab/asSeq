@@ -1330,7 +1330,7 @@ Rcpp::List Rcpp_ase_BFGS(const arma::vec& ni, const arma::vec& ni0,
     old_LL = fnscale * Rcpp_loglikBB(ni, ni0, xk.at(0), xk.at(1), lbc, zeta);
     gr_k   = fnscale * Rcpp_ase_grad(ni, ni0, xk.at(0), xk.at(1), zeta);
     
-    if(old_LL < 0 ) break;
+    //if(old_LL < 0 ) break;
     
     p_k    = -1.0 * inv_Bk * gr_k;
     inv_norm_p_k =  1.0 / std::max(1.0, Rcpp_norm(p_k));
@@ -1373,7 +1373,7 @@ Rcpp::List Rcpp_ase_BFGS(const arma::vec& ni, const arma::vec& ni0,
         break;
       }
     }
-    
+
     //check convergence
     if(iter > 0){
       if(std::abs(curr_LL - old_LL) < eps &&
@@ -1435,7 +1435,7 @@ Rcpp::List Rcpp_ase_theta_BFGS(const arma::vec& ni, const arma::vec& ni0,
     
     old_LL = fnscale * Rcpp_loglikBB(ni, ni0, bxj, xk.at(0), lbc, zeta);
     
-    if(old_LL < 0) break;
+    //if(old_LL < 0) break;
     
     //printR_obj(old_LL);
     gr_k   = fnscale * Rcpp_ase_grad_H0(ni, ni0, bxj, xk.at(0), zeta);
@@ -1481,6 +1481,11 @@ Rcpp::List Rcpp_ase_theta_BFGS(const arma::vec& ni, const arma::vec& ni0,
       }
     }
     
+    if(xk.at(0) < -11.5){
+      converge = 1;
+      break;
+    }
+    
     //check convergence
     if(iter > 0){
       if(std::abs(curr_LL - old_LL) < eps &&
@@ -1507,114 +1512,6 @@ Rcpp::List Rcpp_ase_theta_BFGS(const arma::vec& ni, const arma::vec& ni0,
     Rcpp::Named("PAR", Rcpp::NumericVector(xk.begin(), xk.end()))
   );
 }
-
-// // [[Rcpp::export]]
-// Rcpp::List Rcpp_ase_theta_BFGS2(const arma::vec& ni, const arma::vec& ni0,
-//                                const arma::vec& zeta, const double& bxj,
-//                                const double& lg_theta, const arma::vec& lbc,
-//                                const arma::uword& max_iter = 4e3,
-//                                const double& eps = 1e-7, const bool& show = true){
-// 
-//   arma::uword num_params = 1;
-//   arma::uword iter = 0;
-//   arma::uword jj,uu;
-//   arma::uword converge = 0;
-// 
-//   double xk = lg_theta;
-//   double inv_Bk = 0.0;
-//   double curr_xk = 0.0;
-//   double I_num_params = 1.0;
-//   double new_xk = 0.0;
-//   double gr_k = 0.0;
-//   double p_k = 0.0;
-//   double s_k = 0.0;
-//   double y_k = 0.0;
-//   double ISYT = 0.0;
-// 
-//   double old_LL,new_LL,inv_norm_p_k,tmp_alpha,ys;
-//   double fnscale = -1.0; // For maximization
-//   double curr_LL = 0.0;
-// 
-//   while(iter < max_iter){
-//     //calculate direction p_k
-//     uu = 0;
-// 
-//     old_LL = fnscale * Rcpp_loglikBB(ni, ni0, bxj, xk, lbc, zeta);
-// 
-//     if(old_LL < 0) break;
-// 
-//     //printR_obj(old_LL);
-//     gr_k   = fnscale * Rcpp_ase_grad_H0(ni, ni0, bxj, xk, zeta);
-//     p_k    = -1.0 * inv_Bk * gr_k;
-//     inv_norm_p_k =  1.0 / std::max(1.0, std::abs(p_k));
-// 
-//     //line search for new xk
-//     for(jj=0; jj<15; jj++){
-//       tmp_alpha = inv_norm_p_k / std::pow(4, jj);
-//       new_xk    = xk + tmp_alpha * p_k;
-//       new_LL    = fnscale * Rcpp_loglikBB(ni, ni0,bxj,
-//                                           new_xk, lbc, zeta);
-// 
-//       if(new_LL < old_LL){ //minimizing
-//         s_k = tmp_alpha * p_k;
-//         y_k = fnscale * Rcpp_ase_grad_H0(ni, ni0, bxj,
-//                                          new_xk, zeta) - gr_k;
-//         ys  = y_k * s_k;
-// 
-//         if(ys > 0.0){
-//           // if(show) printR_obj("Update xk and inv_Bk");
-//           ISYT   = I_num_params - (s_k * y_k) /ys;
-//           inv_Bk = ISYT * inv_Bk * ISYT + s_k * s_k / ys;
-//         }else{
-//           // if(show) printR_obj("Update xk only");
-//         }
-//         xk = new_xk;
-//         old_LL = new_LL;
-//         uu = 1;
-//         break;
-//       }
-//     }
-//     //printR_obj(new_LL);
-//     //printR_obj(xk);
-// 
-//     if(uu==0){
-//       if(std::abs(gr_k) > 1.0){
-//         // if(show) printR_obj("Reset inv_Bk");
-//         inv_Bk = I_num_params;
-//       }else{
-//         // if(show) printR_obj("Failed in search");
-//         break;
-//       }
-//     }
-// 
-//     //check convergence
-//     if(iter > 0){
-//       if(std::abs(curr_LL - old_LL) < eps &&
-//          std::abs(curr_xk - xk) < eps){
-// 
-//         gr_k = Rcpp_ase_grad_H0(ni, ni0, bxj, xk, zeta);
-// 
-//         if(std::abs(gr_k) < eps){
-//           converge = 1;
-//           break;
-//         }
-//       }
-//     }
-//     curr_xk = xk;
-//     curr_LL = old_LL;
-//     iter++;
-//   }
-// 
-//   old_LL = Rcpp_loglikBB(ni, ni0, bxj, xk, lbc, zeta);
-// 
-//   return Rcpp::List::create(
-//     Rcpp::Named("converge", converge),
-//     Rcpp::Named("LL", old_LL),
-//     Rcpp::Named("iter", iter),
-//     Rcpp::Named("norm_GRAD", std::abs(gr_k)),
-//     Rcpp::Named("PAR", xk)
-//   );
-// }
 
 // [[Rcpp::export]]
 Rcpp::List Rcpp_ase(const arma::vec& ni, const arma::vec& ni0,
@@ -2312,9 +2209,9 @@ void Rcpp_ase_mtest(const arma::mat& Y1, const arma::mat& Y2,
           }
         }
         
-        if(h1 < min_nASE){
-          Rprintf("sample size of heterzygous genotype is not enoug \n",
-                  ss+1);
+        if(h0 < min_nASE){
+          // Rprintf("sample size of heterzygous genotype is not enoug \n",
+          //         ss+1);
         }else{
           //begin ase fit
           res_ase = Rcpp_ase(ni.subvec(0, h0-1), ni0.subvec(0, h0-1),
@@ -2523,7 +2420,7 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
             }
           }
           
-          if(h1 < min_nASE){ // can still run trec model
+          if(h0 < min_nASE){ // can still run trec model
             // Rprintf("sample size of heterzygous genotype is not enough for SNP %d\n",
             //         ss+1);
             
