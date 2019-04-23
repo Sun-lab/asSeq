@@ -36,6 +36,9 @@ nms = sapply(nms, get_block, split="_", block=1)
 snpt = sprintf("%s/SNP_ex.vcf.gz", vcf.dir)
 snp2 = sprintf("%s/SNP_fix.vcf", vcf.dir)
 
+#
+#block a
+#
 #sometimes people write vcf files with spaces not tabs, but need to have as tabs
 hdr = read.table(gzfile(snpt), as.is=T, comment.char="", nrows=4, sep="@")
 hdr[4,1] = gsub(" ", "\t", hdr[4,1])
@@ -72,10 +75,9 @@ for(k in 1:length(fls)){
     fil.out = sprintf("%s/%s.bam", dir.out, nms[k])
     fil.out1 = sprintf("%s/%sf.bam", dir.out, nms[k])
     boup = gsub("\\.bam","\\.out", fil.out)
-    rst = "SO=coordinate VALIDATION_STRINGENCY=SILENT RGLB=lib1 RGPL=illumina RGPU=unit1" 
-    com = com1 = sprintf("java -jar %s AddOrReplaceReadGroups I=%s O=%s %s RGSM=%s", 
-                                             pic, fil.inp, fil.out, rst, nms[k])
+
     if(!file.exists(dic)){
+      file.remove(dic)
       com0 = sprintf("java -jar %s CreateSequenceDictionary R=%s O=%s", pic, ref, dic)
       system(com0)
     }
@@ -83,15 +85,20 @@ for(k in 1:length(fls)){
       com0 = sprintf("samtools faidx %s", ref)
       system(com0)
     }
-    #preprocessing - fix mate information
+    #
+    #b preprocessing - fix mate information
+    #
     scom0 = sprintf("samtools sort -n -o %s %s", fil.out, fil.inp)
     scom1 = sprintf("samtools fixmate -r %s %s", fil.out, fil.out1)
     scom2 = sprintf("samtools sort -o %s %s", fil.out, fil.out1)    
     scom3 = sprintf("rm %s", fil.out1)
-    com0 = sprintf("%s;%s;%s; %s", scom0, scom1, scom2, scom3)
+    com0 = sprintf("%s && %s && %s && %s", scom0, scom1, scom2, scom3)
     system(com0)
     
+    #
+    #c. reorder bam file chromosom info to match reference FASTA file
     #first need to ensure that fasta chromosomes are in the same order as bam
+    #
     rst = "VALIDATION_STRINGENCY=SILENT "
     #rst = "VALIDATION_STRINGENCY=STRICT "
     fil.out2 = sprintf("%s/ob_%s", dir.out, fls[k])
@@ -99,7 +106,9 @@ for(k in 1:length(fls)){
                         pic, fil.out, fil.out2, ref, rst)
     #system(com1)
 
-    #need to add "group name" - sample id and index
+    #
+    #d. need to add "group name" - sample id and index
+    #
     rst = "SO=coordinate VALIDATION_STRINGENCY=SILENT RGLB=lib1 RGPL=illumina RGPU=unit1" 
     com2 = sprintf("java -jar %s AddOrReplaceReadGroups I=%s O=%s %s RGSM=%s", 
                                              pic, fil.out2, fil.out, rst, nms[k])
@@ -107,7 +116,9 @@ for(k in 1:length(fls)){
     com4 = sprintf("samtools index %s", fil.out)
       
 
-    #now we got to counting
+    #
+    #e. now we got to counting
+    #
     rst = "-U ALLOW_N_CIGAR_READS -minDepth 1 --minMappingQuality 10 --minBaseQuality 20"
     fil.out3 = gsub("\\.bam","\\.txt", fil.out)
 

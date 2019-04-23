@@ -1,10 +1,14 @@
 #module add tabix;module add gcc;module add gsl
 
+set.seed(1565691)
+
 data.dir = "../data"
+cnt.dir = sprintf("%s/cnt", data.dir)
 bam.dir = sprintf("%s/bam", data.dir)
 geno.dir = "../datagen" 
 vcf.dir = sprintf("%s/vcf", geno.dir)
-vcfr.dir = sprintf("%s/vcfr", geno.dir)
+#store permuted data to a separate folder from
+vcfr.dir = sprintf("%s/vcfp", geno.dir)
 if(!file.exists(vcfr.dir))dir.create(vcfr.dir)
 info.dir = "../inf"
 dir.rasc = sprintf("%s/gatkasc", data.dir)
@@ -71,5 +75,42 @@ write.table(vcf.in, out.vcf, quote=F, row.names=F, col.names=F, sep="\t", append
 system(sprintf("bgzip -f %s", out.vcf))
 out.vcf = sprintf("%s.gz", out.vcf)
 system(sprintf("tabix %s", out.vcf))
+
+
+#create other required files if they don't exist yet
+totc = sprintf("%s/Tcnt_ex.dat", cnt.dir)
+xcnt = sprintf("%s/samples.dat", cnt.dir)
+totc = read.table(totc, as.is=T)
+xcnt = read.table(xcnt, as.is=T, header=T)
+
+totb = sprintf("%s/Tcnt_ex.bin", cnt.dir)
+kbin = sprintf("%s/K_ex.bin", cnt.dir)
+xbin = sprintf("%s/X_ex.bin", cnt.dir)
+
+if(!file.exists(totb)){
+  con = file(totb, "wb")
+  writeBin(as.double(t(totc)), con=con, double())
+  close(con)
+}
+if(!file.exists(xbin)){
+  con = file(xbin, "wb")
+  writeBin(as.double(c(as.matrix(xcnt[,c(2:5)]))), con=con, double())
+  close(con)
+}
+if(!file.exists(kbin)){
+  Ks = 10^xcnt[,2]
+  Ks = matrix(rep(Ks/mean(Ks),each=nrow(totc)), nrow=nrow(totc))
+  con = file(kbin,"wb")
+  writeBin(as.double(c(t(Ks))), con=con, double())
+  close(con)
+}
+
+kin = readBin(kbin, n=200, double())
+kin
+tin = readBin(totb, n=200, double())
+tin
+xin = readBin(xbin, n=200, double())
+xin
+
 
 q("no")
