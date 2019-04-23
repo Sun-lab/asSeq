@@ -4,7 +4,9 @@ Details to each step:
 
 1. This step requires several steps fixing the flags and adding tags for GATK to be used
 
-a. ensure that VCF file is tab delimited, ordered and has unique snp positionsb. fig mate status of the flags
++ a. ensure that VCF file is tab delimited, ordered and has unique snp positions
+
++ b. fig mate status of the flags
 
 c. reorder bam file chromosom info to match reference FASTA file
 
