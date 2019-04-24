@@ -23,9 +23,9 @@ code worked with OpenJDK Runtime Environment (build 1.8.0) and didn't work with 
 
 "Invalid command line: Malformed walker argument: Could not find walker with name: ASEReadCounter"
 
-2. step2_update_VCF.R/step2_permute_VCF.R create VCF file with allele specific counts
-+ a. count number of SNPs within a window - will be used as input for RASQUAL
-+ b. add snp level allele-specific counts from individual level files produced in step 1 to a vcf (stored in a separate folder)
+2. step2_update_VCF.R creates VCF file with allele specific counts as input to run RASQUAL. step2_permute_VCF.R is similar, but use permuted genotype data to test RASQUAL under null. 
++ a. count the number of SNPs within a window - will be used as input for RASQUAL
++ b. add SNP level allele-specific counts from individual level files produced in step 1 to a vcf (stored in a separate folder)
 (for permutation data the modification is - petrurbing genotype data at each SNP)
 + c. save in binary format other required files if they don't exist yet: design matrix (X_ex.bin), matrix of offsets (K_ex.bin) and total read counts (Tcnt_ex.bin)
 
