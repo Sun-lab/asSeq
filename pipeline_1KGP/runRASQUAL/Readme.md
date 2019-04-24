@@ -8,11 +8,10 @@ Details to each step:
 
 + b. fig mate status of the flags
 
-c. reorder bam file chromosom info to match reference FASTA file
++ c. reorder bam file chromosom info to match reference FASTA file
 
-d. add group tag to each read - would be sample ID
-
-e. perform counting with options 
++ d. add group tag to each read - would be sample ID
++ e. perform counting with options 
 
 -U ALLOW_N_CIGAR_READS - allowing N's
 
@@ -30,42 +29,42 @@ code worked with OpenJDK Runtime Environment (build 1.8.0) and didn't work with 
 
 2. create VCF file with allele specific counts
 
-a. count number of SNPs within a window - will be used as input for RASQUAL
++ a. count number of SNPs within a window - will be used as input for RASQUAL
 
-b. add snp level allele-specific counts from individual level files produced in step 1 to a vcf (stored in a separate folder)
++ b. add snp level allele-specific counts from individual level files produced in step 1 to a vcf (stored in a separate folder)
 (for permutation data the modification is - petrurbing genotype data at each SNP)
 
-c. save in binary format other required files if they don't exist yet: design matrix (X_ex.bin), matrix of offsets (K_ex.bin) and total read counts (Tcnt_ex.bin)
++ c. save in binary format other required files if they don't exist yet: design matrix (X_ex.bin), matrix of offsets (K_ex.bin) and total read counts (Tcnt_ex.bin)
 
 3. run RASQUAL
 
 Includes several mandatory options: 
 
-a. it takes part of a VCF file as stdin (using tabix with a certain range)
++ RASQUAL takes part of a VCF file as stdin (using tabix with a certain range)
 
-b. -y - total read counts (Y matrix)
++ -y - total read counts (Y matrix)
 
-c. -k - offsets (K matrix)
++ -k - offsets (K matrix)
 
-d. -x - design (X matrix)
++ -x - design (X matrix)
 
-e. -p - number of columns in X-matrix
++ -p - number of columns in X-matrix
 
-f. -n - number of samples
++ -n - number of samples
 
-g. -j - row in Y-matrix corresponding to the jene that is to be tested
++ -j - row in Y-matrix corresponding to the jene that is to be tested
 
-h. -l, -m - technical parameters to ensure that enough space for fSNPs and rSNPs is dedicated (can just put number of rSNPs)
++ -l, -m - parameters suggesting to RASQUAL number of fSNPs and rSNPs (can put number of rSNPs for each of parameters)
 
-i. -s, -e - starting and ending points for exons of the gene (in order for a program to learn which SNPs to consider fSNPs with allele-specific counts)
++ -s, -e - starting and ending points for exons of the gene (in order for a program to learn which SNPs to consider fSNPs with allele-specific counts)
 
-j. -z - convert genome imputation quality score (R^2 or I^2) into allelic probability (AP)
++ -z - convert genome imputation quality score (R^2 or I^2) into allelic probability (AP)
 
-k. --force - force running the code even if it takes many SNPs.
++ --force - force running the code even if it takes many SNPs.
 
-l. --posterior-genotype - do posterior genotype update
++ --posterior-genotype - do posterior genotype update
 
-m. other options to consider (were used in simulations): --min-coverage-depth 0.0, --as-only, --population-only
++ other options to consider (were used in simulations): --min-coverage-depth 0.0, --as-only, --population-only
 
 
 note. initial VCF can be created form imputed data according to pipeline presented in step8 and step9 in:
