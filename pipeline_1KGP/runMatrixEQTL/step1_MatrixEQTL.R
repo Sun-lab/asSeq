@@ -1,6 +1,19 @@
 #module add tabix;module add gcc;module add gsl;module add r
 #export PATH=/nas/longleaf/home/zhabotyn/progs/rasqual-master/bin/:$PATH
 
+normscore = function(vec) {
+    len  = length(na.omit(vec))+1
+    rank = rank(na.omit(vec))
+    ties = (rank - floor(rank)) > 0
+    new.vec = vec[!is.na(vec)] 
+    new.vec[!ties]=qnorm(rank[!ties]/len)
+    new.vec[ties] =0.5*(qnorm((rank[ties]+0.5)/len)+qnorm((rank[ties]-0.5)/len))
+    vec[!is.na(vec)] = new.vec
+    vec
+}
+
+norm = F
+#norm = T
 data.dir = "../data"
 cnt.dir = sprintf("%s/cnt", data.dir)
 
@@ -14,9 +27,7 @@ if(!file.exists(gen.dir))dir.create(gen.dir)
 snp = sprintf("%s/SNP_ex.vcf.gz", vcf.dir)
 
 SNP_file_name = sprintf("%s/SNP.txt", gen.dir)
-expression_file_name = sprintf("%s/GE.dat", cnt.dir)
 covariates_file_name = sprintf("%s/Covariates.txt", cnt.dir) 
-output_file_name = "output.txt"
 
 #
 #a.
@@ -36,26 +47,34 @@ write.table(gen.in, SNP_file_name, row.names=F, col.names=T, quote=F, sep="\t")
 
 #
 #b.
-#reformat from counts to log10 expression
-#
-info = read.table(sprintf("%s/Info_ex.dat", cnt.dir), header=T)
-expr = read.table(sprintf("%s/Tcnt_ex.dat", cnt.dir))
-#will add normalization
-expr = log1p(expr)
-colnames(expr) = samp
-expr = cbind(geneid=info$id, expr)
-write.table(expr, expression_file_name, row.names=F, col.names=T, quote=F, sep="\t")
-
-#
-#c.
 #need to transpose covariate matrix
 #
 covar = read.table(sprintf("%s/samples.dat", cnt.dir), as.is=T)
 covar[1,1] = "id"
 write.table(t(covar[,1:5]), covariates_file_name, row.names=F, col.names=F, quote=F, sep="\t")
 
+#
+#c.
+#reformat from counts to log10 expression
+#
+info = read.table(sprintf("%s/Info_ex.dat", cnt.dir), header=T, as.is=T)
+expr = read.table(sprintf("%s/Tcnt_ex.dat", cnt.dir), as.is=T)
+#will add normalization
+depth = 10^as.numeric(covar[-1,2])
+depth = depth/median(depth)
+expr = log1p(as.matrix(expr)%*%diag(depth))
+if(norm){
+  output_file_name = "output_norm.txt"
+  expression_file_name = sprintf("%s/GE_norm.dat", cnt.dir)
+  expr = t(apply(expr, 1, normscore))
+}
+colnames(expr) = samp
+expr = cbind(geneid=info$id, expr)
+write.table(expr, expression_file_name, row.names=F, col.names=T, quote=F, sep="\t")
+
+
 library(MatrixEQTL)
-pvOutputThreshold = 1e-2;
+pvOutputThreshold = 1e-1;
 errorCovariance = numeric();
 snps = SlicedData$new();
 snps$fileDelimiter = "\t";      # the TAB character
@@ -92,6 +111,6 @@ me = Matrix_eQTL_engine(
     noFDRsaveMemory = FALSE);
 
 
-
+me
 
 q("no")
