@@ -3,13 +3,9 @@ permuted data analysis would have one fix correction to the second step: - permu
 Details to each step:
 
 1. This step requires several steps fixing the flags and adding tags for GATK to be used
-
 + a. ensure that VCF file is tab delimited, ordered and has unique snp positions
-
 + b. fig mate status of the flags
-
 + c. reorder bam file chromosom info to match reference FASTA file
-
 + d. add group tag to each read - would be sample ID
 + e. perform counting with options 
 
@@ -28,42 +24,28 @@ code worked with OpenJDK Runtime Environment (build 1.8.0) and didn't work with 
 "Invalid command line: Malformed walker argument: Could not find walker with name: ASEReadCounter"
 
 2. create VCF file with allele specific counts
-
 + a. count number of SNPs within a window - will be used as input for RASQUAL
-
 + b. add snp level allele-specific counts from individual level files produced in step 1 to a vcf (stored in a separate folder)
 (for permutation data the modification is - petrurbing genotype data at each SNP)
-
 + c. save in binary format other required files if they don't exist yet: design matrix (X_ex.bin), matrix of offsets (K_ex.bin) and total read counts (Tcnt_ex.bin)
 
 3. run RASQUAL
 
 Includes several mandatory options: 
-
 + RASQUAL takes part of a VCF file as stdin (using tabix with a certain range)
-
 + -y - total read counts (Y matrix)
-
 + -k - offsets (K matrix)
-
 + -x - design (X matrix)
-
 + -p - number of columns in X-matrix
-
 + -n - number of samples
-
 + -j - row in Y-matrix corresponding to the jene that is to be tested
-
 + -l, -m - parameters suggesting to RASQUAL number of fSNPs and rSNPs (can put number of rSNPs for each of parameters)
-
 + -s, -e - starting and ending points for exons of the gene (in order for a program to learn which SNPs to consider fSNPs with allele-specific counts)
 
+and a few extra options:
 + -z - convert genome imputation quality score (R^2 or I^2) into allelic probability (AP)
-
 + --force - force running the code even if it takes many SNPs.
-
 + --posterior-genotype - do posterior genotype update
-
 + other options to consider (were used in simulations): --min-coverage-depth 0.0, --as-only, --population-only
 
 
