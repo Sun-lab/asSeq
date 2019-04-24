@@ -34,21 +34,21 @@ code worked with OpenJDK Runtime Environment (build 1.8.0) and didn't work with 
 Includes several mandatory options: 
 + RASQUAL takes part of a VCF file as stdin (using tabix with a certain range)
 ```
-+ -y - total read counts (Y matrix)
-+ -k - offsets (K matrix)
-+ -x - design (X matrix)
-+ -p - number of columns in X-matrix
-+ -n - number of samples
-+ -j - row in Y-matrix corresponding to the jene that is to be tested
-+ -l, -m - parameters suggesting to RASQUAL number of fSNPs and rSNPs (can put number of rSNPs for each of parameters)
-+ -s, -e - starting and ending points for exons of the gene (in order for a program to learn which SNPs to consider fSNPs with allele-specific counts)
+-y - total read counts (Y matrix)
+-k - offsets (K matrix)
+-x - design (X matrix)
+-p - number of columns in X-matrix
+-n - number of samples
+-j - row in Y-matrix corresponding to the jene that is to be tested
+-l, -m - parameters suggesting to RASQUAL number of fSNPs and rSNPs (can put number of rSNPs for each of parameters)
+-s, -e - starting and ending points for exons of the gene (in order for a program to learn which SNPs to consider fSNPs with allele-specific counts)
 ```
 and a few extra options:
 ```
-+ -z - convert genome imputation quality score (R^2 or I^2) into allelic probability (AP)
-+ --force - force running the code even if it takes many SNPs.
-+ --posterior-genotype - do posterior genotype update
-+ other options to consider (were used in simulations): --min-coverage-depth 0.0, --as-only, --population-only
+-z - convert genome imputation quality score (R^2 or I^2) into allelic probability (AP)
+--force - force running the code even if it takes many SNPs.
+--posterior-genotype - do posterior genotype update
+other options to consider (were used in simulations): --min-coverage-depth 0.0, --as-only, --population-only
 ```
 
 note. initial VCF can be created form imputed data according to pipeline presented in step8 and step9 in:
