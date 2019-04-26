@@ -1,8 +1,8 @@
 trecase <-
   function(Y, Y1 = NULL, Y2 = NULL, Z, XX, SNPloc, geneloc, fam_nb = T,
            file_trec = "trec.txt", file_trecase = "trecase.txt",
-           cis_window = 1e5L, useASE = 1L, min_ASE_total = 8L, min_nASE = 10L,
-           eps = 5e-5, max_iter = 400L, show = FALSE)
+           cis_window = 1e5L, useASE = 1L, min_ASE_total = 8L, min_nASE = 5L,
+           min_nASE_het = 5L, eps = 5e-5, max_iter = 400L, show = FALSE)
   {
     ## Y: matrix of total read count. Each row is a sample, and each column is a
     ##    gene
@@ -142,9 +142,6 @@ trecase <-
       if(is.null(Y1) | is.null(Y2)){
         stop("Y1 or Y2 cannot be found\n")
       }
-      if(min_nASE < min_ASE_total){
-        stop("min_nASE should not be smaller than min_ASE_total\n")
-      }
       if(any(is.na(Y1))){
         stop("NA values in Y1\n")
       }
@@ -167,6 +164,7 @@ trecase <-
                        geneloc$start, geneloc$end, geneloc$chr,
                        file_trec, file_trecase,
                        cis_window, useASE, min_ASE_total, min_nASE,
+                       min_nASE_het,
                        eps, max_iter, show)
     
   }

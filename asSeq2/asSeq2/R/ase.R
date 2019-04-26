@@ -1,6 +1,6 @@
 ase <-
   function(Y1, Y2, Z, geneloc, SNPloc, file_ase="ase.txt", cis_window = 1e5L,
-           min_ASE_total = 8L, min_nASE = 10L,
+           min_ASE_total = 8L, min_nASE = 5L, min_nASE_het=5L,
            eps = 5e-5, max_iter = 400L, show = FALSE)
   {
     
@@ -151,6 +151,6 @@ ase <-
     Rcpp_ase_mtest(Y1, Y2, ZZ, SNPloc$pos, SNPloc$chr, 
                    geneloc$start, geneloc$end, geneloc$chr, 
                    file_ase, cis_window, min_ASE_total, 
-                   min_nASE, eps, max_iter, show)
+                   min_nASE, min_nASE_het, eps, max_iter, show)
     
   }

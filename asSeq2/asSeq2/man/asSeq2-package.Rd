@@ -12,11 +12,11 @@
 \usage{
 trecase(Y, Y1 = NULL, Y2 = NULL, Z, XX, SNPloc, geneloc, fam_nb = T,
     file_trec = "trec.txt", file_trecase = "trecase.txt", cis_window = 100000L,
-    useASE = 1L, min_ASE_total = 8L, min_nASE = 10L, eps = 5e-05,
+    useASE = 1L, min_nASE = 5L, min_nASE_het=5L, eps = 5e-05,
     max_iter = 400L, show = FALSE)
 
 ase(Y1, Y2, Z, geneloc, SNPloc, file_ase="ase.txt", cis_window = 1e5L,
-           min_ASE_total = 8L, min_nASE = 10L,
+           min_ASE_total = 8L, min_nASE = 5L, min_nASE_het=5L,
            eps = 5e-5, max_iter = 400L, show = FALSE)
 }
 
@@ -67,6 +67,9 @@ ase(Y1, Y2, Z, geneloc, SNPloc, file_ase="ase.txt", cis_window = 1e5L,
   \item{min_nASE}{
   The minimum number of subjects that must exceed the min_ASE_Total threshold in order for ASE data to be included.
 }
+  \item{min_nASE_het}{
+  The minimum number of subjects having heterozygous SNP that must exceed the min_nASE_het threshold in order for ASE data to be included.
+}
   \item{eps}{
   Specifies whether TReCASE model has converged. Default of 5e-5.
 }
@@ -114,7 +117,11 @@ ASE_*  means values for ASE model.
 
 Joint_theta: The overdispersion parameter in Beta-Binomial regression.
 
-Converge: 0: TReCASE model does not coverged, 1: TReCASE model coverged.
+Converge: 0: TReCASE model does not coverged, 1: TReCASE model coverged. 
+2: ASE does not converge. 3: TReC does not converge. 
+5: both ASE and TReC do not converge.
+7: ASE NULL model does not have enough ASE samples. 
+8: TReC does not converge (under ASE NULL does not have not enough samples)
 
 CisTrans_Chisq: The value of the test statistic for the Cis-Trans Score Test
 
