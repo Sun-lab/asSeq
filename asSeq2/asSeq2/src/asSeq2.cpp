@@ -1081,10 +1081,36 @@ double Rcpp_loglikBB(const arma::vec& ni, const arma::vec& ni0,
 
 
 // [[Rcpp::export]]
+double Rcpp_loglikBB_Pi(const arma::vec& ni, const arma::vec& ni0,
+                     const double& bxj, const double& log_theta,
+                     const arma::vec& lbc, const arma::vec& zeta){
+  // only used to update pi when theta is small 
+  arma::uword ii;
+  double loglik = 0.0;
+  double vtheta = std::exp(-log_theta);
+  double Pi1 = std::exp(bxj)/(1.0 + std::exp(bxj));
+  double aa = Pi1*vtheta;
+  double bb = vtheta - aa;
+  //double lgvt = lgamma(vtheta);
+  double lgvab = - lgamma(aa) - lgamma(bb); //+ lgvt
+  //double lgvabH0 = -2 *lgamma(0.5*vtheta) + lgvt;
+  
+  for(ii=0;ii<ni.n_elem;ii++){
+    if(zeta.at(ii) == 1){   //het
+      //printR_obj(loglik);
+      loglik += lbc.at(ii) + lgamma(aa + ni0.at(ii)) +
+        lgamma(bb + ni.at(ii) - ni0.at(ii)) + lgvab;
+    }
+  }
+  
+  return loglik;
+}
+
+// [[Rcpp::export]]
 arma::vec Rcpp_ase_grad(const arma::vec& ni, const arma::vec& ni0,
                         const double& bxj, const double& log_theta,
                         const arma::vec& zeta){
-  
+  // dASE_dlg_theta. 2019-04-26
   arma::uword ii;
   arma::vec grad = arma::zeros<arma::vec>(2);
   double vtheta = std::exp(-log_theta);
@@ -1125,8 +1151,8 @@ arma::vec Rcpp_ase_grad(const arma::vec& ni, const arma::vec& ni0,
     //printR_obj(grad.at(1));
   }
   grad.at(0) *= vtheta * Pi1/(1.0 + std::exp(bxj)) ;
-  grad.at(1) *= pow(vtheta, 2.0);
-  
+  // grad.at(1) *= pow(vtheta, 2.0);
+  grad.at(1) *= vtheta;
   return grad;
 }
 
@@ -1174,6 +1200,7 @@ double Rcpp_ase_grad_H0(const arma::vec& ni, const arma::vec& ni0,
                         const double& bxj, const double& log_theta,
                         const arma::vec& zeta){
   //under H0 or only update theta
+  // dASE_dlg_theta. 2019-04-26
   arma::uword ii;
   double grad   = 0.0;
   double vtheta = std::exp(-log_theta);
@@ -1206,7 +1233,8 @@ double Rcpp_ase_grad_H0(const arma::vec& ni, const arma::vec& ni0,
     }
     
   }
-  grad *= pow(vtheta, 2.0);
+  // grad *= pow(vtheta, 2.0);
+  grad *= vtheta;
   return grad;
 }
 
@@ -1293,6 +1321,113 @@ double Rcpp_ase_grad_H0(const arma::vec& ni, const arma::vec& ni0,
 //
 //   return hess;
 // } // diagonal is not correct
+// [[Rcpp::export]]
+Rcpp::List Rcpp_ase_Pi_BFGS(const arma::vec& ni, const arma::vec& ni0,
+                            const arma::vec& zeta, const double& bxj,
+                            const double& lg_theta, const arma::vec& lbc,
+                            const arma::uword& max_iter = 4e3,
+                            const double& eps = 1e-7, const bool& show = true){
+  // used to update Pi when theta is small
+  arma::uword num_params = 1;
+  arma::uword iter = 0;
+  arma::uword jj,uu;
+  arma::uword converge = 0;
+  
+  arma::vec xk = arma::zeros<arma::vec>(num_params);
+  arma::mat inv_Bk = arma::eye<arma::mat>(num_params,num_params);
+  arma::vec curr_xk = arma::zeros<arma::vec>(num_params);
+  arma::mat I_num_params = arma::eye<arma::mat>(num_params,num_params);
+  arma::vec new_xk = arma::zeros<arma::vec>(num_params);
+  arma::vec gr_k = arma::zeros<arma::vec>(num_params);
+  arma::vec p_k = arma::zeros<arma::vec>(num_params);
+  arma::vec s_k = arma::zeros<arma::vec>(num_params);
+  arma::vec y_k = arma::zeros<arma::vec>(num_params);
+  arma::mat ISYT = arma::zeros<arma::mat>(num_params,num_params);
+  
+  double old_LL,new_LL,inv_norm_p_k,tmp_alpha,ys;
+  double fnscale = -1.0; // For maximization
+  double curr_LL = 0.0;
+  
+  xk.at(0) = bxj;
+  
+  while(iter < max_iter){
+    //calculate direction p_k
+    uu = 0;
+    
+    old_LL = fnscale * Rcpp_loglikBB_Pi(ni, ni0,xk.at(0), lg_theta, lbc, zeta);
+    
+    //if(old_LL < 0) break;
+    
+    //printR_obj(old_LL);
+    gr_k   = fnscale * Rcpp_ase_grad_Pi(ni, ni0, xk.at(0), lg_theta, zeta);
+    p_k    = -1.0 * inv_Bk * gr_k;
+    inv_norm_p_k =  1.0 / std::max(1.0, Rcpp_norm(p_k));
+    
+    //line search for new xk
+    for(jj=0; jj<15; jj++){
+      tmp_alpha = inv_norm_p_k / std::pow(4, jj);
+      new_xk    = xk + tmp_alpha * p_k;
+      new_LL    = fnscale * Rcpp_loglikBB_Pi(ni, ni0, new_xk.at(0),
+                                             lg_theta, lbc, zeta);
+      
+      if(new_LL < old_LL){ //minimizing
+        s_k = tmp_alpha * p_k;
+        y_k = fnscale * Rcpp_ase_grad_Pi(ni, ni0, new_xk.at(0), 
+                                         lg_theta, zeta) - gr_k;
+        ys  = arma::dot(y_k, s_k);
+        
+        if(ys > 0.0){
+          // if(show) printR_obj("Update xk and inv_Bk");
+          ISYT   = I_num_params - (s_k * y_k.t()) /ys;
+          inv_Bk = ISYT * inv_Bk * ISYT.t() + s_k * s_k.t() / ys;
+        }else{
+          // if(show) printR_obj("Update xk only");
+        }
+        xk = new_xk;
+        old_LL = new_LL;
+        uu = 1;
+        break;
+      }
+    }
+    //printR_obj(new_LL);
+    //printR_obj(xk);
+    
+    if(uu==0){
+      if(Rcpp_norm(gr_k) > 1.0){
+        // if(show) printR_obj("Reset inv_Bk");
+        inv_Bk = I_num_params;
+      }else{
+        // if(show) printR_obj("Failed in search");
+        break;
+      }
+    }
+    
+    //check convergence
+    if(iter > 0){
+      if(std::abs(curr_LL - old_LL) < eps &&
+         Rcpp_norm(curr_xk - xk) < eps){
+        gr_k = Rcpp_ase_grad_Pi(ni, ni0, xk.at(0), lg_theta, zeta);
+        if(Rcpp_norm(gr_k) < 0.01){
+          converge = 1;
+          break;
+        }
+      }
+    }
+    curr_xk = xk;
+    curr_LL = old_LL;
+    iter++;
+  }
+  
+  old_LL = Rcpp_loglikBB(ni, ni0, xk.at(0),lg_theta, lbc, zeta);
+  
+  return Rcpp::List::create(
+    Rcpp::Named("converge", converge),
+    Rcpp::Named("LL", old_LL),
+    Rcpp::Named("iter", iter),
+    Rcpp::Named("norm_GRAD", Rcpp_norm(gr_k)),
+    Rcpp::Named("PAR", Rcpp::NumericVector(xk.begin(), xk.end()))
+  );
+}
 
 // [[Rcpp::export]]
 Rcpp::List Rcpp_ase_BFGS(const arma::vec& ni, const arma::vec& ni0,
@@ -1322,10 +1457,9 @@ Rcpp::List Rcpp_ase_BFGS(const arma::vec& ni, const arma::vec& ni0,
   double curr_LL = 0.0;
   
   while(iter < max_iter){
+    
     //calculate direction p_k
     uu = 0;
-    
-    // if(xk.at(0) < 0 | xk.at(0) > 1) break ;
     
     old_LL = fnscale * Rcpp_loglikBB(ni, ni0, xk.at(0), xk.at(1), lbc, zeta);
     gr_k   = fnscale * Rcpp_ase_grad(ni, ni0, xk.at(0), xk.at(1), zeta);
@@ -1373,7 +1507,18 @@ Rcpp::List Rcpp_ase_BFGS(const arma::vec& ni, const arma::vec& ni0,
         break;
       }
     }
-
+    
+    // if theta < 1e-5 stop updating it
+    if(xk.at(1) < -11.5){
+      Rcpp::List opH1 = Rcpp_ase_Pi_BFGS(ni, ni0, zeta, xk.at(0), xk.at(1),
+                                         lbc, max_iter, eps, show);
+      converge = opH1["converge"];
+      xk.at(0) = as<double>(opH1["PAR"]);
+      iter += as<int>(opH1["iter"]);
+      gr_k = as<double>(opH1["norm_GRAD"]);
+      break;
+    }
+    
     //check convergence
     if(iter > 0){
       if(std::abs(curr_LL - old_LL) < eps &&
@@ -1388,6 +1533,7 @@ Rcpp::List Rcpp_ase_BFGS(const arma::vec& ni, const arma::vec& ni0,
     curr_xk = xk;
     curr_LL = old_LL;
     iter++;
+    
   }
   
   old_LL = Rcpp_loglikBB(ni, ni0, xk.at(0), xk.at(1), lbc, zeta);
@@ -1525,7 +1671,7 @@ Rcpp::List Rcpp_ase(const arma::vec& ni, const arma::vec& ni0,
   arma::vec par = arma::zeros<arma::vec>(2);
   double LL0, lg_theta;
   
-  if(theta0 < 1e-8){
+  if(theta0 < 0.0){
     opH0 = Rcpp_ase_theta_BFGS(ni, ni0, zeta, 0.0, -2.0, lbc, 
                                max_iter, eps, show);
     lg_theta = as<double>(opH0["PAR"]);
@@ -1535,11 +1681,14 @@ Rcpp::List Rcpp_ase(const arma::vec& ni, const arma::vec& ni0,
     LL0 = LL_null_ase;
   }
   
-  par.at(0) = 0.0;
-  par.at(1) = lg_theta; 
+    par.at(0) = 0.0;
+    par.at(1) = lg_theta; 
+    opH1 = Rcpp_ase_BFGS(ni, ni0, zeta, par, lbc, max_iter, eps, show);
+
+
   
   //printR_obj(par);
-  opH1 = Rcpp_ase_BFGS(ni, ni0, zeta, par, lbc, max_iter, eps, show);
+  
   
   double lrt = (as<double>(opH1["LL"]) - LL0)*2.0;
   return Rcpp::List::create(
@@ -1753,21 +1902,21 @@ Rcpp::List Rcpp_trecase(const arma::vec& y, const arma::mat& X,
   BETA    = curr_reg_par.subvec(0, X.n_cols-1);
   phi     = std::exp(curr_reg_par.at(pp-1));
   
-  // if(as<int>(ase_fit["converge"]) !=1 | as<int>(trec_fit["converge"]) !=1){
-  //   return Rcpp::List::create(
-  //     Rcpp::Named("ASE_par", ase_fit["par"]),
-  //     Rcpp::Named("ASE_lrt", aselrt),
-  //     Rcpp::Named("ASE_pval", R::pchisq(aselrt, 1, 0, 0)),
-  //     Rcpp::Named("ASE_converge", as<int>(ase_fit["converge"]) ),
-  //     Rcpp::Named("Trec_converge", as<int>(trec_fit["converge"])),
-  //     Rcpp::Named("reg_par", Rcpp::NumericVector(new_reg_par.begin(), new_reg_par.end())),
-  //     Rcpp::Named("converge", 0),
-  //     Rcpp::Named("Trec_lrt", trec_fit["lrt"]),
-  //     Rcpp::Named("Trec_pval", trec_fit["pvalue"]),
-  //     Rcpp::Named("Trec_bxj", curr_bxj),
-  //     Rcpp::Named("Trec_reg_par", trec_fit["reg_par"]));
-  // }
-  // 
+  if(as<int>(ase_fit["converge"]) !=1 | as<int>(trec_fit["converge"]) !=1){
+    return Rcpp::List::create(
+      Rcpp::Named("ASE_par", ase_fit["par"]),
+      Rcpp::Named("ASE_lrt", aselrt),
+      Rcpp::Named("ASE_pval", R::pchisq(aselrt, 1, 0, 0)),
+      Rcpp::Named("ASE_converge", as<int>(ase_fit["converge"]) ),
+      Rcpp::Named("Trec_converge", as<int>(trec_fit["converge"])),
+      Rcpp::Named("reg_par", Rcpp::NumericVector(new_reg_par.begin(), new_reg_par.end())),
+      Rcpp::Named("converge", 0),
+      Rcpp::Named("Trec_lrt", trec_fit["lrt"]),
+      Rcpp::Named("Trec_pval", trec_fit["pvalue"]),
+      Rcpp::Named("Trec_bxj", curr_bxj),
+      Rcpp::Named("Trec_reg_par", trec_fit["reg_par"]));
+  }
+
   //printR_obj(curr_reg_par);
   while(iter1 < max_iter){
     
@@ -1791,13 +1940,13 @@ Rcpp::List Rcpp_trecase(const arma::vec& y, const arma::mat& X,
     //   Rprintf("bxj updated after %d iter \n", as<int>(new_bxj_fit["iter"]));
     // }
     
-    // update theta
+    // update theta (if theta > 1e-5)
     // double Pi1 = std::exp(new_bxj)/(1.0 + std::exp(new_bxj));
-    
-    new_theta_fit = Rcpp_ase_theta_BFGS(ni, ni0, zeta, new_bxj, new_lg_theta,
+    if(new_lg_theta > -11.5){
+      new_theta_fit = Rcpp_ase_theta_BFGS(ni, ni0, zeta, new_bxj, new_lg_theta,
                                         lbc, max_iter, eps, false);
-    new_lg_theta =  as<double>(new_theta_fit["PAR"]);
-    
+      new_lg_theta =  as<double>(new_theta_fit["PAR"]);
+    }
     // if(show){
     //   Rprintf("theta updated after %d iter \n", as<int>(new_theta_fit["iter"]));
     // }
@@ -1820,7 +1969,7 @@ Rcpp::List Rcpp_trecase(const arma::vec& y, const arma::mat& X,
           std::abs(curr_bxj - new_bxj) < eps &&
           std::abs(curr_lg_theta - new_lg_theta) < eps){
         if(((curr_LL - new_LL > 0.0 && 
-           as<double>(new_reg["norm_GRAD"]) > 0.01)) ){
+           as<double>(new_bxj_fit["norm_GRAD"]) > 0.01)) ){
           // magnitude of log-like decrease is samll but gradient is large
           // still consider not converged
           converge = 0;
@@ -2128,15 +2277,18 @@ void Rcpp_ase_mtest(const arma::mat& Y1, const arma::mat& Y2,
                     const arma::vec& gene_start, const arma::vec& gene_end,
                     const arma::uvec& gChr,
                     const char* file_ase = "ase.txt", const double& cis_window=1e5,
-                    const arma::uword& min_ASE_total=8,
-                    const arma::uword& min_nASE=10, const double& eps=1e-5,
+                    const int& min_ASE_total=8,
+                    const int& min_nASE=5, const int& min_nASE_het=5 ,
+                    const double& eps=1e-5,
                     const arma::uword& max_iter=4000L,const bool& show=false){
   arma::uword gg, ss, ii;
   arma::uword ssBegin = 0;
   Rcpp::List res_ase;
   FILE * f2;
-  double nSam  = Y1.n_rows;
-  double nGene = Y1.n_cols;
+  int nSam  = Y1.n_rows;
+  int nGene = Y1.n_cols;
+  int aseNull_conv;
+  double theta0, LL_Null;
   
   f2 = fopen(file_ase, "w");
   fprintf(f2,"GeneRowID\tMarkerRowID\tASE_b\tASE_theta\tASE_Chisq\tASE_Pvalue\tASE_Conv\n");
@@ -2154,26 +2306,28 @@ void Rcpp_ase_mtest(const arma::mat& Y1, const arma::mat& Y2,
     arma::uword h0 = 0;
     
     for(ii=0;ii<nSam;ii++){
-      
       if(yA.at(ii) >= min_ASE_total){
         ni.at(h0) = yA.at(ii);
-        lbc.at(h0) = R::lchoose(ni.at(h0), y1.at(ii));
+        // lbc.at(h0) = R::lchoose(ni.at(h0), y1.at(ii));
         ni0.at(h0) = y1.at(ii);
         h0++;
       }
     }
-    
-    Rcpp::List ase_Null = Rcpp_ase_theta_BFGS(ni.subvec(0, h0-1),
+    if(h0 < min_nASE){
+      aseNull_conv = 0;
+    }else{
+      Rcpp::List ase_Null = Rcpp_ase_theta_BFGS(ni.subvec(0, h0-1),
                                               ni0.subvec(0, h0-1), 
                                               zeta.subvec(0, h0-1),
                                               0.0, -2.0, lbc.subvec(0, h0-1), 
                                               max_iter, eps, show);
-    double theta0 = exp(as<double>(ase_Null["PAR"]));
-    double LL_Null = as<double>(ase_Null["LL"]);
-    
-    if(as<int>(ase_Null["converge"]) != 1){
-      Rprintf("baseline ASE for gene %d model does not converge \n",
-              gg+1);
+      theta0 = exp(as<double>(ase_Null["PAR"]));
+      LL_Null = as<double>(ase_Null["LL"]);
+      aseNull_conv = as<int>(ase_Null["converge"]);
+    }
+    if(aseNull_conv != 1){
+      // Rprintf("baseline ASE for gene %d model does not converge \n",
+      //         gg+1);
       continue;
     }
     
@@ -2236,9 +2390,12 @@ void Rcpp_ase_mtest(const arma::mat& Y1, const arma::mat& Y2,
 
 /*
  * run all gene-snp pair for trec / trecase 
- * Fail code: 2: ASE does not converge, 4: TReC does not converge, 
- * 6: both ASE and TReC do not converge. 0: TReCASE does not converge.
- * 7: ASE NULL does not converge. 8: ASE NULL + TReC does not converge
+ * Fail code: 0: TReCASE does not converge.
+ * 2: ASE does not converge, 4: TReC does not converge, 
+ * 6: both ASE and TReC do not converge. 
+ * 7: not enouth AS sample / heterzegous SNPs 
+ * 8: ASE null Fail 
+ * 10: both ASE null and TReC not converge
  */
 // [[Rcpp::export]]
 void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
@@ -2250,8 +2407,9 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
                         const char* file_trec = "trec.txt",
                         const char* file_trecase = "trecase.txt",
                         const double& cis_window=1e5,
-                        const bool& useASE = 1, const arma::uword& min_ASE_total=8,
-                        const arma::uword& min_nASE=10, const double& eps=1e-5,
+                        const bool& useASE = 1, const int& min_ASE_total=8,
+                        const int& min_nASE= 5, const int& min_nASE_het=5,
+                        const double& eps=1e-5,
                         const arma::uword& max_iter=4000L,const bool& show=false){
   arma::uword gg, ss, ii, xi, h0, h1;
   arma::uword ssBegin = 0;
@@ -2295,7 +2453,7 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
     if(fam_nb){
       fprintf(f2, "Joint_phi\t");
     }
-    fprintf(f2, "Joint_theta\tConverge\tCisTrans_Chisq\tCisTrans_Pvalue\n");
+    fprintf(f2, "Joint_theta\tConverge\tCisTrans_Chisq\tCisTrans_Pvalue\tp.final\n");
     
   }else{
     
@@ -2350,13 +2508,13 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
         
         if(yA.at(ii) >= min_ASE_total){
           ni.at(h0) = yA.at(ii);
-          lbc.at(h0) = R::lchoose(ni.at(h0), y1.at(ii));
+          // lbc.at(h0) = R::lchoose(ni.at(h0), y1.at(ii));
           ni0.at(h0) = y1.at(ii);
           h0++;
         }
       }
       if(h0 < min_nASE){
-        aseNull_conv = 0;
+        aseNull_conv = 7;
       }else{
         Rcpp::List ase_Null = Rcpp_ase_theta_BFGS(ni.subvec(0, h0-1),
                                                   ni0.subvec(0, h0-1), 
@@ -2368,11 +2526,11 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
         aseNull_conv = as<int>(ase_Null["converge"]) ;
       }
       
-      if(aseNull_conv != 1){
-        Rprintf("baseline ASE for gene %d model does not converge \n",
-                gg+1);
-        //continue;
-      }
+      // if(aseNull_conv != 1){
+      //   Rprintf("baseline ASE for gene %d model does not converge \n",
+      //           gg+1);
+      //   continue;
+      // }
     }
     
     for(ss = ssBegin; ss < Z.n_cols ; ss++){
@@ -2393,7 +2551,7 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
         arma::vec zz2 = Z.col(ss);
         arma::vec zz  = Z.col(ss);
         
-        if(useASE & aseNull_conv){
+        if(useASE & aseNull_conv == 1){
           
           arma::vec zz2 = Z.col(ss);
           zeta.zeros();
@@ -2420,7 +2578,8 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
             }
           }
           
-          if(h0 < min_nASE){ // can still run trec model
+          if(h1 < min_nASE_het){
+            // can still run trec model
             // Rprintf("sample size of heterzygous genotype is not enough for SNP %d\n",
             //         ss+1);
             
@@ -2450,7 +2609,9 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
             if(fam_nb){
               fprintf(f2, "NA\t");
             }
-            fprintf(f2, "NA\t%d\tNA\tNA\n", as<int>(res_trec["converge"]));
+            fprintf(f2, "NA\t%d\tNA\tNA\t%.4e\n", 
+                    4+3*as<int>(res_trec["converge"]),
+                    as<double>(res_trec["pvalue"]));
             
             
           }else{
@@ -2463,7 +2624,7 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
             NumericVector Trecase_reg_pars = res_trecase["reg_par"];
             NumericVector ase_par = res_trecase["ASE_par"];
             int trecase_conver = as<int>(res_trecase["converge"]);
-            
+            double pfinal = as<double>(res_trecase["Trec_pval"]);
             if(as<int>(res_trecase["ASE_converge"]) != 1){
               // Rprintf("ASE model for snp %d does not converge \n",
               //         ss+1);
@@ -2475,6 +2636,7 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
               trecase_conver += 4;
               
             }
+            
             // write out trec result
             // printR_obj(as<int>(res_trecase["converge"]));
             // printR_obj("TRECASE");
@@ -2500,8 +2662,13 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
               if(fam_nb){
                 fprintf(f2, "NA\t");
               }
-              fprintf(f2, "NA\t%d\tNA\tNA\n", trecase_conver);
-            }else{        
+              fprintf(f2, "NA\t%d\tNA\tNA\t%.4e\n", trecase_conver,
+                      as<double>(res_trecase["Trec_pval"]));
+            }else{  
+              
+              if(as<double>(res_trecase["CisTrans_pval"]) < 0.01){
+                pfinal = as<double>(res_trecase["pval"]);
+              }
               fprintf(f2, "%.2e\t%.2e\t%.4e\t",
                       as<double>(res_trecase["bxj"]),
                       as<double>(res_trecase["lrt"]),
@@ -2512,15 +2679,17 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
               if(fam_nb){
                 fprintf(f2, "%.2e\t", exp(Trecase_reg_pars[XX.n_cols]));
               }
-              fprintf(f2, "%.2e\t%d\t%.2e\t%.4e\n",
+              fprintf(f2, "%.2e\t%d\t%.2e\t%.4e\t%.4e\n",
                       exp(as<double>(res_trecase["lg_theta"])),
                       trecase_conver,
                       as<double>(res_trecase["CisTrans_lrt"]),
-                      as<double>(res_trecase["CisTrans_pval"]) );
+                      as<double>(res_trecase["CisTrans_pval"]),
+                      pfinal);
               
             }}
           
         }else{
+          // run trec model (useASE = 0 or didn't pass null model ASE )
           for(ii=0;ii<nSam;ii++){
             if(zz2.at(ii)==2){
               zz.at(ii) = 1;
@@ -2532,10 +2701,18 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
           res_trec = Rcpp_trec(y, XX, zz, fam_nb, lgy1, ini_bxj, LL_null,
                                ini_reg_par, max_iter, eps, show);
           NumericVector reg_pars = res_trec["reg_par"];
+          int Conv2 = res_trec["converge"];
           //ini_bxj = as<double>(res_trec["bxj"]); //initial value of next snp
-          if(as<int>(new_reg["converge"]) != 1){
-            Rprintf("TReC model for snp %d does not converge \n",
-                    ss+1);
+         // 
+         // if(as<int>(res_trec["converge"]) != 1){
+         //    Rprintf("TReC model for snp %d does not converge \n",
+         //            ss+1);
+         //    }
+          
+          if(aseNull_conv == 0){
+            Conv2 = 10 - 2*Conv2;
+          }else{
+            Conv2 = 4 + 3*Conv2;
           }
           //printR_obj(as<double>(res_trec["LL"]));
           //printR_obj(reg_pars);
@@ -2560,13 +2737,16 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
             if(fam_nb){
               fprintf(f2, "NA\t");
             }
-            fprintf(f2, "NA\t%d\tNA\tNA\n", 8 - as<int>(res_trec["converge"]));
+            fprintf(f2, "NA\t%d\tNA\tNA\t%.4e\n", 
+                    Conv2, 
+                    as<double>(res_trec["pvalue"]));
             
           }else{ //write out trec result
             fprintf(f1, "%d\t%d\t%.2e\t%.2e\t%.4e\t%d\t",
                     gg+1,ss+1, as<double>(res_trec["bxj"]),
                     as<double>(res_trec["lrt"]),
-                    as<double>(res_trec["pvalue"]),as<int>(res_trec["converge"]));
+                    as<double>(res_trec["pvalue"]),
+                    as<int>(res_trec["converge"]));
             for(xi=0;xi<(pp-1);xi++){
               fprintf(f1, "%.2e\t", reg_pars[xi]);
             }

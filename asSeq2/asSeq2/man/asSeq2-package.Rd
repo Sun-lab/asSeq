@@ -121,9 +121,9 @@ Converge: 0: TReCASE model does not coverged, 1: TReCASE model coverged.
 2: ASE does not converge. 3: TReC does not converge. 
 5: both ASE and TReC do not converge.
 7: ASE NULL model does not have enough ASE samples. 
-8: TReC does not converge (under ASE NULL does not have not enough samples)
-
-CisTrans_Chisq: The value of the test statistic for the Cis-Trans Score Test
+8: ASE Null does not converge.
+10: Both ASE Null and TReC do not converge
+CisTrans_Chisq: The value of the test statistic for the Cis-Trans Score Test.
 
 CisTrans_Pvalue: Pvalue for the Cis-Trans Score Test
 
