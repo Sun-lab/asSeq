@@ -210,6 +210,12 @@ aseR(ni0, ni, zeta)
 time3 = Sys.time()
 c(time2-time1, time3-time2)
 
+Rcpp_ase(ni, ni0, zeta, lbc, theta0 = 0.06685035534, LL_null_ase = -307.9154298,
+         max_iter = 4000L,
+         eps = 5e-05, show = FALSE)
+Rcpp_ase(ni, ni0, zeta, lbc, theta0 = -5, LL_null_ase = -307.9154298,
+         max_iter = 4000L,
+         eps = 5e-05, show = FALSE)
 #-------------------------------------------------------------
 # TReCASE
 #-------------------------------------------------------------
@@ -363,7 +369,6 @@ Y1 = cbind(y1,y1)
 Y2 = cbind(y2,y2)
 
 
-library(asSeq2)
 time1 = Sys.time()
 trecase(Y, Y1, Y2 , ZZ, XX, SNPloc, geneloc, fam_nb = T,eps=5e-5, show = F, useASE = 1)
 time2 = Sys.time()
@@ -399,13 +404,17 @@ TrecFastTest:::trec_fast(Y, XX[,-1], ZZ3, "output_trec", 1, local.distance = 1e+
 
 
 as2 = read.table("trecase.txt", header = T)
+head(as2)
 table(as2$Converge)
 as1 = read.table("output_trecase_eqtl.txt", header = T)
 head(as1)
 dim(as1)
 table(is.na(as1$Joint_Pvalue))
-plot(as2$CisTrans_Pvalue, as1$trans_Pvalue)
-plot(as2$CisTrans_Chisq, as1$trans_Chisq)
-plot(as2$Joint_Pvalue, as1$Joint_Pvalue)
-plot(as2$ASE_Pvalue, as1$ASE_Pvalue)
+plot(-log10(as2$CisTrans_Pvalue), -log10(as1$trans_Pvalue))
+plot(-log10(as2$CisTrans_Chisq), -log10(as1$trans_Chisq))
+plot(-log10(as2$Joint_Pvalue), -log10(as1$Joint_Pvalue))
+plot(-log10(as2$ASE_Pvalue), -log10(as1$ASE_Pvalue))
 plot(as2$TReC_Pvalue, as1$TReC_Pvalue)
+plot(as2$ASE_b, as1$ASE_b)
+plot(as2$Joint_b, as1$Joint_b)
+dabline(0, 1)
