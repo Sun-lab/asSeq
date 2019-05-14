@@ -11,6 +11,9 @@ rasq = rasq[!is.na(rasq$pvalT),]
 rasq$qvalR = 10^rasq$qval
 rasq$qvalT[rasq$qvalT<1e-100] = 1e-100
 rasq$qvalR[rasq$qvalR<1e-100] = 1e-100
+rasq$pvalT[rasq$pvalT<1e-100] = 1e-100
+rasq$pvalR[rasq$pvalR<1e-100] = 1e-100
+dim(rasq)
 
 #rasq$rnlt = -log10(rasq$qvalR)
 #rasq$tnlt = -log10(rasq$qvalT)
