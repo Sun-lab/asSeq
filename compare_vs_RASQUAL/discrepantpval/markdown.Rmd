@@ -1,12 +1,18 @@
 ---
 title: "Linear model fit for p-value discrepancies"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
 rasq = read.csv("linear_model_cov.csv")
-rasq$rnlt = -log10(rasq$pvalR)#neglog10(rasq)
-rasq$tnlt = -log10(rasq$pvalT)#neglog10(trecase)
+rasq = rasq[!is.na(rasq$qvalT),]
+rasq$qvalT[rasq$qvalT<1e-100] = 1e-100
+rasq$qvalR[rasq$qvalR<1e-100] = 1e-100
+
+rasq$rnlt = -log10(rasq$qvalR)#neglog10(rasq)
+rasq$tnlt = -log10(rasq$qvalT)#neglog10(trecase)
 
 cent = function(x){
   med = median(x)
@@ -36,7 +42,7 @@ GfSNP[rasq$NfSNP>2]=6
 GfSNP[rasq$NfSNP>4]=12
 GfSNP[rasq$NfSNP>8]=24
 GfSNP[rasq$NfSNP>16]=48
-cutoff = 20
+cutoff = 25
 rasq$rnlt[rasq$rnlt>cutoff] = cutoff
 rasq$tnlt[rasq$tnlt>cutoff] = cutoff
 y = rasq$rnlt-rasq$tnlt
@@ -76,16 +82,18 @@ for(i in ind){
 
 Plotting fraction of RASQUAL more significant than TReCASE and over-dispersion correlations vs dicrepancy in p-value and number of F SNPs
 
-```{r echo=TRUE }
-cexes = 2
-#png("RASQ_discr_3x1.png", height=8, width=8 res=300, units="in")
-#par(mfrow=c(2,2), mar=c(5,5,3,1))
+```{r fig1, fig.height=8, fig.width=8, fig.align="center", echo=TRUE }
+cexes = 1.8
+#png("RASQ_discr_2x2.png", height=8, width=8, res=300, units="in")
+#dev.new()
+#knitr::opts_chunk$set(fig.width=12, fig.height=12)
+par(mfrow=c(2,2))
 par(mar=c(5,5,3,1))
 
 plot(ind, frR[1,], xlab="|log10(T p-val)-log10(R p-val)|", ylab="%p(R)<p(T)", 
 main="", bty="n", cex.main=cexes, cex.lab=cexes, cex.axis=cexes, cex=log10(frR[2,]))
-legend("topleft", legend=c("#genes", 10^(4:2)), pt.cex=c(1, 4:2), cex=cexes, bty="n", pch=c(NA, 1,1,1))
-legend("bottomright", legend=c(2500, 500, 100), pt.cex=log10(c(2500, 500, 100)), cex=cexes, bty="n", pch=c(1,1,1))
+legend("bottomright", legend=c("#genes", 10^(4:2)), pt.cex=c(1, 4:2), cex=cexes, bty="n", pch=c(NA, 1,1,1))
+legend("topleft", legend=c(2500, 500, 100), pt.cex=log10(c(2500, 500, 100)), cex=cexes, bty="n", pch=c(1,1,1))
 axis(1, at=c(12), 12, cex.axis=cexes)
 
 plot(ind, odnb, xlab="|log10(T p-val)-log10(R p-val)|", ylab="normalized log(NBod)", 
@@ -106,16 +114,25 @@ text.col=c("black", "blue", "goldenrod", "red"), pch=c(1:4), bty="n", cex=cexes)
 
 
 plot(ind, cors, cex=log10(numg), pch=1, bty="n", xlab="|log10(T p-val)-log10(R p-val)|", 
-ylab="OD correlation", main="", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+ylab="OD correlation", main="", cex.main=cexes, cex.lab=cexes, cex.axis=cexes, ylim=c(0,1))
 points(ind, cors2, cex=log10(numg), pch=2)
 axis(1, at=c(12), 12, cex.axis=cexes)
 legend("bottomleft", c("OD(NB)", "OD(BB)"), bty="n", pch=c(1,2), cex=cexes)
-legend("topright", legend=c("#genes", 10^(4:2)), pt.cex=c(1, 4:2), cex=cexes, bty="n", pch=c(NA, 1,1,1))
+legend("bottomright", legend=c("#genes", 10^(4:2)), pt.cex=c(1, 4:2), cex=cexes, bty="n", pch=c(NA, 1,1,1))
 #dev.off()
 
 ```
 
 ## fittin linear model vs differences
+
+Plotting fraction of significant by group
+
+```{r fig2, fig.height=8, fig.width=12, fig.align="center", echo=TRUE }
+
+
+```
+
+
 
 ```{r echo=FALSE}
 #fit model
@@ -159,7 +176,9 @@ cutoff = 15
 rasq$rnlt[rasq$rnlt>cutoff] = cutoff
 rasq$tnlt[rasq$tnlt>cutoff] = cutoff
 y = rasq$rnlt-rasq$tnlt
-kp = abs(y)>=(cutoff-5)
+
+#kp = abs(y)>=(cutoff-5)
+kp = abs(y)>=0
 
 mpp = rasq$mpp
 mpp[mpp<1e-5] = 1e-5
@@ -246,7 +265,7 @@ ano[,5] = format(ano[,5], scientific=T, digits=2)
 ano = cbind(ano[,-c(1,4)], ano3)
 ano = ano[-17,]
 ano = cbind(ano, mr2[-1,1])
-rownames(ano) = names(lm.2$coefficients)[-17]
+rownames(ano) = names(lm.2$coefficients)[-1]
 colnames(ano)=c("SumSq", "Typ1per", "T1P-val", "Typ3per", "T3P-val", "Marg.R")
 #ano
 
