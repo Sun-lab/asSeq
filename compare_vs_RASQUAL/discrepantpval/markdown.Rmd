@@ -1,12 +1,24 @@
 ---
 title: "Linear model fit for p-value discrepancies"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=TRUE}
 rasq = read.csv("linear_model_cov.csv")
-rasq$rnlt = -log10(rasq$pvalR)#neglog10(rasq)
-rasq$tnlt = -log10(rasq$pvalT)#neglog10(trecase)
+rasq = rasq[!is.na(rasq$pvalT),]
+rasq$qvalR = 10^rasq$qval
+rasq$qvalT[rasq$qvalT<1e-100] = 1e-100
+rasq$qvalR[rasq$qvalR<1e-100] = 1e-100
+rasq$pvalT[rasq$pvalT<1e-100] = 1e-100
+rasq$pvalR[rasq$pvalR<1e-100] = 1e-100
+dim(rasq)
+
+#rasq$rnlt = -log10(rasq$qvalR)
+#rasq$tnlt = -log10(rasq$qvalT)
+rasq$rnlt = -log10(rasq$pvalR)
+rasq$tnlt = -log10(rasq$pvalT)
 
 cent = function(x){
   med = median(x)
@@ -19,8 +31,8 @@ norm = function(x){
 
 odNB = rasq$odNB; odNB[odNB<1e-3]=1e-3; odNB[odNB>8]=8; 
 odBB = rasq$odBB; odBB[odBB<1e-3]=1e-3; odBB[odBB>8]=8
-lodNB = cent(norm(log(odNB))); #lodNB=lodNB-min(lodNB)#-log(min(odNB)))
-lodBB = cent(norm(log(odBB))); #lodBB=lodBB-min(lodBB)
+lodNB = cent(norm(log(odNB))); 
+lodBB = cent(norm(log(odBB))); 
 lodR = cent(norm(-log(rasq$OD)));
 
 
@@ -36,7 +48,7 @@ GfSNP[rasq$NfSNP>2]=6
 GfSNP[rasq$NfSNP>4]=12
 GfSNP[rasq$NfSNP>8]=24
 GfSNP[rasq$NfSNP>16]=48
-cutoff = 20
+cutoff = 25
 rasq$rnlt[rasq$rnlt>cutoff] = cutoff
 rasq$tnlt[rasq$tnlt>cutoff] = cutoff
 y = rasq$rnlt-rasq$tnlt
@@ -76,27 +88,30 @@ for(i in ind){
 
 Plotting fraction of RASQUAL more significant than TReCASE and over-dispersion correlations vs dicrepancy in p-value and number of F SNPs
 
-```{r echo=TRUE }
-cexes = 2
-#png("RASQ_discr_3x1.png", height=8, width=8 res=300, units="in")
-#par(mfrow=c(2,2), mar=c(5,5,3,1))
+```{r fig1, fig.height=8, fig.width=8, fig.align="center", echo=TRUE }
+cexes = 1.8
+par(mfrow=c(2,2))
 par(mar=c(5,5,3,1))
 
 plot(ind, frR[1,], xlab="|log10(T p-val)-log10(R p-val)|", ylab="%p(R)<p(T)", 
 main="", bty="n", cex.main=cexes, cex.lab=cexes, cex.axis=cexes, cex=log10(frR[2,]))
-legend("topleft", legend=c("#genes", 10^(4:2)), pt.cex=c(1, 4:2), cex=cexes, bty="n", pch=c(NA, 1,1,1))
-legend("bottomright", legend=c(2500, 500, 100), pt.cex=log10(c(2500, 500, 100)), cex=cexes, bty="n", pch=c(1,1,1))
+legend("bottomright", legend=c("#genes", 10^(4:2)), pt.cex=c(1, 4:2), 
+       cex=cexes, bty="n", pch=c(NA, 1,1,1))
+legend("topleft", legend=c(2500, 500, 100), pt.cex=log10(c(2500, 500, 100)), 
+       cex=cexes, bty="n", pch=c(1,1,1))
 axis(1, at=c(12), 12, cex.axis=cexes)
 
 plot(ind, odnb, xlab="|log10(T p-val)-log10(R p-val)|", ylab="normalized log(NBod)", 
 main="", bty="n", cex.main=cexes, cex.lab=cexes, cex.axis=cexes, cex=log10(frR[2,]))
-legend("bottomleft", legend=c(2500, 500, 100), pt.cex=log10(c(2500, 500, 100)), cex=cexes, bty="n", pch=c(1,1,1))
+legend("bottomleft", legend=c(2500, 500, 100), pt.cex=log10(c(2500, 500, 100)), 
+       cex=cexes, bty="n", pch=c(1,1,1))
 axis(1, at=c(12), 12, cex.axis=cexes)
 
 
 x = 1:6
 plot(x, ag0[,2], ylim=c(0,1), type="b", xlab="#fSNP", ylab="%p(R)<p(T)", 
-main="", bty="n", xaxt="n", cex=log10(cg0[,2]), xlim=c(1,6.1), cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+      main="", bty="n", xaxt="n", cex=log10(cg0[,2]), 
+      xlim=c(1,6.1), cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
 points(x, ag5[,2], col="blue", type="b", pch=2, cex=log10(cg5[,2]))
 points(x, ag10[,2], col="goldenrod", type="b", pch=3, cex=log10(cg10[,2]))
 points(x, ag15[,2], col="red", type="b", pch=4, cex=log10(cg15[,2]))
@@ -106,26 +121,25 @@ text.col=c("black", "blue", "goldenrod", "red"), pch=c(1:4), bty="n", cex=cexes)
 
 
 plot(ind, cors, cex=log10(numg), pch=1, bty="n", xlab="|log10(T p-val)-log10(R p-val)|", 
-ylab="OD correlation", main="", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+ylab="OD correlation", main="", cex.main=cexes, cex.lab=cexes, cex.axis=cexes, ylim=c(0,1))
 points(ind, cors2, cex=log10(numg), pch=2)
 axis(1, at=c(12), 12, cex.axis=cexes)
 legend("bottomleft", c("OD(NB)", "OD(BB)"), bty="n", pch=c(1,2), cex=cexes)
-legend("topright", legend=c("#genes", 10^(4:2)), pt.cex=c(1, 4:2), cex=cexes, bty="n", pch=c(NA, 1,1,1))
-#dev.off()
+legend("bottomright", legend=c("#genes", 10^(4:2)), 
+       pt.cex=c(1, 4:2), cex=cexes, bty="n", pch=c(NA, 1,1,1))
 
 ```
 
-## fittin linear model vs differences
 
 ```{r echo=FALSE}
-#fit model
+#prepare covariates
 
-odNB = rasq$odNB; odNB[odNB<1e-3]=1e-3; odNB[odNB>8]=8; 
-odBB = rasq$odBB; odBB[odBB<1e-3]=1e-3; odBB[odBB>8]=8
-odBBf = odBB==1e-3
-nodNB = cent(norm(odNB))
-nodBB = cent(norm(odBB))
-nodNBB = nodNB*nodBB
+#odNB = rasq$odNB; odNB[odNB<1e-3]=1e-3; odNB[odNB>8]=8; 
+#odBB = rasq$odBB; odBB[odBB<1e-3]=1e-3; odBB[odBB>8]=8
+#odBBf = odBB==1e-3
+#nodNB = cent(norm(odNB))
+#nodBB = cent(norm(odBB))
+#nodNBB = nodNB*nodBB
 
 NfSNP = rasq$NfSNP;
 NfSNP[rasq$NfSNP>=60] = 60;
@@ -159,7 +173,7 @@ cutoff = 15
 rasq$rnlt[rasq$rnlt>cutoff] = cutoff
 rasq$tnlt[rasq$tnlt>cutoff] = cutoff
 y = rasq$rnlt-rasq$tnlt
-kp = abs(y)>=(cutoff-5)
+
 
 mpp = rasq$mpp
 mpp[mpp<1e-5] = 1e-5
@@ -170,99 +184,290 @@ i12 = asR*NfSNP
 i13 = asR*lodBB
 i23 = NfSNP*lodBB
 i123 = asR*lodBB*NfSNP
+#i123[i123< -10] = -10
+#i123[i123>  10] = 10
 ia14 = asT*asR
+```
 
-nms = c("log(OD_BB)", "ASReC_R", "n-fSNP", "ASReC_R:n-SNP", "ASReC_R:log(OD_BB)",
- "n-fSNP:log(OD_BB)", "ASReC_R:n-fSNP:log(OD_BB)", "n-rSNP", "log(OD_NB)",
- "ASReC_T", "ASReC_T:ASReC_R", "AF", "Chi2-HWEC", "Map.Err", "Ref.Bias", "Med(perm-p)") 
-lm.2 = lm(y[kp]~lodBB[kp]+asR[kp]+NfSNP[kp]
-           +i12[kp]+i13[kp]+i23[kp]+i123[kp]
-           +NrSNP[kp]+lodNB[kp]+asT[kp]+ia14[kp]
-           +af[kp]+hwec2[kp]+derr[kp]+phib[kp]+mpp[kp])
-names(lm.2$coefficients)[-1] = nms
+Plotting Over-dispersions
 
+```{r fig2, fig.height=8, fig.width=12, fig.align="center", echo=TRUE }
+par(mfrow=c(2,3))
+par(mar=c(5,5,3,1))
 
+plot(density(lodNB), bty="n", main="log10(NB OD)", xlab="log(od)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+plot(density(lodBB), bty="n", main="log10(BB OD)", xlab="log(od)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+plot(density(lodR), bty="n", main="log10(RASQ OD)", xlab="log(od)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+smoothScatter(lodNB, lodBB, main="NB vs BB over-disp", xlab="log(NB OD)", ylab="log(BB OD)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+smoothScatter(lodNB, lodR, main="NB vs Rasq over-disp", xlab="log(NB OD)", ylab="log(RASQ OD)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+smoothScatter(lodR, lodBB, main="Rasq vs BB over-disp", xlab="log(RASQ OD)", ylab="log(BB OD)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
 
-library(car)
-an.1 = anova(lm.2)
-tss = sum(an.1[,2])
-an.3 = Anova(lm.2, type="3")
-ano3 = cbind(round(100*an.3[,1]/tss,1), format(an.3[,4], scientific=T, digits=2))[-1,]
-
-
-lm.m0 = lm(y[kp]~1)
-lm.m1 = lm(y[kp]~lodBB[kp])
-lm.m2 = lm(y[kp]~asR[kp])
-lm.m3 = lm(y[kp]~NfSNP[kp])
-lm.m4 = lm(y[kp]~i12[kp])
-lm.m5 = lm(y[kp]~i13[kp])
-lm.m6 = lm(y[kp]~i23[kp])
-lm.m7 = lm(y[kp]~i123[kp])
-lm.m8 = lm(y[kp]~NrSNP[kp])
-lm.m9 = lm(y[kp]~lodNB[kp])
-lm.m10 = lm(y[kp]~asT[kp])
-lm.m11 = lm(y[kp]~ia14[kp])
-
-lm.m12 = lm(y[kp]~af[kp])
-lm.m13 = lm(y[kp]~hwec2[kp])
-lm.m14 = lm(y[kp]~derr[kp])
-lm.m15 = lm(y[kp]~phib[kp])
-lm.m16 = lm(y[kp]~mpp[kp])
-
-mr2 = 
-c(round(summary(lm.m0)$r.squared*100,1), lm.m0$coef[1], summary(lm.m0)$coefficients[1,4],
-round(summary(lm.m1)$r.squared*100,1), lm.m1$coef[2], summary(lm.m1)$coefficients[2,4],
-round(summary(lm.m2)$r.squared*100,1), lm.m2$coef[2], summary(lm.m2)$coefficients[2,4],
-round(summary(lm.m3)$r.squared*100,1), lm.m3$coef[2], summary(lm.m3)$coefficients[2,4],
-round(summary(lm.m4)$r.squared*100,1), lm.m4$coef[2], summary(lm.m4)$coefficients[2,4],
-round(summary(lm.m5)$r.squared*100,1), lm.m5$coef[2], summary(lm.m5)$coefficients[2,4],
-round(summary(lm.m6)$r.squared*100,1), lm.m6$coef[2], summary(lm.m6)$coefficients[2,4],
-round(summary(lm.m7)$r.squared*100,1), lm.m7$coef[2], summary(lm.m7)$coefficients[2,4],
-round(summary(lm.m8)$r.squared*100,1), lm.m8$coef[2], summary(lm.m8)$coefficients[2,4],
-round(summary(lm.m9)$r.squared*100,1), lm.m9$coef[2], summary(lm.m9)$coefficients[2,4],
-round(summary(lm.m10)$r.squared*100,1), lm.m10$coef[2], summary(lm.m10)$coefficients[2,4],
-round(summary(lm.m11)$r.squared*100,1), lm.m11$coef[2], summary(lm.m11)$coefficients[2,4],
-round(summary(lm.m12)$r.squared*100,1), lm.m12$coef[2], summary(lm.m12)$coefficients[2,4],
-round(summary(lm.m13)$r.squared*100,1), lm.m13$coef[2], summary(lm.m13)$coefficients[2,4],
-round(summary(lm.m14)$r.squared*100,1), lm.m14$coef[2], summary(lm.m14)$coefficients[2,4],
-round(summary(lm.m15)$r.squared*100,1), lm.m15$coef[2], summary(lm.m15)$coefficients[2,4],
-round(summary(lm.m16)$r.squared*100,1), lm.m16$coef[2], summary(lm.m16)$coefficients[2,4])
-mr2 = t(matrix(mr2, nrow=3))
-
-tab = summary(lm.2)$coef
-tab = tab[,-3]
-tab = cbind(tab, mr2[,2], mr2[,3])
-tab[,1] = round(tab[,1],3)
-tab[,2] = round(tab[,2],3)
-tab[,3] = format(as.numeric(tab[,3]), scientific=T, digits=2)
-tab[,4] = round(as.numeric(tab[,4]), 3)
-tab[,5] = format(as.numeric(tab[,5]), scientific=T, digits=2)
-colnames(tab) = c("Est", "SE", "P-val", "Marg.Est", "Marg.P")
-#tab
-
-ano = an.1
-ano[,3] = round(100*ano[,2]/tss,1)
-ano[,5] = format(ano[,5], scientific=T, digits=2)
-ano = cbind(ano[,-c(1,4)], ano3)
-ano = ano[-17,]
-ano = cbind(ano, mr2[-1,1])
-rownames(ano) = names(lm.2$coefficients)[-17]
-colnames(ano)=c("SumSq", "Typ1per", "T1P-val", "Typ3per", "T3P-val", "Marg.R")
-#ano
-
-write.csv(ano, "anova.csv", quote=F)
-write.csv(tab, "model.csv", quote=F)
 
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+Plotting RASQUAL read counts, normalized NfSNP and their interaction along with interactions with BB over-dispersion
+
+```{r fig3, fig.height=8, fig.width=12, fig.align="center", echo=TRUE }
+par(mfrow=c(2,3))
+par(mar=c(5,5,3,1))
+
+plot(density(asR), bty="n", main="#as-RASQ", xlab="#as-RASQUAL", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+plot(density(NfSNP), bty="n", main="#fSNPs", xlab="#fSNPs", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+#plot(density(NrSNP), bty="n", main="#rSNPs", xlab="#fSNPs", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+plot(density(i12), bty="n", main="interac, #asR & #fSNP", 
+     xlab="#as-RASQ * #fSNPs", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+plot(density(i13), bty="n", main="interac, #asR & #log(BB OD)", 
+     xlab="#asR * log10(BB OD)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+plot(density(i23), bty="n", main="interac, #fSNP & log(BB OD)", 
+     xlab="#fSNPs * log10(BB OD)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+plot(density(i123), bty="n", main="interac, #asR & #fSNP & log(BB OD0", xlim=c(-10,10),
+     xlab="#as-RASQ * #fSNPs * log10(BB OD)", , cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+
+```
+
+```{r fig4, fig.height=8, fig.width=12, fig.align="center", echo=TRUE }
+par(mfrow=c(2,3))
+par(mar=c(5,5,3,1))
+
+plot(density(asT), bty="n", main="#as-TReCASE", 
+     xlab="#as-TReCASE", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+plot(density(ia14), bty="n", main="interact, #as-RASQ & #as-TReCASE", 
+     xlab="#as-RASQ*#as-TReCASE", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+smoothScatter(asT, asR, bty="n", main="#as-RASQ vs #as-TReCASE", 
+              xlab="#as-TReCASE", ylab="#as-RASQUAL", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+
+plot(density(NrSNP), bty="n", main="#rSNPs", 
+     xlab="#fSNPs", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+plot(density(y), bty="n", main="difference in log10 p-values", 
+     xlab="log10(T p-val)-log10(R p-val)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+smoothScatter(rasq$tnlt, rasq$rnlt, bty="n", main="RASQUAL vs TReCASE p-val", 
+              xlab="-log10(T p-val)", ylab="-log10(R p-val)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+#rasq$rnlt-rasq$tnlt") - negative implies TReCASE is more significant
+
+```
+
+Other covariates: median permuted p-value, mapping error, reference bias and Chi2 of Hardy Weinberg Equilibrium
+```{r fig5, fig.height=8, fig.width=8, fig.align="center", echo=TRUE }
+par(mfrow=c(2,2))
+par(mar=c(5,5,3,1))
+plot(density(mpp), bty="n", main="#median permuted p-val", 
+     xlab="normalized p-value", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+plot(density(derr), bty="n", main="mapping error", 
+     xlab="normalized error", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+plot(density(phib), bty="n", main="#reference bias", 
+     xlab="normalized deviation from 0.5", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+plot(density(hwec2), bty="n", main="#HWE equilibrium", 
+     xlab="log(Chi2)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+```
 
 
+Plotting RASQUAL read counts, normalized NfSNP and their interaction along with interactions with BB over-dispersion
 
+```{r fig6, fig.height=8, fig.width=12, fig.align="center", echo=TRUE }
+par(mfrow=c(2,3))
+par(mar=c(5,5,3,1))
+
+smoothScatter(lodNB, y, main="discrep. vs log(NB)", ylab="diff", 
+              xlab="log(NB OD)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+smoothScatter(lodBB, y, main="discrep. vs log(BB)", ylab="diff", 
+              xlab="log(BB OD)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+smoothScatter(NfSNP, y, main="discrep. vs #fSNP", ylab="diff", 
+              xlab="num-fSNP", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+smoothScatter(asR, y, main="discrep. vs ASReC-RL cnt", ylab="diff", 
+              xlab="ASReC-RL", cex.main=cexes, cex.lab=cexes,cex.axis=cexes)
+smoothScatter(asT, y, main="discrep. vs ASReC-TR cnt", ylab="diff", 
+              xlab="ASReC-TR", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+smoothScatter(mpp, y, main="discrep. vs med. per. p-val", ylab="diff", 
+              xlab="med. per. p-val", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+
+```
+
+
+Adding a wrapper to linear model and anova processing to be run with a subset of the genes.
 ```{r echo=FALSE}
-tab
+#a function to fit model on a subset of genes
+
+subset_fit = function(kp, digits=3){
+  nms = c("log(OD_BB)", "ASReC_R", "n-fSNP", "ASReC_R:n-SNP", "ASReC_R:log(OD_BB)",
+   "n-fSNP:log(OD_BB)", "ASReC_R:n-fSNP:log(OD_BB)", "n-rSNP", "log(OD_NB)",
+   "ASReC_T", "ASReC_T:ASReC_R", "AF", "Chi2-HWEC", "Map.Err", "Ref.Bias", "Med(perm-p)") 
+  lm.2 = lm(y[kp]~lodBB[kp]+asR[kp]+NfSNP[kp]
+             +i12[kp]+i13[kp]+i23[kp]+i123[kp]
+             +NrSNP[kp]+lodNB[kp]+asT[kp]+ia14[kp]
+             +af[kp]+hwec2[kp]+derr[kp]+phib[kp]+mpp[kp])
+  names(lm.2$coefficients)[-1] = nms
+  
+  
+  
+  library(car)
+  an.1 = anova(lm.2)
+  tss = sum(an.1[,2])
+  an.3 = Anova(lm.2, type="3")
+  ano3 = cbind(round(100*an.3[,1]/tss,digits-2), format(an.3[,4], scientific=T, digits=digits-1))[-1,]
+  
+  
+  lm.m0 = lm(y[kp]~1)
+  lm.m1 = lm(y[kp]~lodBB[kp])
+  lm.m2 = lm(y[kp]~asR[kp])
+  lm.m3 = lm(y[kp]~NfSNP[kp])
+  lm.m4 = lm(y[kp]~i12[kp])
+  lm.m5 = lm(y[kp]~i13[kp])
+  lm.m6 = lm(y[kp]~i23[kp])
+  lm.m7 = lm(y[kp]~i123[kp])
+  lm.m8 = lm(y[kp]~NrSNP[kp])
+  lm.m9 = lm(y[kp]~lodNB[kp])
+  lm.m10 = lm(y[kp]~asT[kp])
+  lm.m11 = lm(y[kp]~ia14[kp])
+  
+  lm.m12 = lm(y[kp]~af[kp])
+  lm.m13 = lm(y[kp]~hwec2[kp])
+  lm.m14 = lm(y[kp]~derr[kp])
+  lm.m15 = lm(y[kp]~phib[kp])
+  lm.m16 = lm(y[kp]~mpp[kp])
+  
+  mr2 = 
+  c(round(summary(lm.m0)$r.squared*100,digits-2), lm.m0$coef[1], summary(lm.m0)$coefficients[1,4],
+  round(summary(lm.m1)$r.squared*100,digits-2), lm.m1$coef[2], summary(lm.m1)$coefficients[2,4],
+  round(summary(lm.m2)$r.squared*100,digits-2), lm.m2$coef[2], summary(lm.m2)$coefficients[2,4],
+  round(summary(lm.m3)$r.squared*100,digits-2), lm.m3$coef[2], summary(lm.m3)$coefficients[2,4],
+  round(summary(lm.m4)$r.squared*100,digits-2), lm.m4$coef[2], summary(lm.m4)$coefficients[2,4],
+  round(summary(lm.m5)$r.squared*100,digits-2), lm.m5$coef[2], summary(lm.m5)$coefficients[2,4],
+  round(summary(lm.m6)$r.squared*100,digits-2), lm.m6$coef[2], summary(lm.m6)$coefficients[2,4],
+  round(summary(lm.m7)$r.squared*100,digits-2), lm.m7$coef[2], summary(lm.m7)$coefficients[2,4],
+  round(summary(lm.m8)$r.squared*100,digits-2), lm.m8$coef[2], summary(lm.m8)$coefficients[2,4],
+  round(summary(lm.m9)$r.squared*100,digits-2), lm.m9$coef[2], summary(lm.m9)$coefficients[2,4],
+  round(summary(lm.m10)$r.squared*100,digits-2), lm.m10$coef[2], summary(lm.m10)$coefficients[2,4],
+  round(summary(lm.m11)$r.squared*100,digits-2), lm.m11$coef[2], summary(lm.m11)$coefficients[2,4],
+  round(summary(lm.m12)$r.squared*100,digits-2), lm.m12$coef[2], summary(lm.m12)$coefficients[2,4],
+  round(summary(lm.m13)$r.squared*100,digits-2), lm.m13$coef[2], summary(lm.m13)$coefficients[2,4],
+  round(summary(lm.m14)$r.squared*100,digits-2), lm.m14$coef[2], summary(lm.m14)$coefficients[2,4],
+  round(summary(lm.m15)$r.squared*100,digits-2), lm.m15$coef[2], summary(lm.m15)$coefficients[2,4],
+  round(summary(lm.m16)$r.squared*100,digits-2), lm.m16$coef[2], summary(lm.m16)$coefficients[2,4])
+  mr2 = t(matrix(mr2, nrow=3))
+  
+  tab = summary(lm.2)$coef
+  tab[,1] = round(tab[,1],digits)
+  tab[,2] = round(tab[,2],digits)
+  tab = tab[,-3]
+  tab = cbind(tab, mr2[,2], mr2[,3])
+  tab[,3] = format(as.numeric(tab[,3]), scientific=T, digits=2)
+  tab[,4] = round(as.numeric(tab[,4]), digits)
+  tab[,5] = format(as.numeric(tab[,5]), scientific=T, digits=2)
+  colnames(tab) = c("Est", "SE", "P-val", "Marg.Est", "Marg.P")
+  #tab
+  
+  ano = an.1
+  ano[,3] = round(100*ano[,2]/tss,digits-2)
+  ano[,5] = format(ano[,5], scientific=T, digits=2)
+  ano[,2] = round(ano[,2])
+  ano = cbind(ano[,-c(1,4)], ano3)
+  ano = ano[-17,]
+  ano = cbind(ano, mr2[-1,1])
+  rownames(ano) = names(lm.2$coefficients)[-1]
+  colnames(ano)=c("SumSq", "Typ1per", "T1P-val", "Typ3per", "T3P-val", "Marg.R")
+  #ano
+  list(tab=tab, ano=ano, r2=summary(lm.2)$r.squared)
+}
+
+
 ```
 
-```{r echo=FALSE}
-ano
+Fitting all 13978 genes
+
+
+
+```{r echo=TRUE}
+#with several cutoffs
+#kp = abs(y)>=(cutoff-5)
+cutsub = 0
+kp = abs(y)>=cutsub
+sum(kp)
+resA = subset_fit(kp, digits=3)
+
+resA$tab
+resA$ano
+resA$r2
+
+write.csv(resA$ano, sprintf("anova_cut%s.csv", cutsub), quote=F)
+write.csv(resA$tab, sprintf("model_cut%s.csv", cutsub), quote=F)
+
 ```
+
+Less stringent cutoff (1204 genes)
+```{r echo=TRUE}
+cutsub = 5
+kp = abs(y)>=cutsub
+sum(kp)
+resA = subset_fit(kp)
+
+resA$tab
+resA$ano
+resA$r2
+
+write.csv(resA$ano, sprintf("anova_cut%s.csv", cutsub), quote=F)
+write.csv(resA$tab, sprintf("model_cut%s.csv", cutsub), quote=F)
+
+```
+The most discrepant 221 genes
+
+```{r echo=TRUE}
+cutsub = cutoff-5
+kp = abs(y)>=cutsub
+sum(kp)
+resA = subset_fit(kp)
+
+resA$tab
+resA$ano
+resA$r2
+
+write.csv(resA$ano, sprintf("anova_cut%s.csv", cutsub), quote=F)
+write.csv(resA$tab, sprintf("model_cut%s.csv", cutsub), quote=F)
+
+```
+Keeping only genes with difference <10
+```{r echo=TRUE}
+cutsub = 10
+kp = abs(y)<cutsub
+sum(kp)
+resA = subset_fit(kp)
+
+resA$tab
+resA$ano
+resA$r2
+
+write.csv(resA$ano, sprintf("anova_less%s.csv", cutsub), quote=F)
+write.csv(resA$tab, sprintf("model_less%s.csv", cutsub), quote=F)
+```
+
+Keeping only genes with difference <5
+```{r echo=TRUE}
+cutsub = 5
+kp = abs(y)<cutsub
+sum(kp)
+resA = subset_fit(kp)
+
+resA$tab
+resA$ano
+resA$r2
+
+write.csv(resA$ano, sprintf("anova_less%s.csv", cutsub), quote=F)
+write.csv(resA$tab, sprintf("model_less%s.csv", cutsub), quote=F)
+
+```
+
+
+```{r od, echo=TRUE}
+kp = abs(y)>5
+lm.r = lm(lodR[kp]~lodBB[kp]+lodNB[kp]+lodBB[kp]:lodNB[kp])
+odr = lm.r$residuals
+lm.3 = lm(y[kp]~lodBB[kp]+asR[kp]+NfSNP[kp]
+             +i12[kp]+i13[kp]+i23[kp]+i123[kp]
+             +NrSNP[kp]+lodNB[kp]+asT[kp]+ia14[kp]+odr
+             +af[kp]+hwec2[kp]+derr[kp]+phib[kp]+mpp[kp])
+summary(lm.3)
+anova(lm.r)
+anova(lm.3)
+
+```
+
