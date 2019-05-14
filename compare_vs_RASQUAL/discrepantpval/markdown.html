@@ -627,6 +627,87 @@ resA$tab</code></pre>
 <pre><code>## [1] 0.09756989</code></pre>
 <pre class="r"><code>write.csv(resA$ano, sprintf(&quot;anova_less%s.csv&quot;, cutsub), quote=F)
 write.csv(resA$tab, sprintf(&quot;model_less%s.csv&quot;, cutsub), quote=F)</code></pre>
+<pre class="r"><code>kp = abs(y)&gt;5
+lm.r = lm(lodR[kp]~lodBB[kp]+lodNB[kp]+lodBB[kp]:lodNB[kp])
+odr = lm.r$residuals
+lm.3 = lm(y[kp]~lodBB[kp]+asR[kp]+NfSNP[kp]
+             +i12[kp]+i13[kp]+i23[kp]+i123[kp]
+             +NrSNP[kp]+lodNB[kp]+asT[kp]+ia14[kp]+odr
+             +af[kp]+hwec2[kp]+derr[kp]+phib[kp]+mpp[kp])
+summary(lm.3)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = y[kp] ~ lodBB[kp] + asR[kp] + NfSNP[kp] + i12[kp] + 
+##     i13[kp] + i23[kp] + i123[kp] + NrSNP[kp] + lodNB[kp] + asT[kp] + 
+##     ia14[kp] + odr + af[kp] + hwec2[kp] + derr[kp] + phib[kp] + 
+##     mpp[kp])
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -22.4692  -4.3369  -0.2848   4.6269  16.2550 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -2.37966    1.09216  -2.179 0.029540 *  
+## lodBB[kp]    3.15985    0.23444  13.478  &lt; 2e-16 ***
+## asR[kp]      3.66900    0.49002   7.487 1.37e-13 ***
+## NfSNP[kp]    1.63208    0.28537   5.719 1.35e-08 ***
+## i12[kp]      0.71200    0.24247   2.936 0.003384 ** 
+## i13[kp]      0.98768    0.18356   5.381 8.94e-08 ***
+## i23[kp]      0.28426    0.17873   1.590 0.112008    
+## i123[kp]     0.11497    0.14483   0.794 0.427430    
+## NrSNP[kp]   -0.07664    0.20024  -0.383 0.701989    
+## lodNB[kp]   -2.01364    0.22357  -9.007  &lt; 2e-16 ***
+## asT[kp]     -1.54235    0.42988  -3.588 0.000347 ***
+## ia14[kp]    -0.17112    0.14508  -1.179 0.238452    
+## odr          1.58464    0.39604   4.001 6.69e-05 ***
+## af[kp]      -0.27323    0.17586  -1.554 0.120531    
+## hwec2[kp]   -0.39562    0.18338  -2.157 0.031182 *  
+## derr[kp]    -0.65811    0.18049  -3.646 0.000278 ***
+## phib[kp]     0.75358    0.19434   3.878 0.000111 ***
+## mpp[kp]      0.26666    0.27011   0.987 0.323727    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 6.118 on 1184 degrees of freedom
+## Multiple R-squared:  0.4246, Adjusted R-squared:  0.4163 
+## F-statistic: 51.39 on 17 and 1184 DF,  p-value: &lt; 2.2e-16</code></pre>
+<pre class="r"><code>anova(lm.r)</code></pre>
+<pre><code>## Analysis of Variance Table
+## 
+## Response: lodR[kp]
+##                       Df Sum Sq Mean Sq   F value Pr(&gt;F)    
+## lodBB[kp]              1 723.23  723.23 2430.2844 &lt;2e-16 ***
+## lodNB[kp]              1 569.37  569.37 1913.2682 &lt;2e-16 ***
+## lodBB[kp]:lodNB[kp]    1   0.73    0.73    2.4433 0.1183    
+## Residuals           1198 356.52    0.30                     
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+<pre class="r"><code>anova(lm.3)</code></pre>
+<pre><code>## Analysis of Variance Table
+## 
+## Response: y[kp]
+##             Df Sum Sq Mean Sq  F value    Pr(&gt;F)    
+## lodBB[kp]    1   2572  2571.8  68.7042 3.072e-16 ***
+## asR[kp]      1  13450 13449.5 359.2991 &lt; 2.2e-16 ***
+## NfSNP[kp]    1   5043  5042.7 134.7134 &lt; 2.2e-16 ***
+## i12[kp]      1    144   144.0   3.8474  0.050057 .  
+## i13[kp]      1   4375  4375.0 116.8767 &lt; 2.2e-16 ***
+## i23[kp]      1    364   364.3   9.7320  0.001855 ** 
+## i123[kp]     1    155   155.5   4.1541  0.041757 *  
+## NrSNP[kp]    1    291   291.1   7.7770  0.005376 ** 
+## lodNB[kp]    1   3709  3709.3  99.0937 &lt; 2.2e-16 ***
+## asT[kp]      1    731   730.9  19.5244 1.084e-05 ***
+## ia14[kp]     1     71    71.2   1.9030  0.168001    
+## odr          1    660   660.4  17.6429 2.865e-05 ***
+## af[kp]       1     77    76.9   2.0550  0.151968    
+## hwec2[kp]    1    230   230.1   6.1481  0.013294 *  
+## derr[kp]     1    217   216.7   5.7894  0.016276 *  
+## phib[kp]     1    576   576.3  15.3961 9.218e-05 ***
+## mpp[kp]      1     36    36.5   0.9746  0.323727    
+## Residuals 1184  44320    37.4                       
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
 
 

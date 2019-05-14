@@ -456,3 +456,18 @@ write.csv(resA$tab, sprintf("model_less%s.csv", cutsub), quote=F)
 
 ```
 
+
+```{r od, echo=TRUE}
+kp = abs(y)>5
+lm.r = lm(lodR[kp]~lodBB[kp]+lodNB[kp]+lodBB[kp]:lodNB[kp])
+odr = lm.r$residuals
+lm.3 = lm(y[kp]~lodBB[kp]+asR[kp]+NfSNP[kp]
+             +i12[kp]+i13[kp]+i23[kp]+i123[kp]
+             +NrSNP[kp]+lodNB[kp]+asT[kp]+ia14[kp]+odr
+             +af[kp]+hwec2[kp]+derr[kp]+phib[kp]+mpp[kp])
+summary(lm.3)
+anova(lm.r)
+anova(lm.3)
+
+```
+
