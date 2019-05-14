@@ -262,7 +262,29 @@ plot(density(hwec2), bty="n", main="#HWE equilibrium",
 ```
 
 
+Plotting RASQUAL read counts, normalized NfSNP and their interaction along with interactions with BB over-dispersion
 
+```{r fig6, fig.height=8, fig.width=12, fig.align="center", echo=TRUE }
+par(mfrow=c(2,3))
+par(mar=c(5,5,3,1))
+
+smoothScatter(lodNB, y, main="discrep. vs log(NB)", ylab="diff", 
+              xlab="log(NB OD)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+smoothScatter(lodBB, y, main="discrep. vs log(BB)", ylab="diff", 
+              xlab="log(BB OD)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+smoothScatter(NfSNP, y, main="discrep. vs #fSNP", ylab="diff", 
+              xlab="num-fSNP", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+smoothScatter(asR, y, main="discrep. vs ASReC-RL cnt", ylab="diff", 
+              xlab="ASReC-RL", cex.main=cexes, cex.lab=cexes,cex.axis=cexes)
+smoothScatter(asT, y, main="discrep. vs ASReC-TR cnt", ylab="diff", 
+              xlab="ASReC-TR", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+smoothScatter(mpp, y, main="discrep. vs med. per. p-val", ylab="diff", 
+              xlab="med. per. p-val", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+
+```
+
+
+Adding a wrapper to linear model and anova processing to be run with a subset of the genes.
 ```{r echo=FALSE}
 #a function to fit model on a subset of genes
 
