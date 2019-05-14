@@ -21,7 +21,7 @@ Data_generate <- function(rep, N, betas, X, phi, KAPPA, ETA, GAMMA, THETA,
   dat         = data.frame(X) 
   dat$y       = NA
   prob_phased = 0.05
-  dat$z       = sample(1:4,N,replace = TRUE,prob = geno_probs)
+  dat$z       = sample(0:3,N,replace = TRUE,prob = geno_probs)
   prob_tau    = c(0.14, 0.68, 0.17, 0.01)
   tau1        = sample(0:3,N,replace = TRUE,prob_tau)
   tau2        = sample(0:3,N,replace = TRUE,prob_tau)

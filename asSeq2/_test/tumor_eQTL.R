@@ -5,19 +5,19 @@
 compute_offset <- function(z, RHO, KAPPA, ETA, GAMMA, tau1, tau2){
   n = length(z)
   offsets = vector('numeric', n)
-  indAA = which(z == 1)
+  indAA = which(z == 0)
   offsets[indAA] = log(2*(1-RHO[indAA]) +
                          (tau1[indAA]+tau2[indAA])*RHO[indAA]*KAPPA)
 
-  indAB = which(z == 2)
+  indAB = which(z == 1)
   offsets[indAB] = log((1-RHO[indAB]) + tau1[indAB]*RHO[indAB]*KAPPA +
                          (1-RHO[indAB])*ETA + tau2[indAB]*RHO[indAB]*KAPPA*GAMMA)
 
-  indBA = which(z == 3)
+  indBA = which(z == 2)
   offsets[indBA] = log((1-RHO[indBA]) + tau2[indBA]*RHO[indBA]*KAPPA +
                          (1-RHO[indBA])*ETA + tau1[indBA]*RHO[indBA]*KAPPA*GAMMA)
 
-  indBB = which(z == 4)
+  indBB = which(z == 3)
   offsets[indBB] = log(2*(1-RHO[indBB])*ETA +
                          (tau1[indBB]+tau2[indBB])*RHO[indBB]*KAPPA*GAMMA)
 
@@ -91,23 +91,23 @@ Grad_NB <- function(para, H0, y,z, X, betas, phi, RHO, tau1, tau2){
   dmu.dKAPPA =dmu.dETA =dmu.dGAMMA = rep(0, n)
 
   # z = AA
-  indAA = which(z == 1)
+  indAA = which(z == 0)
   dmu.dKAPPA[indAA] = tau[indAA]
 
   # z = AB
-  indAB = which(z == 2)
+  indAB = which(z == 1)
   dmu.dKAPPA[indAB] =  tau1[indAB]+tau2[indAB]*GAMMA
   dmu.dETA[indAB] = 1
   dmu.dGAMMA[indAB] = tau2[indAB]
 
   # z = BA
-  indBA = which(z == 3)
+  indBA = which(z == 2)
   dmu.dKAPPA[indBA] = tau2[indBA] + tau1[indBA]*GAMMA
   dmu.dETA[indBA] = 1
   dmu.dGAMMA[indBA] = tau1[indBA]
 
   # z = BB
-  indBB = which(z == 4)
+  indBB = which(z == 3)
   dmu.dKAPPA[indBB] = tau[indBB]*GAMMA
   dmu.dETA[indBB] = 2
   dmu.dGAMMA[indBB] = tau[indBB]
@@ -315,11 +315,11 @@ TReC_test = function(y,z, X, RHO, tau1, tau2, maxiter =500, tol = 1e-7){
 
 compute_pi <- function(z_AS, RHO_AS, KAPPA, ETA, GAMMA, tauB, tau){
   pis = vector('numeric', length(z_AS))
-  indhomo = which(z_AS %in% c(1,4))
+  indhomo = which(z_AS %in% c(0,3))
   pis[indhomo] = (RHO_AS[indhomo]*tauB[indhomo]*KAPPA + 1 -
                     RHO_AS[indhomo])/(RHO_AS[indhomo]*tau[indhomo]*KAPPA
                                       + 2*(1 - RHO_AS[indhomo]))
-  indhet = which(z_AS %in% c(2,3))
+  indhet = which(z_AS %in% c(1,3))
   tmp1 = RHO_AS[indhet]*tauB[indhet]*GAMMA*KAPPA + (1 - RHO_AS[indhet])*ETA
   pis[indhet] = tmp1/(RHO_AS[indhet]*(tau[indhet]-tauB[indhet])*KAPPA +
                         (1 - RHO_AS[indhet]) + tmp1)
@@ -379,7 +379,7 @@ Grad_BB_keg<-function(para, H0,A,D,THETA, z_AS, RHO_AS,tauB, tau){
                            digamma(D-A+pis_1/THETA) - digamma(pis/THETA))
 
   dpi.dKAPPA = dpi.dETA = dpi.dGAMMA = rep(0, n)
-  indhomo = which((z_AS %in% c(1,4)))
+  indhomo = which((z_AS %in% c(0,3)))
   tmp.homo = (RHO_AS[indhomo]*tau[indhomo]*KAPPA + 2*(1-RHO_AS[indhomo]))
   dpi.dKAPPA[indhomo] = RHO_AS[indhomo]*tauB[indhomo]/tmp.homo -
     RHO_AS[indhomo]*tau[indhomo]*
@@ -694,23 +694,23 @@ CisTrans_ScoreObs <- function(para, y,z,z_AS, X, betas, phi,
   dmu.dKAPPA = dmu.dETA =dmu.dGAMMA = rep(0, n)
 
   ## z = AA
-  indAA = which(z == 1)
+  indAA = which(z == 0)
   dmu.dKAPPA[indAA] = (tau2[indAA] + tau1[indAA])
 
   ## z = AB
-  indAB = which(z == 2)
+  indAB = which(z == 1)
   dmu.dKAPPA[indAB] =  tau1[indAB]+tau2[indAB]*GAMMA
   dmu.dETA[indAB]   = 1
   dmu.dGAMMA[indAB] = tau2[indAB]
 
   ## z = BA
-  indBA = which(z == 3)
+  indBA = which(z == 2)
   dmu.dKAPPA[indBA] = tau2[indBA] + tau1[indBA]*GAMMA
   dmu.dETA[indBA]   = 1
   dmu.dGAMMA[indBA] = tau1[indBA]
 
   ## z = BB
-  indBB = which(z == 4)
+  indBB = which(z == 3)
   dmu.dKAPPA[indBB] = (tau2[indBB] + tau1[indBB])*GAMMA
   dmu.dETA[indBB]   = 2
   dmu.dGAMMA[indBB] = (tau2[indBB] + tau1[indBB])
@@ -771,8 +771,8 @@ CisTrans_ScoreObs <- function(para, y,z,z_AS, X, betas, phi,
   # Score and Information (ASE)
   # RHO_AS, z_AS
   # ---------------------------------
-  indhet  = which(z_AS %in% c(2,3))
-  indhomo = which(z_AS %in% c(1,4))
+  indhet  = which(z_AS %in% c(1,2))
+  indhomo = which(z_AS %in% c(0,3))
   vTHETA  = 1/THETA
   n_AS    = length(RHO_AS)
 
@@ -1006,23 +1006,23 @@ CisTrans_Score <- function(para, y,z,z_AS, X, betas, phi,
   dmu.dKAPPA = dmu.dETA =dmu.dGAMMA = rep(0, n)
 
   ## z = AA
-  indAA = which(z == 1)
+  indAA = which(z == 0)
   dmu.dKAPPA[indAA] = (tau2[indAA] + tau1[indAA])
 
   ## z = AB
-  indAB = which(z == 2)
+  indAB = which(z == 1)
   dmu.dKAPPA[indAB] =  tau1[indAB]+tau2[indAB]*GAMMA
   dmu.dETA[indAB]   = 1
   dmu.dGAMMA[indAB] = tau2[indAB]
 
   ## z = BA
-  indBA = which(z == 3)
+  indBA = which(z == 2)
   dmu.dKAPPA[indBA] = tau2[indBA] + tau1[indBA]*GAMMA
   dmu.dETA[indBA]   = 1
   dmu.dGAMMA[indBA] = tau1[indBA]
 
   ## z = BB
-  indBB = which(z == 4)
+  indBB = which(z == 3)
   dmu.dKAPPA[indBB] = (tau2[indBB] + tau1[indBB])*GAMMA
   dmu.dETA[indBB]   = 2
   dmu.dGAMMA[indBB] = (tau2[indBB] + tau1[indBB])
@@ -1066,8 +1066,8 @@ CisTrans_Score <- function(para, y,z,z_AS, X, betas, phi,
   # Score and Information (ASE)
   # RHO_AS, z_AS
   # ---------------------------------
-  indhet  = which(z_AS %in% c(2,3))
-  indhomo = which(z_AS %in% c(1,4))
+  indhet  = which(z_AS %in% c(1,2))
+  indhomo = which(z_AS %in% c(0,3))
   vTHETA  = 1/THETA
   n_AS    = length(RHO_AS)
 
@@ -1575,16 +1575,4 @@ gen_hap_v2<-function(SNPcor, MAF, ZZ){
   fn <- function(x, SNPcor, MAF){
     EG1 = x[1]*MAF +x[2]*(1-MAF)
     c(F1 = (EG1 - MAF ) ,
-      F2 = (x[1]*MAF - EG1*MAF)/sqrt((EG1*(1-EG1)*MAF*(1-MAF))) - SNPcor)
-  }
-  delta.p= multiroot(fn, c(-1e-3,1e-3), SNPcor=SNPcor, MAF=MAF)$root
-  if(any(delta.p < 0) | any(delta.p > 1)){
-    stop('delta.p out of bound')
-  }
-  hap = vector('numeric', N)
-  ind1 = which(ZZ==1)
-  hap[ind1] = rbinom(length(ind1), 1, prob = delta.p[1])
-  hap[-ind1] = rbinom(N- length(ind1), 1, prob = delta.p[2])
-  # print(cor(hap, ZZ))
-  return(hap)
-}
+      F2 = (x[                                                            

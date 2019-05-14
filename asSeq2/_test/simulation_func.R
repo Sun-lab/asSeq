@@ -143,6 +143,134 @@ gen_gene_RC_SNPs = function(gene_name,XX,numSNPs,BETA,PHI,bxj,
   list(dat,ZZ)
 }
 
+## ---------------------------------------------------------------------
+## Simulation Function (Tumor eQTL)
+## ---------------------------------------------------------------------
+
+compute_offset <- function(z, RHO, KAPPA, ETA, GAMMA, tau1, tau2){
+  n = length(z)
+  offsets = vector('numeric', n)
+  indAA = which(z == 0)
+  offsets[indAA] = log(2*(1-RHO[indAA]) +
+                         (tau1[indAA]+tau2[indAA])*RHO[indAA]*KAPPA)
+  
+  indAB = which(z == 1)
+  offsets[indAB] = log((1-RHO[indAB]) + tau1[indAB]*RHO[indAB]*KAPPA +
+                         (1-RHO[indAB])*ETA + tau2[indAB]*RHO[indAB]*KAPPA*GAMMA)
+  
+  indBA = which(z == 2)
+  offsets[indBA] = log((1-RHO[indBA]) + tau2[indBA]*RHO[indBA]*KAPPA +
+                         (1-RHO[indBA])*ETA + tau1[indBA]*RHO[indBA]*KAPPA*GAMMA)
+  
+  indBB = which(z == 3)
+  offsets[indBB] = log(2*(1-RHO[indBB])*ETA +
+                         (tau1[indBB]+tau2[indBB])*RHO[indBB]*KAPPA*GAMMA)
+  
+  return(offsets)
+}
+
+compute_pi <- function(z_AS, RHO_AS, KAPPA, ETA, GAMMA, tauB, tau){
+  pis = vector('numeric', length(z_AS))
+  indhomo = which(z_AS %in% c(0,3))
+  pis[indhomo] = (RHO_AS[indhomo]*tauB[indhomo]*KAPPA + 1 -
+                    RHO_AS[indhomo])/(RHO_AS[indhomo]*tau[indhomo]*KAPPA
+                                      + 2*(1 - RHO_AS[indhomo]))
+  indhet = which(z_AS %in% c(1,2))
+  tmp1 = RHO_AS[indhet]*tauB[indhet]*GAMMA*KAPPA + (1 - RHO_AS[indhet])*ETA
+  pis[indhet] = tmp1/(RHO_AS[indhet]*(tau[indhet]-tauB[indhet])*KAPPA +
+                        (1 - RHO_AS[indhet]) + tmp1)
+  return(pis)
+}
+
+gen_gene_RC_SNPs_cnv = function(gene_name,XX,numSNPs,RHO, BETA,PHI,ETA,KAPPA,GAMMA,
+                                PSI,MAF,tau1,tau2,prob_phased,corrSNPs,eQTL_index){
+  if(FALSE){
+    set.seed(1)
+    gene_name = "G1"
+    NN = 300
+    XX = smart_df(cbind(1,matrix(runif(NN*3),NN,3))); names(XX) = paste0("x",1:4)
+    numSNPs = 100
+    RHO  = runif(NN)
+    BETA = c(5,0.15,-0.5,0.25)
+    PHI = 0.1
+    KAPPA = 1.5
+    ETA = 0.8
+    GAMMA = 1.2
+    PSI = 0.05
+    MAF = 0.2
+    prob_phased = 0.05
+    corrSNPs = 0
+    eQTL_index = 1
+    prob_tau    = c(0.14, 0.68, 0.17, 0.01)
+    tau1        = sample(0:3,NN,replace = TRUE, prob_tau)
+    tau2        = sample(0:3,NN,replace = TRUE, prob_tau)
+  }
+  
+  
+  N = nrow(XX)
+  
+  # Generate SNPs
+  # MAF = 0.2; N = 500; numSNPs = 10; corrSNPs = 0
+  ZZ1 = ZZ2 = matrix(NA, nrow = N, ncol = numSNPs )
+  ZZ1[,1] = rbinom(N, 1, prob = MAF)
+  ZZ2[,1] = rbinom(N, 1, prob = MAF)
+  if(corrSNPs == 0){
+    for(coli in 2:numSNPs){
+      ZZ1[,coli] = rbinom(N, 1, prob = MAF)
+      ZZ2[,coli] = rbinom(N, 1, prob = MAF)
+    }
+  }else{
+    for(coli in 2:numSNPs){
+      ZZ1[,coli] = gen_hap_v2(corrSNPs, MAF, ZZ1[, coli-1]) 
+      ZZ2[,coli] = gen_hap_v2(corrSNPs, MAF, ZZ2[, coli-1]) 
+    }
+    
+  }
+  
+  ZZ = ZZ1+2*ZZ2
+  
+  colnames(ZZ) = paste0("Z",seq(numSNPs))
+  # round(cor(ZZ),3); ZZ[1:5,]
+  
+  dat = smart_df(total = rep(NA,N))
+  dat$total_phased = NA
+  dat$hapA = 0
+  dat$hapB = 0
+  dat$LBC = 1
+  dat$phased = NA
+  dat$Z = ZZ[,paste0("Z",eQTL_index)]
+  dat$tau = tau1 + tau2
+  dat$tau1 = tau1
+  dat$tau2 = tau2
+  dat$tauB = tau2
+  dat$tauB[which(dat$Z==2)] = tau1[which(dat$Z==2)]
+  # First snp corresponds to cts eQTL, other snps are not associated
+  offsets = compute_offset(dat$Z, RHO, KAPPA, ETA, GAMMA, tau1, tau2)
+  mus     = exp(as.matrix(XX)%*%BETA+offsets)
+  dat$pis =  compute_pi(dat$Z, RHO, KAPPA, ETA, GAMMA, dat$tauB, dat$tau)
+
+  for(ii in seq(N)){
+
+    dat$total[ii] = rnbinom(n = 1,mu = mus[ii], size = 1/PHI)
+    dat$total_phased[ii] = rbinom(n = 1,size = dat$total[ii],prob = prob_phased)
+    dat$phased[ii] = ifelse(dat$total_phased[ii] > 0,1,0)
+    dat$hapB[ii] = emdbook::rbetabinom(n = 1, 
+                                   prob = dat$pis[ii],
+                                   size = dat$total_phased[ii],
+                                   theta = 1/PSI)
+    dat$hapA[ii] = dat$total_phased[ii] - dat$hapB[ii]
+  }
+  
+  tmp_index = which(dat$phased == 1)
+  dat$LBC[tmp_index] = as.numeric(apply(dat[tmp_index,c("total_phased","hapB")],
+                                        1,function(x) lchoose(x[1],x[2])))
+  dat$LGX1 = sapply(dat$total,function(x) lgamma(x+1))
+  dat = dat[,which(!(names(dat) %in% c("pp","Z")))]
+  
+  return(list(dat,ZZ))
+  # save.image("_test_func_tumorEQTL.Rdata")
+}
+
 
 ## ---------------------------------------------------------------------
 ## Simulation 
