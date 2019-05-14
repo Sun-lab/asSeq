@@ -1,0 +1,3 @@
+load("/Users/wsun/research/GitHub/asSeq/asSeq2/asSeq2/src/symbols.rds")
+x = readRDS("/Users/wsun/research/GitHub/asSeq/asSeq2/asSeq2/src/symbols.rds")
+x

@@ -8,6 +8,9 @@ output:
 ```{r setup, include=TRUE}
 rasq = read.csv("linear_model_cov.csv")
 rasq = rasq[!is.na(rasq$pvalT),]
+dim(rasq)
+rasq[1:2,]
+
 rasq$qvalR = 10^rasq$qval
 rasq$qvalT[rasq$qvalT<1e-100] = 1e-100
 rasq$qvalR[rasq$qvalR<1e-100] = 1e-100
@@ -268,8 +271,9 @@ Plotting RASQUAL read counts, normalized NfSNP and their interaction along with 
 par(mfrow=c(2,3))
 par(mar=c(5,5,3,1))
 
-smoothScatter(lodNB, y, main="discrep. vs log(NB)", ylab="diff", 
-              xlab="log(NB OD)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+plot(lodNB, y, main="discrep. vs log(NB)", ylab="diff", cex=0.5, 
+     col=rgb(0.8,0.1,0.1,0.5), xlab="log(NB OD)", cex.main=cexes, 
+     cex.lab=cexes, cex.axis=cexes, pch=20)
 smoothScatter(lodBB, y, main="discrep. vs log(BB)", ylab="diff", 
               xlab="log(BB OD)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
 smoothScatter(NfSNP, y, main="discrep. vs #fSNP", ylab="diff", 
@@ -425,6 +429,11 @@ write.csv(resA$ano, sprintf("anova_cut%s.csv", cutsub), quote=F)
 write.csv(resA$tab, sprintf("model_cut%s.csv", cutsub), quote=F)
 
 ```
+plot(lodNB[kp], y[kp], main="discrep. vs log(NB)", ylab="diff", cex=0.5, 
+     col=rgb(0.8,0.1,0.1,0.5), xlab="log(NB OD)", cex.main=cexes, 
+     cex.lab=cexes, cex.axis=cexes, pch=20)
+
+
 Keeping only genes with difference <10
 ```{r echo=TRUE}
 cutsub = 10
