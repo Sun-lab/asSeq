@@ -37,6 +37,8 @@ odBB = rasq$odBB; odBB[odBB<1e-3]=1e-3; odBB[odBB>8]=8
 lodNB = cent(norm(log(odNB))); 
 lodBB = cent(norm(log(odBB))); 
 lodR = cent(norm(-log(rasq$OD)));
+lodNBp = log(odNB); 
+lodBBp = log(odBB); 
 
 
 
@@ -137,13 +139,6 @@ legend("bottomright", legend=c("#genes", 10^(4:2)),
 ```{r echo=FALSE}
 #prepare covariates
 
-#odNB = rasq$odNB; odNB[odNB<1e-3]=1e-3; odNB[odNB>8]=8; 
-#odBB = rasq$odBB; odBB[odBB<1e-3]=1e-3; odBB[odBB>8]=8
-#odBBf = odBB==1e-3
-#nodNB = cent(norm(odNB))
-#nodBB = cent(norm(odBB))
-#nodNBB = nodNB*nodBB
-
 NfSNP = rasq$NfSNP;
 NfSNP[rasq$NfSNP>=60] = 60;
 NfSNP = log(NfSNP)
@@ -198,13 +193,21 @@ Plotting Over-dispersions
 par(mfrow=c(2,3))
 par(mar=c(5,5,3,1))
 
-plot(density(lodNB), bty="n", main="log10(NB OD)", xlab="log(od)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
-plot(density(lodBB), bty="n", main="log10(BB OD)", xlab="log(od)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
-plot(density(lodR), bty="n", main="log10(RASQ OD)", xlab="log(od)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
-smoothScatter(lodNB, lodBB, main="NB vs BB over-disp", xlab="log(NB OD)", ylab="log(BB OD)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
-smoothScatter(lodNB, lodR, main="NB vs Rasq over-disp", xlab="log(NB OD)", ylab="log(RASQ OD)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
-smoothScatter(lodR, lodBB, main="Rasq vs BB over-disp", xlab="log(RASQ OD)", ylab="log(BB OD)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
-
+plot(density(lodNB), bty="n", main="log10(NB OD)", 
+     xlab="log(od)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+plot(density(lodBB), bty="n", main="log10(BB OD)", 
+     xlab="log(od)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+plot(density(lodR), bty="n", main="log10(RASQ OD)",
+     xlab="log(od)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+plot(lodNB, lodBB, main="NB vs BB over-disp", pch=20, cex=0.5, col=rgb(0.8,0.1,0.1,0.5), bty="n",
+     xlab="log(NB OD)", ylab="log(BB OD)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+abline(a=0, b=1)
+plot(lodNB, lodR, main="NB vs Rasq over-disp", pch=20, cex=0.5, col=rgb(0.8,0.1,0.1,0.5), bty="n",
+     xlab="log(NB OD)", ylab="log(RASQ OD)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+abline(a=0, b=1)
+plot(lodR, lodBB, main="Rasq vs BB over-disp", pch=20, cex=0.5, col=rgb(0.8,0.1,0.1,0.5), bty="n",
+     xlab="log(RASQ OD)", ylab="log(BB OD)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+abline(a=0, b=1)
 
 ```
 
@@ -237,14 +240,14 @@ plot(density(asT), bty="n", main="#as-TReCASE",
      xlab="#as-TReCASE", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
 plot(density(ia14), bty="n", main="interact, #as-RASQ & #as-TReCASE", 
      xlab="#as-RASQ*#as-TReCASE", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
-smoothScatter(asT, asR, bty="n", main="#as-RASQ vs #as-TReCASE", 
+plot(asT, asR, bty="n", main="#as-RASQ vs #as-TReCASE", pch=20, cex=0.5, col=rgb(0.8,0.1,0.1,0.5), bty="n", 
               xlab="#as-TReCASE", ylab="#as-RASQUAL", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
 
 plot(density(NrSNP), bty="n", main="#rSNPs", 
      xlab="#fSNPs", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
 plot(density(y), bty="n", main="difference in log10 p-values", 
      xlab="log10(T p-val)-log10(R p-val)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
-smoothScatter(rasq$tnlt, rasq$rnlt, bty="n", main="RASQUAL vs TReCASE p-val", 
+plot(rasq$tnlt, rasq$rnlt, bty="n", main="RASQUAL vs TReCASE p-val", pch=20, cex=0.5, col=rgb(0.8,0.1,0.1,0.5), bty="n", 
               xlab="-log10(T p-val)", ylab="-log10(R p-val)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
 #rasq$rnlt-rasq$tnlt") - negative implies TReCASE is more significant
 
@@ -271,19 +274,18 @@ Plotting RASQUAL read counts, normalized NfSNP and their interaction along with 
 par(mfrow=c(2,3))
 par(mar=c(5,5,3,1))
 
-plot(lodNB, y, main="discrep. vs log(NB)", ylab="diff", cex=0.5, 
-     col=rgb(0.8,0.1,0.1,0.5), xlab="log(NB OD)", cex.main=cexes, 
-     cex.lab=cexes, cex.axis=cexes, pch=20)
-smoothScatter(lodBB, y, main="discrep. vs log(BB)", ylab="diff", 
-              xlab="log(BB OD)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
-smoothScatter(NfSNP, y, main="discrep. vs #fSNP", ylab="diff", 
-              xlab="num-fSNP", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
-smoothScatter(asR, y, main="discrep. vs ASReC-RL cnt", ylab="diff", 
-              xlab="ASReC-RL", cex.main=cexes, cex.lab=cexes,cex.axis=cexes)
-smoothScatter(asT, y, main="discrep. vs ASReC-TR cnt", ylab="diff", 
-              xlab="ASReC-TR", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
-smoothScatter(mpp, y, main="discrep. vs med. per. p-val", ylab="diff", 
-              xlab="med. per. p-val", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+plot(lodNB, y, main="discrep. vs log(NB)", ylab="diff", pch=20, cex=0.5, col=rgb(0.8,0.1,0.1,0.5), 
+     xlab="log(NB OD)", cex.main=cexes,  cex.lab=cexes, cex.axis=cexes, bty="n")
+plot(lodBB, y, main="discrep. vs log(BB)", ylab="diff", pch=20, cex=0.5, col=rgb(0.8,0.1,0.1,0.5),  
+     xlab="log(BB OD)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes, bty="n")
+plot(NfSNP, y, main="discrep. vs #fSNP", ylab="diff", pch=20, cex=0.5, col=rgb(0.8,0.1,0.1,0.5), 
+     xlab="num-fSNP", cex.main=cexes, cex.lab=cexes, cex.axis=cexes, bty="n")
+plot(asR, y, main="discrep. vs ASReC-RL cnt", ylab="diff",  pch=20, cex=0.5, col=rgb(0.8,0.1,0.1,0.5),
+     xlab="ASReC-RL", cex.main=cexes, cex.lab=cexes,cex.axis=cexes, bty="n")
+plot(asT, y, main="discrep. vs ASReC-TR cnt", ylab="diff",  pch=20, cex=0.5, col=rgb(0.8,0.1,0.1,0.5),
+     xlab="ASReC-TR", cex.main=cexes, cex.lab=cexes, cex.axis=cexes, bty="n")
+plot(mpp, y, main="discrep. vs med. per. p-val", ylab="diff",  pch=20, cex=0.5, col=rgb(0.8,0.1,0.1,0.5), 
+     xlab="med. per. p-val", cex.main=cexes, cex.lab=cexes, cex.axis=cexes, bty="n")
 
 ```
 
@@ -293,7 +295,7 @@ Adding a wrapper to linear model and anova processing to be run with a subset of
 #a function to fit model on a subset of genes
 
 subset_fit = function(kp, digits=3){
-  nms = c("log(OD_BB)", "ASReC_R", "n-fSNP", "ASReC_R:n-SNP", "ASReC_R:log(OD_BB)",
+  nms = c("log(OD_BB)", "ASReC_R", "n-fSNP", "ASReC_R:n-fSNP", "ASReC_R:log(OD_BB)",
    "n-fSNP:log(OD_BB)", "ASReC_R:n-fSNP:log(OD_BB)", "n-rSNP", "log(OD_NB)",
    "ASReC_T", "ASReC_T:ASReC_R", "AF", "Chi2-HWEC", "Map.Err", "Ref.Bias", "Med(perm-p)") 
   lm.2 = lm(y[kp]~lodBB[kp]+asR[kp]+NfSNP[kp]
@@ -398,7 +400,7 @@ write.csv(resA$tab, sprintf("model_cut%s.csv", cutsub), quote=F)
 
 ```
 
-Less stringent cutoff (1204 genes)
+Less stringent cutoff (1202 genes)
 ```{r echo=TRUE}
 cutsub = 5
 kp = abs(y)>=cutsub
@@ -479,4 +481,27 @@ anova(lm.r)
 anova(lm.3)
 
 ```
+```{r fig_last, echo=TRUE}
+cexes = 1.2
+png("new_od_plot.png", height=4, width=4, res=300, units="in")
+par(mar=c(5,5,3,1))
+plot(lodNBp, lodBBp, main="NB vs BB over-disp", pch=20, cex=.5, col=rgb(0.4,0.4,0.4,0.5), bty="n",
+     xlab="log10(NB overdispersion)", ylab="log(BB overdispersion)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+abline(a=0, b=1, col="red", lwd=2, lty=3)
+dev.off()
+
+rasqS = trecS = rep(0, nrow(rasq))
+rasqS[rasq$qvalR<5e-2] = 1
+rasqS[rasq$qvalR<1e-3] = 2
+rasqS[rasq$qvalR<1e-4] = 3
+rasqS[rasq$qvalR<1e-5] = 4
+
+trecS[rasq$qvalT<5e-2] = 1
+trecS[rasq$qvalT<1e-3] = 2
+trecS[rasq$qvalT<1e-4] = 3
+trecS[rasq$qvalT<1e-5] = 4
+
+table(rasqS, trecS)
+```
+
 
