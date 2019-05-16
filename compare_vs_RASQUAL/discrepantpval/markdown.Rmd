@@ -37,8 +37,8 @@ odBB = rasq$odBB; odBB[odBB<1e-3]=1e-3; odBB[odBB>8]=8
 lodNB = cent(norm(log(odNB))); 
 lodBB = cent(norm(log(odBB))); 
 lodR = cent(norm(-log(rasq$OD)));
-lodNBp = log(odNB); 
-lodBBp = log(odBB); 
+lodNBp = log10(odNB); 
+lodBBp = log10(odBB); 
 
 
 
