@@ -6,6 +6,8 @@ significant_combined_spline.png show dependency of fraction of significant genes
 or plain r code in fit_lm.R
 
 3. updated markdown file: 
+- try to replace the smoothScatter with scatter plot with approprate point size and color. 
+- Draw some scatter plot of covariates versus the response variable for those ~220 genes. 
 - added plots for covariates, 
 - added model fits at several scanario cutoffs (all genes, more discrepant and less discrepant genes) to see the robustness - NB OD always remains significantly associated with stronger TReCASE p-values
 - cleaned up the code and split into smaller chunks
