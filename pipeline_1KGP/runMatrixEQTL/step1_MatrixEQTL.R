@@ -67,6 +67,9 @@ if(norm){
   output_file_name = "output_norm.txt"
   expression_file_name = sprintf("%s/GE_norm.dat", cnt.dir)
   expr = t(apply(expr, 1, normscore))
+}else{
+  output_file_name = "output_unnorm.txt"
+  expression_file_name  = sprintf("%s/GE_unnorm.dat", cnt.dir)
 }
 colnames(expr) = samp
 expr = cbind(geneid=info$id, expr)
@@ -74,6 +77,7 @@ write.table(expr, expression_file_name, row.names=F, col.names=T, quote=F, sep="
 
 
 library(MatrixEQTL)
+useModel = modelLINEAR; 
 pvOutputThreshold = 1e-1;
 errorCovariance = numeric();
 snps = SlicedData$new();
