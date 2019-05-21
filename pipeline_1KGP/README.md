@@ -16,7 +16,7 @@ For real data analysis I provided adding real data we provide data snippets for 
 
 2. For each gene, we got multiple p-values across multiple SNPs, how to get a permutation p-value or an approximation. Let p_min be the minimum p-value of this gene across all SNPs, and let d_eff be effect number of independent tests. Then our p-value for this gene is p_gene = min(p_min * d_eff, 1). To define the number of independent tests, we want fit a linear model of the relation between minimum p-value versus permution p-value. We can perturb the expression of this gene a few times, for example, by parametric bootstrap given SNP genotype and the linear regression betwween gene expression and SNP genotype, and get more data points. Maybe we can use 10 data points and permute 1000 times for each data points. Thus this requires 10,000 permutation per gene in total. Here when you do parametric bootstrap, you want to choose the eQTL effects in a range so that the permutation p-value spread the range of 0.001 and 0.1. 
 
-2.1 We can do this for 100 genes first and compare the d_eff with some simple methods such as the one presented here: 
++ 2.1 We can do this for 100 genes first and compare the d_eff with some simple methods such as the one presented here: 
 https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1181954/
 
 3. Summarize the location of eQTLs. Find the strongest eQTL per gene, apply a threshold, and plot their locations by a density plot. 
