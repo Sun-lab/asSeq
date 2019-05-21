@@ -19,4 +19,6 @@ For real data analysis I provided adding real data we provide data snippets for 
 2.1 We can do this for 100 genes first and compare the d_eff with some simple methods such as the one presented here: 
 https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1181954/
 
-2. Summarize the location of eQTLs. Find the strongest eQTL per gene, apply a 
+3. Summarize the location of eQTLs. Find the strongest eQTL per gene, apply a threshold, and plot their locations by a density plot. 
+
+4. Check whether GWAS signals are enriched in eQTL sites, for example, using LD regression. 
