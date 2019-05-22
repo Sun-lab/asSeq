@@ -1,9 +1,11 @@
 permuted data analysis would have one fix correction to the second step: - permuting SNP information in VCF file
 
+note. initial VCF can be created form imputed data according to pipeline presented in step8 and step9 in: https://github.com/Sun-lab/eQTL-PoO-analysis-pipeline/tree/master/parents/block2_phasining_imputation. The intial VCF file should be based on phased genotype. 
+
 Details to each step:
 
 1. step1_use_GATK.R. This step requires several steps fixing the flags and adding tags for GATK to be used
-+ a. ensure that VCF file is tab delimited, ordered and has unique snp positions
++ a. ensure that VCF file is tab delimited, ordered and has unique snp positions. 
 + b. fig mate status of the flags
 + c. reorder bam file chromosom info to match reference FASTA file
 + d. add group tag to each read - would be sample ID
@@ -51,5 +53,3 @@ and a few extra options:
 other options to consider (were used in simulations): --min-coverage-depth 0.0, --as-only, --population-only
 ```
 
-note. initial VCF can be created form imputed data according to pipeline presented in step8 and step9 in:
-https://github.com/Sun-lab/eQTL-PoO-analysis-pipeline/tree/master/parents/block2_phasining_imputation
