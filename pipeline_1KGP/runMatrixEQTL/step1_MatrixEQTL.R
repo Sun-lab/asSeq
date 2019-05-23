@@ -75,8 +75,12 @@ colnames(expr) = samp
 expr = cbind(geneid=info$id, expr)
 write.table(expr, expression_file_name, row.names=F, col.names=T, quote=F, sep="\t")
 
+snpspos = vcf.in[,2]
+genepos = round((info[,3]+info[,4])/2)
 
 library(MatrixEQTL)
+cisDist = 2e5
+
 useModel = modelLINEAR; 
 pvOutputThreshold = 1e-1;
 errorCovariance = numeric();
@@ -109,6 +113,9 @@ me = Matrix_eQTL_engine(
     pvOutputThreshold = pvOutputThreshold,
     useModel = useModel, 
     errorCovariance = errorCovariance, 
+    snpspos = snpspos,
+    genepos = genepos, 
+    cisDist = cisDist,
     verbose = TRUE,
     pvalue.hist = TRUE,
     min.pv.by.genesnp = FALSE,

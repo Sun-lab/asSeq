@@ -1,3 +1,4 @@
+#setwd("C:/Users/Vasyl/Documents/GitHub/asSeq/compare_vs_RASQUAL/fisher")
 library(VGAM)
 source("fishercl.R")
 
@@ -5,83 +6,147 @@ source("fishercl.R")
 nas = 20
 phi = .1
 #phi = .5
-rho = phi/(1+phi)
-par3 = par4 =
-par1 = par2 = matrix(0, nrow=nas, ncol=4)
-for(i in 1:nas){
-f8 = f4 = f2 = f1 = matrix(0,nrow=2, ncol=2)
-ni = i+(0);ni0=0
-for(j in 1:1){
-  f8 = f8 + fishBB(n = rep(ni,8), y=rep(ni0,8), rho=rho, pi1=.5)
-  f4 = f4 + fishBB(n = rep(2*ni, 4), y=rep(ni0,4), rho=rho, pi1=.5)
-  f2 = f2 + fishBB(n = rep(4*ni, 2), y=rep(ni0,2), rho=rho, pi1=.5)
-  f1 = f1 + fishBB(n = rep(8*ni, 1), y=rep(ni0,1), rho=rho, pi1=.5)
-  ni = ni+1
-  }
-  par1[i,1] = f1[1,1]
-  par1[i,2] = f2[1,1]
-  par1[i,3] = f4[1,1]
-  par1[i,4] = f8[1,1]
+for(phi in c(.1, .5)){
+  rho = phi/(1+phi)
+  par3 = par4 =
+  par1 = par2 = matrix(0, nrow=nas, ncol=4)
+  for(i in 1:nas){
+  f8 = f4 = f2 = f1 = matrix(0,nrow=2, ncol=2)
+  ni = i+(0);ni0=0
+  for(j in 1:1){
+    f8 = f8 + fishBB(n = rep(ni,8), y=rep(ni0,8), rho=rho, pi1=.5)
+    f4 = f4 + fishBB(n = rep(2*ni, 4), y=rep(ni0,4), rho=rho, pi1=.5)
+    f2 = f2 + fishBB(n = rep(4*ni, 2), y=rep(ni0,2), rho=rho, pi1=.5)
+    f1 = f1 + fishBB(n = rep(8*ni, 1), y=rep(ni0,1), rho=rho, pi1=.5)
+    ni = ni+1
+    }
+    par1[i,1] = f1[1,1]
+    par1[i,2] = f2[1,1]
+    par1[i,3] = f4[1,1]
+    par1[i,4] = f8[1,1]
+    
+    par2[i,1] = f1[2,2]
+    par2[i,2] = f2[2,2]
+    par2[i,3] = f4[2,2]
+    par2[i,4] = f8[2,2]
   
-  par2[i,1] = f1[2,2]
-  par2[i,2] = f2[2,2]
-  par2[i,3] = f4[2,2]
-  par2[i,4] = f8[2,2]
-
-  for(j in 1:4){
-  m = matrix(0, nrow=2, ncol=2)
-  m[1,1] = par1[i,j]
-  m[2,2] = par2[i,j]
-  m1 = qr.solve(m)
-  par3[i,j] = m1[1,1]
-  par4[i,j] = m1[2,2]
+    for(j in 1:4){
+    m = matrix(0, nrow=2, ncol=2)
+    m[1,1] = par1[i,j]
+    m[2,2] = par2[i,j]
+    m1 = qr.solve(m)
+    par3[i,j] = m1[1,1]
+    par4[i,j] = m1[2,2]
+    }
+    message(i)
   }
-  message(i)
+  par3[1,4]=1e10
+  if(phi==0.1){
+    par1.1 = par1
+    par2.1 = par2
+    par3.1 = par3
+    par4.1 = par4
+  }else{
+    par1.5 = par1
+    par2.5 = par2
+    par3.5 = par3
+    par4.5 = par4
+  }
 }
-par1[1:5,]
-par2[1:5,]
-par3[1:5,]
-par4[1:5,]
-#par3[par3<0]=0
-#par3[par3>10]=10
-par3[1,4]=1e10
+
+cexes=1.3
 cols = c("black", "blue", "goldenrod", "red")
+phi = .1
 png(sprintf("sd_by_asc_1ind_%s.png", phi), height=4, width=8, units="in", res=300)
 par(mfrow=c(1,2))
 ind1 = 1:nas
-ylim = range(c(sqrt(par3[ind1,])),na.rm=T)
-ylim[ylim>.5] = .5
-plot(ind1, sqrt(par3[ind1,1]), xlim=c(1,nas), ylim=ylim, type="l", bty="n", xlab="ASReC/SNP @ 8 SNP scenario", ylab="sd", main="OD (rho)")
-axis(1, at=c(1,5), labels=c(1,5))
+ylim = range(c(sqrt(par4.1[ind1,1]), sqrt(par4.1[ind1,2]), sqrt(par4.1[ind1,3]), sqrt(par4.1[ind1,4])))
+plot(ind1, sqrt(par4.1[ind1,1]), xlim=c(1,nas), ylim=ylim, type="l", bty="n", bty="n", 
+xlab="ASReC/SNP, 8 SNP case", ylab="sd", main="(a) eQTL(prop)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+axis(1, at=c(1,5), labels=c(1,5), cex.lab=cexes, cex.axis=cexes)
 abline(v=1, lty=3, col="grey")
-ylim = range(c(par3[ind1,1], par3[ind1,2], par3[ind1,3], par4[ind1,4]))
-for(i in 2:4)lines(ind1, sqrt(par3[ind1,i]), col=cols[i])
-legend("topright", legend=c("1 SNP", "2 SNP", "4 SNP", "8 SNP"), 
-bty="n", text.col=cols)
+for(i in 2:4)lines(ind1, sqrt(par4.1[ind1,i]), col=cols[i])
+legend("topright", legend=c(sprintf("OD(theta)=%s",phi),sprintf("OD(rho)=%s",round(phi/(1+phi),3))), bty="n",cex=cexes) 
 
-ylim = range(c(sqrt(par4[ind1,1]), sqrt(par4[ind1,2]), sqrt(par4[ind1,3]), sqrt(par4[ind1,4])))
-plot(ind1, sqrt(par4[ind1,1]), xlim=c(1,nas), ylim=ylim, type="l", bty="n", bty="n", xlab="ASReC/SNP @ 8 SNP scenario", ylab="sd", main="eQTL(prop)")
-axis(1, at=c(1,5), labels=c(1,5))
+ylim = range(c(sqrt(par3.1[ind1,])),na.rm=T)
+ylim[ylim>.5] = .5
+plot(ind1, sqrt(par3.1[ind1,1]), xlim=c(1,nas), ylim=ylim, type="l", bty="n", 
+xlab="ASReC/SNP, 8 SNP case", ylab="sd", main="(b) OD (rho)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+axis(1, at=c(1,5), labels=c(1,5), cex.lab=cexes, cex.axis=cexes)
 abline(v=1, lty=3, col="grey")
-for(i in 2:4)lines(ind1, sqrt(par4[ind1,i]), col=cols[i])
-legend("topright", legend=sprintf("OD(theta)=%s",phi), bty="n") 
+ylim = range(c(par3.1[ind1,1], par3.1[ind1,2], par3.1[ind1,3], par3.1[ind1,4]))
+for(i in 2:4)lines(ind1, sqrt(par3.1[ind1,i]), col=cols[i])
+legend("topright", legend=c("1 SNP", "2 SNP", "4 SNP", "8 SNP"), 
+bty="n", text.col=cols,cex=cexes)
+dev.off()
+
+ind1 = 1:nas
+phi = .5
+png(sprintf("sd_by_asc_1ind_%s.png", phi), height=4, width=8, units="in", res=300)
+par(mfrow=c(1,2))
+ylim = range(c(sqrt(par4.5[ind1,1]), sqrt(par4.5[ind1,2]), sqrt(par4.5[ind1,3]), sqrt(par4.5[ind1,4])))
+plot(ind1, sqrt(par4.5[ind1,1]), xlim=c(1,nas), ylim=ylim, type="l", bty="n", bty="n", 
+xlab="ASReC/SNP, 8 SNP case", ylab="sd", main="(c) eQTL(prop)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+axis(1, at=c(1,5), labels=c(1,5), cex.lab=cexes, cex.axis=cexes)
+abline(v=1, lty=3, col="grey")
+for(i in 2:4)lines(ind1, sqrt(par4.5[ind1,i]), col=cols[i])
+legend("topright", legend=c(sprintf("OD(theta)=%s",phi),"",sprintf("OD(rho)=%s",round(phi/(1+phi),3))), bty="n",cex=cexes) 
+
+ylim = range(c(sqrt(par3.5[ind1,])),na.rm=T)
+ylim[ylim>.5] = .5
+plot(ind1, sqrt(par3.5[ind1,1]), xlim=c(1,nas), ylim=ylim, type="l", bty="n", 
+xlab="ASReC/SNP, 8 SNP case", ylab="sd", main="(d) OD (rho)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+axis(1, at=c(1,5), labels=c(1,5), cex.lab=cexes, cex.axis=cexes)
+abline(v=1, lty=3, col="grey")
+ylim = range(c(par3.5[ind1,1], par3.5[ind1,2], par3.5[ind1,3], par3.5[ind1,4]))
+for(i in 2:4)lines(ind1, sqrt(par3.5[ind1,i]), col=cols[i])
+legend("topright", legend=c("1 SNP", "2 SNP", "4 SNP", "8 SNP"), 
+bty="n", text.col=cols,cex=cexes)
 dev.off()
 
 
+phi = .1
 png(sprintf("relSD_%s.png", phi), height=4, width=8, units="in", res=300)
 par(mfrow=c(1,2))
-y = par3/par3[,1]
-ylim = range(y[-1,4])
-plot(y[,1], xlim=c(1,nas), ylim=ylim, type="l", bty="n", bty="n", xlab="ASReC/SNP @ 8 SNP scenario", ylab="relative sd", main="OD(rho)")
+y = par4.1/par4.1[,1]
+ylim = c(0, 1)
+plot(y[,1], xlim=c(1,nas), ylim=ylim, type="l", bty="n", bty="n", 
+xlab="ASReC/SNP, 8 SNP case", ylab="relative sd", main="(a) eQTL(prop)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+for(i in 2:4){lines(ind1, y[,i], col=cols[i])}
+legend("topright", legend=c(sprintf("OD(theta)=%s",phi),sprintf("OD(rho)=%s",round(phi/(phi+1),3))), bty="n",cex=cexes)  
+axis(1, at=c(1,5), labels=c(1,5), cex.lab=cexes, cex.axis=cexes)
+
+y = par3.1/par3.1[,1]
+ylim = c(0,3.5)
+plot(y[,1], xlim=c(1,nas), ylim=ylim, type="l", bty="n", bty="n", 
+xlab="ASReC/SNP, 8 SNP case", ylab="relative sd", main="(b) OD(rho)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
 for(i in 2:4){lines(ind1, y[,i], col=cols[i])}
 legend("topright", legend=c("1 SNP", "2 SNP", "4 SNP", "8 SNP"), 
-bty="n", text.col=cols)
+bty="n", text.col=cols,cex=cexes) 
+axis(1, at=c(1,5), labels=c(1,5), cex.lab=cexes, cex.axis=cexes)
 
-y = par4/par4[,1]
-ylim = range(y)
-plot(y[,1], xlim=c(1,nas), ylim=ylim, type="l", bty="n", bty="n", xlab="ASReC/SNP @ 8 SNP scenario", ylab="relative sd", main="eQTL(prop)")
+dev.off()
+
+phi = .5
+png(sprintf("relSD_%s.png", phi), height=4, width=8, units="in", res=300)
+par(mfrow=c(1,2))
+y = par4.5/par4.5[,1]
+ylim = c(0, 1)
+plot(y[,1], xlim=c(1,nas), ylim=ylim, type="l", bty="n", bty="n", 
+xlab="ASReC/SNP, 8 SNP case", ylab="relative sd", main="(c) eQTL(prop)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
 for(i in 2:4){lines(ind1, y[,i], col=cols[i])}
-legend("topright", legend=sprintf("OD(theta)=%s",phi), bty="n") 
+legend("topright", legend=c(sprintf("OD(theta)=%s",phi),sprintf("OD(rho)=%s",round(phi/(phi+1),3))), bty="n",cex=cexes)  
+axis(1, at=c(1,5), labels=c(1,5), cex.lab=cexes, cex.axis=cexes)
+
+y = par3.5/par3.5[,1]
+ylim = c(0,3.5)
+plot(y[,1], xlim=c(1,nas), ylim=ylim, type="l", bty="n", bty="n", 
+xlab="ASReC/SNP, 8 SNP case", ylab="relative sd", main="(d) OD(rho)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+for(i in 2:4){lines(ind1, y[,i], col=cols[i])}
+legend("topright", legend=c("1 SNP", "2 SNP", "4 SNP", "8 SNP"), 
+bty="n", text.col=cols,cex=cexes) 
+axis(1, at=c(1,5), labels=c(1,5), cex.lab=cexes, cex.axis=cexes)
+
 dev.off()
 
 png(sprintf("hess_log10scale_%s.png", phi), height=4, width=8, units="in", res=300)

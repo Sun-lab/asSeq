@@ -1,12 +1,12 @@
-args = commandArgs(trailingOnly = TRUE)
+#setwd("C:/Users/Vasyl/Documents/GitHub/asSeq/compare_vs_RASQUAL/fisher")
+b0 = 0
+th = 0.5 
+dv = 1
+niter=1e4
+ss = 2
+
+
 percase = 0.1
-args
-b0 = as.numeric(args[1])
-th = as.numeric(args[2])
-dv = as.numeric(args[3])
-niter = as.numeric(args[4])
-ss = as.numeric(args[5])
-nsnp = as.numeric(args[6])
 b1 = 0
 mn = 100
 set.seed(12345)

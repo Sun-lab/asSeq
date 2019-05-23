@@ -508,16 +508,16 @@ table(rasqS, trecS)
 
 
 ```{r fig_last, echo=TRUE}
-cexes = 1.2
+cexes = 1.7
 png("od_vs_rasq_plot.png", height=4, width=8, res=300, units="in")
 par(mfrow=c(1,2))
 par(mar=c(5,5,3,1))
-plot(lodRp, lodNBp, main="RASQUAL vs NB over-disp", pch=20, cex=.5, col=rgb(0.4,0.4,0.4,0.5), bty="n",
-     xlab="log10(RASQUAL overdispersion)", ylab="log(NB overdispersion)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+plot(lodRp, lodNBp, main="(a) RASQUAL vs NB", pch=20, cex=.5, col=rgb(0.4,0.4,0.4,0.5), bty="n",
+     xlab="log10(RASQUAL od)", ylab="log10(TReCASE NB od)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
 abline(a=0, b=1, col="red", lwd=2, lty=3)
 
-plot(lodRp, lodBBp, main="RASQUAL vs BB over-disp", pch=20, cex=.5, col=rgb(0.4,0.4,0.4,0.5), bty="n",
-     xlab="log10(RASQUAL overdispersion)", ylab="log(BB overdispersion)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
+plot(lodRp, lodBBp, main="(b) RASQUAL vs BB", pch=20, cex=.5, col=rgb(0.4,0.4,0.4,0.5), bty="n",
+     xlab="log10(RASQUAL od)", ylab="log10(TReCASE BB od)", cex.main=cexes, cex.lab=cexes, cex.axis=cexes)
 abline(a=0, b=1, col="red", lwd=2, lty=3)
 dev.off()
 ```
