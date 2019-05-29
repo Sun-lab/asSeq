@@ -150,7 +150,7 @@ update_beta_phi <- function(y, X , offsets){
 # updtade KAPPA, ETA, GAMMA
 # L-BFGS-B
 
-update_keg_trec <- function(H0, para, y,z, X,betas, b, phi, RHO, tau1, tau2){
+update_keg_trec <- function(H0, para, y,z, X,betas, phi, RHO, tau1, tau2){
   # gr = Grad_NB
   if(H0 == 0){
     lbfgs = optim(par = para , fn = loglikNB,gr = Grad_NB,
@@ -319,7 +319,7 @@ compute_pi <- function(z_AS, RHO_AS, KAPPA, ETA, GAMMA, tauB, tau){
   pis[indhomo] = (RHO_AS[indhomo]*tauB[indhomo]*KAPPA + 1 -
                     RHO_AS[indhomo])/(RHO_AS[indhomo]*tau[indhomo]*KAPPA
                                       + 2*(1 - RHO_AS[indhomo]))
-  indhet = which(z_AS %in% c(1,3))
+  indhet = which(z_AS %in% c(1,2))
   tmp1 = RHO_AS[indhet]*tauB[indhet]*GAMMA*KAPPA + (1 - RHO_AS[indhet])*ETA
   pis[indhet] = tmp1/(RHO_AS[indhet]*(tau[indhet]-tauB[indhet])*KAPPA +
                         (1 - RHO_AS[indhet]) + tmp1)
@@ -386,7 +386,7 @@ Grad_BB_keg<-function(para, H0,A,D,THETA, z_AS, RHO_AS,tauB, tau){
     (RHO_AS[indhomo]*tauB[indhomo]*KAPPA+(1-RHO_AS[indhomo]))/tmp.homo^2
 
 
-  indhet = which(z_AS %in% c(2,3))
+  indhet = which(z_AS %in% c(1,2))
   tmp1 = RHO_AS[indhet]*tauB[indhet]*GAMMA*KAPPA+(1-RHO_AS[indhet])*ETA
   tmp2 = RHO_AS[indhet]*(tau[indhet]-tauB[indhet])*KAPPA + (1 - RHO_AS[indhet]) +
     tmp1
@@ -1564,15 +1564,3 @@ TReCASE_sep_sfit = function(KEG_EaseGase=rep(0,5), y,z,z_AS, X, RHO, RHO_AS,
               loglik =-keg_lbfgs$value, iters = iter,
               conv = c(keg_lbfgs$convergence,theta_lbfgs$convergence)))
 }
-
-
-gen_hap_v2<-function(SNPcor, MAF, ZZ){
-  ## SNPcor: correlation between adjecent SNPs
-  ## MAF: minor allele frequency
-  ## ZZ: adjecent haplotype
-  library(rootSolve)
-  N = length(ZZ)
-  fn <- function(x, SNPcor, MAF){
-    EG1 = x[1]*MAF +x[2]*(1-MAF)
-    c(F1 = (EG1 - MAF ) ,
-      F2 = (x[                                                            

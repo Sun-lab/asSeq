@@ -265,7 +265,7 @@ double RcppT_loglikNB(const arma::vec& y, const double& phi,
 }
 
 // [[Rcpp::export]]
-double RcppT_loglikNB_eqtl(const arma::vec& para, const int& H0, 
+double RcppT_loglikNB_KEG(const arma::vec& para, const int& H0, 
                           const arma::vec& y, const arma::vec& z, 
                           const double& phi, const arma::vec& RHO,
                           const arma::vec& tau1, const arma::vec& tau2,
@@ -433,7 +433,7 @@ arma::vec RcppT_grad_NB(const arma::vec& para, const int& H0,
 }
 
 // [[Rcpp::export]]
-Rcpp::List RcppT_trec_eqtl_BFGS(const arma::vec& para0, const int& H0, 
+Rcpp::List RcppT_trec_KEG_BFGS(const arma::vec& para0, const int& H0, 
                               const arma::vec& y, const arma::vec& z,
                               const arma::vec& RHO, const arma::mat& X,
                               const arma::vec& BETA, const double& phi,
@@ -471,7 +471,7 @@ Rcpp::List RcppT_trec_eqtl_BFGS(const arma::vec& para0, const int& H0,
   while(iter < max_iter){
     //calculate direction p_k
     uu = 0;
-    old_LL = fnscale * RcppT_loglikNB_eqtl(xk, H0, y, z, phi, RHO, 
+    old_LL = fnscale * RcppT_loglikNB_KEG(xk, H0, y, z, phi, RHO, 
                                            tau1, tau2, lgy1, expXbeta,
                                            offsets, mu);
     gr_k   = fnscale * RcppT_grad_NB(xk, H0, y, z, RHO, phi,
@@ -483,7 +483,7 @@ Rcpp::List RcppT_trec_eqtl_BFGS(const arma::vec& para0, const int& H0,
     for(jj=0; jj<15; jj++){
       tmp_alpha = inv_norm_p_k / std::pow(4, jj);
       new_xk    = xk + tmp_alpha * p_k;
-      new_LL    = fnscale * RcppT_loglikNB_eqtl(new_xk, H0, y, z, phi, RHO, 
+      new_LL    = fnscale * RcppT_loglikNB_KEG(new_xk, H0, y, z, phi, RHO, 
                                                 tau1, tau2, lgy1, expXbeta,
                                                 offsets, mu);
       if(new_LL < old_LL){ //minimizing
@@ -598,18 +598,11 @@ Rcpp::List RcppT_trec_sfit(const int& H0, const arma::vec& para0,
     }
     
     //update KEG
-    new_keg_fit = RcppT_trec_eqtl_BFGS(curr_para, H0, y, z, RHO, X, BETA, phi,
+    new_keg_fit = RcppT_trec_KEG_BFGS(curr_para, H0, y, z, RHO, X, BETA, phi,
                                        tau1, tau2, lgy1, max_iter, eps, false);
     new_para    = Rcpp::as<arma::vec>(new_keg_fit["PAR"]);
     new_LL      = as<double>(new_keg_fit["LL"]);
     
-    // if(as<int>(new_keg_fit["converge"]) ==0){
-    //   Rprintf("failed update keg at %d iter \n PHI =%.2e \n",
-    //           as<int>(new_keg_fit["iter"]),  phi);
-    //   printR_obj(BETA);
-    //   converge = 0;
-    //   break;
-    // }
     if(show){
       Rprintf("TReC: keg updated after %d iter \n",
               as<int>(new_keg_fit["iter"]));
@@ -664,6 +657,8 @@ Rcpp::List RcppT_trec(const arma::vec& y, const arma::vec& z,
   Rcpp::List sfit0, sfit1, sfit2, sfit3;
   double p_eta, p_gamma;
   arma::vec para0 = arma::zeros<arma::vec>(3);
+  int converge = 0;
+  
   sfit0 = RcppT_trec_sfit(0, para0, y, z, RHO, X, tau1, tau2, lgy1, 
                           max_iter, eps, show); 
   sfit1 = RcppT_trec_sfit(1, para0.subvec(0,1), y, z, RHO, X, tau1, tau2, lgy1, 
@@ -676,9 +671,12 @@ Rcpp::List RcppT_trec(const arma::vec& y, const arma::vec& z,
   sfit3 = RcppT_trec_sfit(0, para0, y, z, RHO, X, tau1, tau2, lgy1, 
                           max_iter, eps, show); 
   
-  if(as<double>(sfit0["LL"]) < as<double>(sfit3["LL"]) ){
+  if(as<double>(sfit0["LL"]) < as<double>(sfit3["LL"]) && sfit3["converge"] ){
     sfit0 = sfit3;  
   }
+  
+  converge = sfit0["converge"] && sfit1["converge"] && sfit2["converge"];
+  
   Rcpp::NumericVector PAR = as<Rcpp::NumericVector>(sfit0["PAR"]);
   Rcpp::NumericVector reg_par = as<Rcpp::NumericVector>(sfit0["reg_par"]);
   
@@ -694,7 +692,312 @@ Rcpp::List RcppT_trec(const arma::vec& y, const arma::vec& z,
     Rcpp::Named("reg_par", Rcpp::NumericVector(reg_par.begin(), reg_par.end())),
     Rcpp::Named("LL", sfit0["LL"]),
     Rcpp::Named("LL_eta", sfit1["LL"]),
-    Rcpp::Named("LL_gamma", sfit2["LL"])
+    Rcpp::Named("LL_gamma", sfit2["LL"]),
+    Rcpp::Named("converge", converge)
   );
     
+}
+
+
+// ----------------------------------------------------------------------
+// ASE
+// ----------------------------------------------------------------------
+
+// [[Rcpp::export]]
+void RcppT_compite_pi(const arma::vec& z_AS, const arma::vec& RHO_AS, 
+                     const double& KAPPA, const double& ETA, const double& GAMMA,
+                     const arma::vec& tauB, const arma::vec& tau, 
+                     arma::vec& pis){
+  arma::uword ii;
+  double tmp1, tmp2; 
+
+  for(ii=0;ii<z_AS.n_elem;ii++){
+    if(z_AS.at(ii) == 0 | z_AS.at(ii) == 3){
+      tmp1 = RHO_AS.at(ii)*tauB.at(ii)*KAPPA + 1 - RHO_AS.at(ii);
+      tmp2 = RHO_AS.at(ii)*tau.at(ii)*KAPPA + 2*(1 - RHO_AS.at(ii));
+      pis.at(ii) = tmp1/tmp2;
+      
+    }else{
+      tmp1 = RHO_AS.at(ii)*tauB.at(ii)*KAPPA*GAMMA + (1 - RHO_AS.at(ii))*ETA;
+      tmp2 = RHO_AS.at(ii)*(tau.at(ii) - tauB.at(ii))*KAPPA + 
+        (1 - RHO_AS.at(ii)) + tmp1;
+      pis.at(ii) = tmp1/tmp2;
+    }
+  }
+}
+
+// [[Rcpp::export]]
+double RcppT_loglikBB_KEG(const arma::vec& para, const int& H0,
+                        const arma::vec& z_AS, const arma::vec& RHO_AS, 
+                        const arma::vec& ni, const arma::vec& ni0,
+                        const double& log_theta, const arma::vec& lbc, 
+                        const arma::vec& tauB, const arma::vec& tau, 
+                        arma::vec& pis){
+  //update KEG
+  arma::uword ii;
+  double loglik = 0.0;
+  double vtheta = std::exp(-log_theta);
+  double lgvt = lgamma(vtheta);
+  double KAPPA, ETA, GAMMA;
+  
+  if(H0 == 0){
+    KAPPA = exp(para.at(0));
+    ETA   = exp(para.at(1));
+    GAMMA = exp(para.at(2));
+  }else if(H0 == 1){ //para = log(c(KAPPA, GAMMA))
+    KAPPA = exp(para.at(0));
+    ETA   = 1.0;
+    GAMMA = exp(para.at(1));
+  }else{ //para = log(c(KAPPA, ETA))
+    KAPPA = exp(para.at(0));
+    ETA   = exp(para.at(1));
+    GAMMA = 1.0;
+  }
+  
+  RcppT_compite_pi(z_AS, RHO_AS, KAPPA, ETA, GAMMA, tauB, tau, pis);
+  
+  for(ii=0;ii<ni.n_elem;ii++){
+    double aa = pis.at(ii) * vtheta; 
+    double bb = vtheta - aa;
+    double lgvab = - lgamma(aa) - lgamma(bb) + lgvt;
+    
+    //printR_obj(loglik);
+    loglik += lbc.at(ii) + lgamma(aa + ni0.at(ii)) +
+        lgamma(bb + ni.at(ii) - ni0.at(ii)) + lgvab ;
+        //- lgamma(vtheta + ni.at(ii));
+
+  }
+  
+  return loglik;
+}
+
+// [[Rcpp::export]]
+arma::vec RcppT_grad_BB_KEG(const arma::vec& para, const int& H0,
+                            const arma::vec& z_AS, const arma::vec& RHO_AS, 
+                            const arma::vec& ni, const arma::vec& ni0,
+                            const double& log_theta, const arma::vec& lbc, 
+                            const arma::vec& tauB, const arma::vec& tau, 
+                            const arma::vec& pis){
+  arma::uword ii;
+  arma::vec grad = arma::zeros<arma::vec>(para.size());
+  double KAPPA, ETA, GAMMA;
+  double dlASE_dpi, dpi_dkappa, dpi_deta, dpi_dgamma, tmp1, tmp2, tmp3, tmp4;
+  double vtheta = std::exp(-log_theta);
+  double lgvt = lgamma(vtheta);
+  
+  if(H0 == 0){
+    KAPPA = exp(para.at(0));
+    ETA   = exp(para.at(1));
+    GAMMA = exp(para.at(2));
+    
+    for(ii =0; ii<z_AS.size(); ii++){
+      double aa = pis.at(ii) * vtheta; 
+      double bb = vtheta - aa;
+      double diaa = R::digamma(aa);
+      double dibb =  R::digamma(bb);
+      double diaa_ni0 = R::digamma(aa + ni0.at(ii));
+      double dibb_ni1 = R::digamma(bb + ni.at(ii) - ni0.at(ii));
+      
+      dlASE_dpi = diaa_ni0 - dibb_ni1 - diaa + dibb;
+      
+      if(z_AS.at(ii) == 0 | z_AS.at(ii) == 3){
+        tmp1 = RHO_AS.at(ii)*tau.at(ii)*KAPPA + 2*(1 - RHO_AS.at(ii));
+        tmp2 = RHO_AS.at(ii)*tauB.at(ii)/tmp1;
+        tmp3 = RHO_AS.at(ii)*tau.at(ii)*(RHO_AS.at(ii)*tauB.at(ii)*KAPPA + 
+          (1 - RHO_AS.at(ii)))/pow(tmp1, 2.0);
+        dpi_dkappa = tmp2 - tmp3;
+        dpi_deta   = 0;
+        dpi_dgamma = 0;
+        
+      }else{
+        tmp1 = RHO_AS.at(ii)*tauB.at(ii)*GAMMA*KAPPA + (1 - RHO_AS.at(ii))*ETA;
+        tmp2 = RHO_AS.at(ii)*(tau.at(ii) - tauB.at(ii))*KAPPA +
+          (1 - RHO_AS.at(ii)) + tmp1;
+        tmp3 = tmp1/pow(tmp2, 2.0);
+        tmp4 = 1/tmp2 -tmp3; 
+        dpi_dkappa = RHO_AS.at(ii)*tauB.at(ii)*GAMMA*tmp4 -
+          RHO_AS.at(ii)*(tau.at(ii) - tauB.at(ii))*tmp3;
+        dpi_deta   = (1 - RHO_AS.at(ii))*tmp4;
+        dpi_dgamma = RHO_AS.at(ii)*tauB.at(ii)*KAPPA*tmp4;
+      }
+      
+      grad.at(0) += dlASE_dpi*dpi_dkappa;
+      grad.at(1) += dlASE_dpi*dpi_deta;
+      grad.at(2) += dlASE_dpi*dpi_dgamma;
+      
+    }
+    grad.at(0) *= KAPPA * vtheta;
+    grad.at(1) *= ETA * vtheta;
+    grad.at(2) *= GAMMA* vtheta;
+    
+    
+  }else if(H0 == 1){ //para = log(c(KAPPA, GAMMA))
+    KAPPA = exp(para.at(0));
+    ETA   = 1.0;
+    GAMMA = exp(para.at(1));
+    for(ii =0; ii<z_AS.size(); ii++){
+      double aa = pis.at(ii) * vtheta; 
+      double bb = vtheta - aa;
+      double diaa = R::digamma(aa);
+      double dibb =  R::digamma(bb);
+      double diaa_ni0 = R::digamma(aa + ni0.at(ii));
+      double dibb_ni1 = R::digamma(bb + ni.at(ii) - ni0.at(ii));
+      
+      dlASE_dpi = diaa_ni0 - dibb_ni1 - diaa + dibb;
+      
+      if(z_AS.at(ii) == 0 | z_AS.at(ii) == 3){
+        tmp1 = RHO_AS.at(ii)*tau.at(ii)*KAPPA + 2*(1 - RHO_AS.at(ii));
+        tmp2 = RHO_AS.at(ii)*tauB.at(ii)/tmp1;
+        tmp3 = RHO_AS.at(ii)*tau.at(ii)*(RHO_AS.at(ii)*tauB.at(ii)*KAPPA + 
+          (1 - RHO_AS.at(ii)))/pow(tmp1, 2.0);
+        dpi_dkappa = tmp2 - tmp3;
+        dpi_dgamma = 0;
+        
+      }else{
+        tmp1 = RHO_AS.at(ii)*tauB.at(ii)*GAMMA*KAPPA + (1 - RHO_AS.at(ii))*ETA;
+        tmp2 = RHO_AS.at(ii)*(tau.at(ii) - tauB.at(ii))*KAPPA +
+          (1 - RHO_AS.at(ii)) + tmp1;
+        tmp3 = tmp1/pow(tmp2, 2.0);
+        tmp4 = 1/tmp2 -tmp3; 
+        dpi_dkappa = RHO_AS.at(ii)*tauB.at(ii)*GAMMA*tmp4 -
+          RHO_AS.at(ii)*(tau.at(ii) - tauB.at(ii))*tmp3;
+        dpi_dgamma = RHO_AS.at(ii)*tauB.at(ii)*KAPPA*tmp4;
+      }
+      
+      grad.at(0) += dlASE_dpi*dpi_dkappa;
+      grad.at(1) += dlASE_dpi*dpi_dgamma;
+      
+    }
+    grad.at(0) *= KAPPA * vtheta;
+    grad.at(1) *= GAMMA* vtheta;
+    
+    
+  }else{ //para = log(c(KAPPA, ETA))
+    KAPPA = exp(para.at(0));
+    ETA   = exp(para.at(1));
+    GAMMA = 1.0;
+    for(ii =0; ii<z_AS.size(); ii++){
+      double aa = pis.at(ii) * vtheta; 
+      double bb = vtheta - aa;
+      double diaa = R::digamma(aa);
+      double dibb =  R::digamma(bb);
+      double diaa_ni0 = R::digamma(aa + ni0.at(ii));
+      double dibb_ni1 = R::digamma(bb + ni.at(ii) - ni0.at(ii));
+      
+      dlASE_dpi = diaa_ni0 - dibb_ni1 - diaa + dibb;
+      
+      if(z_AS.at(ii) == 0 | z_AS.at(ii) == 3){
+        tmp1 = RHO_AS.at(ii)*tau.at(ii)*KAPPA + 2*(1 - RHO_AS.at(ii));
+        tmp2 = RHO_AS.at(ii)*tauB.at(ii)/tmp1;
+        tmp3 = RHO_AS.at(ii)*tau.at(ii)*(RHO_AS.at(ii)*tauB.at(ii)*KAPPA + 
+          (1 - RHO_AS.at(ii)))/pow(tmp1, 2.0);
+        dpi_dkappa = tmp2 - tmp3;
+        dpi_deta   = 0;
+
+      }else{
+        tmp1 = RHO_AS.at(ii)*tauB.at(ii)*GAMMA*KAPPA + (1 - RHO_AS.at(ii))*ETA;
+        tmp2 = RHO_AS.at(ii)*(tau.at(ii) - tauB.at(ii))*KAPPA +
+          (1 - RHO_AS.at(ii)) + tmp1;
+        tmp3 = tmp1/pow(tmp2, 2.0);
+        tmp4 = 1/tmp2 -tmp3; 
+        dpi_dkappa = RHO_AS.at(ii)*tauB.at(ii)*GAMMA*tmp4 -
+          RHO_AS.at(ii)*(tau.at(ii) - tauB.at(ii))*tmp3;
+        dpi_deta   = (1 - RHO_AS.at(ii))*tmp4;
+      }
+      
+      grad.at(0) += dlASE_dpi*dpi_dkappa;
+      grad.at(1) += dlASE_dpi*dpi_deta;
+
+    }
+    grad.at(0) *= KAPPA * vtheta;
+    grad.at(1) *= ETA * vtheta;
+
+  }
+  
+  return grad;
+  
+}
+
+// [[Rcpp::export]]
+double RcppT_loglikBB_THETA(const arma::vec& ni, const arma::vec& ni0, 
+                           const double& log_theta, const arma::vec& pis,
+                          const arma::vec& lbc){
+  
+  arma::uword ii;
+  double loglik = 0.0;
+  double vtheta = std::exp(-log_theta);
+
+  for(ii=0;ii<ni.n_elem;ii++){
+    
+    double aa = pis.at(ii)*vtheta;
+    double bb = vtheta - aa;
+    double lgvt = lgamma(vtheta);
+    double lgvab = - lgamma(aa) - lgamma(bb) + lgvt;
+    
+    loglik += lbc.at(ii) + lgamma(aa + ni0.at(ii)) +
+        lgamma(bb + ni.at(ii) - ni0.at(ii)) + lgvab -
+        lgamma(vtheta + ni.at(ii));
+
+  }
+  
+  return loglik;
+}
+
+// [[Rcpp::export]]
+double RcppT_grad_BB_THETA(const arma::vec& ni, const arma::vec& ni0,
+                              const double& log_theta, const arma::vec& pis){
+  // only update theta
+  arma::uword ii;
+  double grad   = 0.0;
+  double vtheta = std::exp(-log_theta);
+  double divt   = R::digamma(vtheta);
+  double diaa_ni0, dibb_ni1, aa, bb, diaa, dibb;
+  
+  for(ii=0;ii<ni.n_elem;ii++){
+    aa      = pis.at(ii)*vtheta;
+    bb      = vtheta - aa;
+    diaa    = R::digamma(aa);
+    dibb    = R::digamma(bb);
+    diaa_ni0 = R::digamma(aa + ni0.at(ii));
+    dibb_ni1 = R::digamma(bb + ni.at(ii) - ni0.at(ii));
+      
+    //dlase_dtheta
+    grad += - pis.at(ii)*(diaa_ni0 - diaa) -
+        (1.0 - pis.at(ii)) * (dibb_ni1 - dibb) -
+        (divt - R::digamma(vtheta + ni.at(ii)));
+
+  }
+  grad *= vtheta;
+  return grad; 
+}
+
+
+// ----------------------------------------------------------------------
+// TRECASE
+// ----------------------------------------------------------------------
+
+// [[Rcpp::export]]
+double RcppT_TReCASE_LL_KEG(const arma::vec& para, const int& H0,
+                        const arma::vec& y, const arma::vec& z,
+                        const arma::vec& z_AS, const arma::vec& RHO,
+                        const arma::vec& RHO_AS, const arma::vec& tau1,
+                        const arma::vec& tau2, const arma::vec& ni0,
+                        const arma::vec& ni, const double& THETA,
+                        const arma::vec& tauB, const arma::vec& tau,
+                        const arma::vec& lgy1, const arma::vec& lbc,
+                        arma::vec& pis, arma::vec& mu){
+  double LL_NB, LL_BB;
+  double log_theta = log(THETA);
+  LL_NB = RcppT_loglikNB_KEG(para, H0, y, z, phi, RHO, tau1, 
+                             tau2, lgy1, expXbeta, offsets, mu);
+  LL_BB = RcppT_loglikBB_KEG(para, H0, z_AS, RHO_AS, ni, ni0, log_theta,
+                            lbc, tauB, tau, pis);
+  return LL_NB + LL_BB;
+}
+
+double RcppT_TReCASE_LL(const arma::vec& y, ){
+  
+  LL_NB = RcppT_loglikNB(y, phi, lgy1, mu) 
+  LL_BB = RcppT_loglikBB_THETA(ni, ni0, log_theta, pis, lbc);
+
 }

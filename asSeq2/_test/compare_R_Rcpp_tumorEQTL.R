@@ -27,6 +27,9 @@ zz_AS = zz2[ind]
 ni = dat$total_phased[ind]
 ni0 = dat$hapB[ind]
 lbc = dat$LBC[ind]
+tauB = dat$tauB[ind]
+tau = dat$tau[ind]
+RHO_AS = RHO[ind]
 
 offsets = rep(0, N)
 mu = rep(0, N)
@@ -58,7 +61,7 @@ loglikNB(para, H0, y, zz2, X, betas, phi, RHO, tau1, tau2)
 RcppT_compute_offset(zz2, RHO, KAPPA, ETA, GAMMA, tau1, tau2, offsets)
 RcppT_compute_expXbeta(X, betas, expXbeta) 
 Grad_NB(para, H0, y, zz2, X, betas, phi, RHO, tau1, tau2)
-RcppT_loglikNB_eqtl(para, H0, y, zz2, phi, RHO, tau1, tau2, lgy1, 
+RcppT_loglikNB_KEG(para, H0, y, zz2, phi, RHO, tau1, tau2, lgy1, 
                     expXbeta, offsets, mu)
 RcppT_grad_NB(para, H0, y, zz2, RHO, phi, tau1, tau2, expXbeta, 
               offsets, mu) 
@@ -71,7 +74,7 @@ loglikNB(para, H0, y, zz2, X, betas, phi, RHO, tau1, tau2)
 RcppT_compute_offset(zz2, RHO, KAPPA, 1, GAMMA, tau1, tau2, offsets)
 RcppT_compute_expXbeta(X, betas, expXbeta) 
 Grad_NB(para, H0, y, zz2, X, betas, phi, RHO, tau1, tau2)
-RcppT_loglikNB_eqtl(para, H0, y, zz2, phi, RHO, tau1, tau2, lgy1, 
+RcppT_loglikNB_KEG(para, H0, y, zz2, phi, RHO, tau1, tau2, lgy1, 
                     expXbeta, offsets, mu)
 RcppT_grad_NB(para, H0, y, zz2, RHO, phi, tau1, tau2, expXbeta, 
               offsets, mu) 
@@ -84,7 +87,7 @@ loglikNB(para, H0, y,zz2, X, betas, phi, RHO, tau1, tau2)
 RcppT_compute_offset(zz2, RHO, KAPPA, ETA, 1, tau1, tau2, offsets)
 RcppT_compute_expXbeta(X, betas, expXbeta) 
 Grad_NB(para, H0, y, zz2, X, betas, phi, RHO, tau1, tau2)
-RcppT_loglikNB_eqtl(para, H0, y, zz2, phi, RHO, tau1, tau2, lgy1, 
+RcppT_loglikNB_KEG(para, H0, y, zz2, phi, RHO, tau1, tau2, lgy1, 
                     expXbeta, offsets, mu)
 RcppT_grad_NB(para, H0, y, zz2, RHO, phi, tau1, tau2, expXbeta, 
               offsets, mu) 
@@ -93,7 +96,7 @@ RcppT_loglikNB(y, phi, lgy1, mu)
 
 H0 = 0
 para = c(0,0,0)
-RcppT_trec_eqtl_BFGS(para, H0, y, zz2, RHO, X, betas, phi,
+RcppT_trec_KEG_BFGS(para, H0, y, zz2, RHO, X, betas, phi,
                      tau1, tau2, lgy1)
 update_keg_trec(H0, para, y,zz2, X, betas, phi, RHO, tau1, tau2)
 sfitR = TReC_sfit(H0, para, y,zz2, X, RHO, tau1, tau2)
@@ -107,7 +110,7 @@ c(sfit$reg_par[1:length(betas)], exp(sfit$reg_par[length(betas)+1]))
 
 H0 = 1
 para = c(0,0)
-RcppT_trec_eqtl_BFGS(para, H0, y, zz2, RHO, X, betas, phi, tau1, tau2, lgy1)
+RcppT_trec_KEG_BFGS(para, H0, y, zz2, RHO, X, betas, phi, tau1, tau2, lgy1)
 update_keg_trec(H0,para, y,zz2, X,betas, phi, RHO, tau1, tau2)
 sfitR = TReC_sfit(H0, para, y,zz2, X, RHO, tau1, tau2)
 sfit  = RcppT_trec_sfit(H0, para, y, zz2, RHO, X, tau1, tau2, lgy1) 
@@ -120,7 +123,7 @@ c(sfit$reg_par[1:length(betas)], exp(sfit$reg_par[length(betas)+1]))
 
 
 H0 = 2
-RcppT_trec_eqtl_BFGS(para, H0, y, zz2, RHO, X, betas, phi, tau1, tau2, lgy1)
+RcppT_trec_KEG_BFGS(para, H0, y, zz2, RHO, X, betas, phi, tau1, tau2, lgy1)
 update_keg_trec(H0, para, y,zz2, X,betas, phi, RHO, tau1, tau2)
 sfitR = TReC_sfit(H0, para, y,zz2, X, RHO, tau1, tau2)
 sfit  = RcppT_trec_sfit(H0, para, y, zz2, RHO, X, tau1, tau2, lgy1) 
@@ -142,5 +145,29 @@ c(TReCR$KAPPA, TReCR$ETA, TReCR$GAMMA)
 exp(TReC$PAR)
 c(TReCR$betas, TReCR$phi)
 c(TReC$reg_par[1:length(betas)], exp(TReC$reg_par[length(betas)+1]))
+
+#-------------------------------------------------------------
+# ASE likelihood (beta binomial)
+#-------------------------------------------------------------
+pis = rep(0, length(zz_AS))
+
+piR = compute_pi(zz_AS, RHO_AS, KAPPA, ETA, GAMMA, tauB, tau)
+RcppT_compite_pi(zz_AS, RHO_AS, KAPPA, ETA, GAMMA, tauB, tau, pis)
+summary(piR - pis)
+
+H0 = 0
+para = log(c(KAPPA, ETA, GAMMA))
+loglikBB(para, H0, ni0, ni, theta, zz_AS, RHO_AS, tauB, tau)
+RcppT_loglikBB_THETA(ni, ni0, log(theta), pis, lbc) 
+loglikBB_THETA(theta, ni0, ni, pis)
+
+RcppT_grad_BB_THETA(ni, ni0, log(theta), pis)
+lASE.dTHETA(theta, ni0, ni, pis)*theta
+
+RcppT_grad_BB_KEG(para, H0, zz_AS, RHO_AS, ni, ni0, log(theta), lbc, tauB, 
+                  tau, pis)
+Grad_BB_keg(para, H0,ni0,ni,theta, zz_AS, RHO_AS,tauB, tau)
+RcppT_loglikBB_KEG(para, H0, zz_AS, RHO_AS, ni, ni0, log(theta), lbc, tauB, 
+                   tau, pis) 
 
 
