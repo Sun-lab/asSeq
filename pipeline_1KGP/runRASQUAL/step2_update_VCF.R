@@ -10,7 +10,8 @@ if(!file.exists(vcfr.dir))dir.create(vcfr.dir)
 info.dir = "../inf"
 dir.rasc = sprintf("%s/gatkasc", data.dir)
 
-snp = sprintf("%s/SNP_fix.vcf.gz", vcf.dir)
+#snp = sprintf("%s/SNP_fix.vcf.gz", vcf.dir)
+snp = sprintf("%s/SNP_ex.vcf.gz", vcf.dir)
 system(sprintf("gunzip -c %s | awk '{print $1,$2}' > tmpsnps.txt", snp))
 
 genes = read.table(sprintf("%s/GTF_ex.gtf", info.dir), as.is=T)

@@ -13,7 +13,8 @@ if(!file.exists(vcfr.dir))dir.create(vcfr.dir)
 info.dir = "../inf"
 dir.rasc = sprintf("%s/gatkasc", data.dir)
 
-snp = sprintf("%s/SNP_fix.vcf.gz", vcf.dir)
+#snp = sprintf("%s/SNP_fix.vcf.gz", vcf.dir)
+snp = sprintf("%s/SNP_ex.vcf.gz", vcf.dir)
 system(sprintf("gunzip -c %s | awk '{print $1,$2}' > tmpsnps.txt", snp))
 
 genes = read.table(sprintf("%s/GTF_ex.gtf", info.dir), as.is=T)
@@ -25,10 +26,10 @@ if(length(to.rm)>0)geneid=geneid[-to.rm]
 #a.
 #count number of SNPs within a window - will be used as input for RASQUAL
 #
+win = 2e5
 snp.cnt = sprintf("%s/number_of_snps_per_gene_win%s.csv", info.dir, win)
 if(!file.exists(snp.cnt)){
   res = data.frame(matrix(NA, nrow=length(geneid), ncol=3))
-  win = 2e5
   for(i in 1:length(geneid)){
     #m = match(geneid[i], genes[,11])
     gnm = which(geneid[i]==genes[,11])
@@ -63,7 +64,9 @@ vcf.in[,8] = af
 #also add a permutation step for VCF
 frac = 0.1
 samples = unlist(strsplit(vcf.hd[4,1], split="\t"))[-(1:9)]
-for(i in 1:length(samples)){
+nsub = length(samples)
+
+for(i in 1:nsub){
   alt = ref = numeric(nrow(vcf.in))
   sampli = samples[i]
   rasc = read.table(sprintf("%s/%s.txt",dir.rasc, sampli), header=T)
@@ -77,6 +80,23 @@ for(i in 1:length(samples)){
   vcf.in[,i+9] = sprintf("%s:%s,%s", sample(vcf.in[,i+9]), ref, alt)
   message("individual ", i, " has been processed")
 }
+
+#add permutation step
+get_block = function(x, split=":", block = 1){
+  unlist(strsplit(x, split=split))[block]
+}
+snpm = as.matrix(vcf.in[,-(1:9)])
+snpi = apply(snpm, c(1,2), get_block)
+snpc = apply(snpm, c(1,2), get_block, block=2)
+
+for(i in 1:nrow(snpm)){
+  snpi[i,] = snpi[i, sample(1:nsub)]
+  if(i%%1e5==0)message(i, " out of ", nrow(snpm))
+}
+snpm = matrix(paste(snpi,snpc, sep=":"), ncol=nsub)
+all(substr(snpm, 1, 3)==snpi)
+vcf.in = cbind(vcf.in[,1:9], snpm)
+
 
 #save to rasqual count folder
 out.vcf = sprintf("%s/SNP_fix.vcf", vcfr.dir)
