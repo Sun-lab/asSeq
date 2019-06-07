@@ -49,7 +49,8 @@ summary(as.vector(expXbeta - expXbetaR))
 # regression
 RcppT_reg_LL(y, X, offsets, betas, lgy1, mu) 
 RcppT_reg_grad(y, X, mu, betas) 
-reg  = RcppT_reg_BFGS(y, X, offsets, rep(0, length(betas)+1), lgy1)
+reg  = RcppT_reg_BFGS(y, X, offsets, rep(0, length(betas)+1), lgy1,
+                    max_iter = 400, eps=1e-5, show = F)
 regR = update_beta_phi(y, X , offsets)
 reg$PAR
 c(regR$betas, log(regR$phi))
@@ -66,7 +67,7 @@ RcppT_loglikNB_KEG(para, H0, y, zz2, phi, RHO, tau1, tau2, lgy1,
 RcppT_grad_NB(para, H0, y, zz2, RHO, phi, tau1, tau2, expXbeta, 
               offsets, mu) 
 mu = expXbeta*exp(offsets)
-RcppT_loglikNB(y, phi, lgy1, mu) 
+Rcpp_loglikNB(y, phi, lgy1, mu) 
 
 H0 = 1 
 para = log(c(KAPPA, GAMMA))
@@ -79,7 +80,7 @@ RcppT_loglikNB_KEG(para, H0, y, zz2, phi, RHO, tau1, tau2, lgy1,
 RcppT_grad_NB(para, H0, y, zz2, RHO, phi, tau1, tau2, expXbeta, 
               offsets, mu) 
 mu = expXbeta*exp(offsets)
-RcppT_loglikNB(y, phi, lgy1, mu) 
+Rcpp_loglikNB(y, phi, lgy1, mu) 
 
 H0 = 2
 para = log(c(KAPPA, ETA))
@@ -92,7 +93,7 @@ RcppT_loglikNB_KEG(para, H0, y, zz2, phi, RHO, tau1, tau2, lgy1,
 RcppT_grad_NB(para, H0, y, zz2, RHO, phi, tau1, tau2, expXbeta, 
               offsets, mu) 
 mu = expXbeta*exp(offsets)
-RcppT_loglikNB(y, phi, lgy1, mu) 
+Rcpp_loglikNB(y, phi, lgy1, mu) 
 
 H0 = 0
 para = c(0,0,0)
@@ -157,6 +158,7 @@ summary(piR - pis)
 
 H0 = 0
 para = log(c(KAPPA, ETA, GAMMA))
+RcppT_compite_pi(zz_AS, RHO_AS, KAPPA, ETA, GAMMA, tauB, tau, pis)
 loglikBB(para, H0, ni0, ni, theta, zz_AS, RHO_AS, tauB, tau)
 RcppT_loglikBB_THETA(ni, ni0, log(theta), pis, lbc) 
 loglikBB_THETA(theta, ni0, ni, pis)
@@ -170,4 +172,165 @@ Grad_BB_keg(para, H0,ni0,ni,theta, zz_AS, RHO_AS,tauB, tau)
 RcppT_loglikBB_KEG(para, H0, zz_AS, RHO_AS, ni, ni0, log(theta), lbc, tauB, 
                    tau, pis) 
 
+RcppT_compite_pi(zz_AS, RHO_AS, KAPPA, ETA, GAMMA, tauB, tau, pis)
+bfgsC = RcppT_ase_theta_BFGS(-4, ni, ni0, pis, lbc) 
+bfgsR = update_theta(para, H0, zz_AS,RHO_AS, ni0, ni, 0.1, tauB, tau)
+c(bfgsC$LL, bfgsR$value)
+c(exp(bfgsC$PAR), bfgsR$par)
+
+
+H0 = 1
+para = log(c(KAPPA, GAMMA))
+RcppT_compite_pi(zz_AS, RHO_AS, KAPPA, 1, GAMMA, tauB, tau, pis)
+loglikBB(para, H0, ni0, ni, theta, zz_AS, RHO_AS, tauB, tau)
+RcppT_loglikBB_THETA(ni, ni0, log(theta), pis, lbc) 
+loglikBB_THETA(theta, ni0, ni, pis)
+
+RcppT_grad_BB_THETA(ni, ni0, log(theta), pis)
+lASE.dTHETA(theta, ni0, ni, pis)*theta
+
+RcppT_grad_BB_KEG(para, H0, zz_AS, RHO_AS, ni, ni0, log(theta), lbc, tauB, 
+                  tau, pis)
+Grad_BB_keg(para, H0,ni0,ni,theta, zz_AS, RHO_AS,tauB, tau)
+RcppT_loglikBB_KEG(para, H0, zz_AS, RHO_AS, ni, ni0, log(theta), lbc, tauB, 
+                   tau, pis) 
+
+bfgsC = RcppT_ase_theta_BFGS(-4, ni, ni0, pis, lbc) 
+bfgsR = update_theta(para, H0, zz_AS,RHO_AS, ni0, ni, 0.1, tauB, tau)
+c(bfgsC$LL, bfgsR$value)
+c(exp(bfgsC$PAR), bfgsR$par)
+
+H0 = 2
+para = log(c(KAPPA, ETA))
+RcppT_compite_pi(zz_AS, RHO_AS, KAPPA, ETA, 1, tauB, tau, pis)
+loglikBB(para, H0, ni0, ni, theta, zz_AS, RHO_AS, tauB, tau)
+RcppT_loglikBB_THETA(ni, ni0, log(theta), pis, lbc) 
+loglikBB_THETA(theta, ni0, ni, pis)
+
+RcppT_grad_BB_THETA(ni, ni0, log(theta), pis)
+lASE.dTHETA(theta, ni0, ni, pis)*theta
+
+RcppT_grad_BB_KEG(para, H0, zz_AS, RHO_AS, ni, ni0, log(theta), lbc, tauB, 
+                  tau, pis)
+Grad_BB_keg(para, H0,ni0,ni,theta, zz_AS, RHO_AS,tauB, tau)
+RcppT_loglikBB_KEG(para, H0, zz_AS, RHO_AS, ni, ni0, log(theta), lbc, tauB, 
+                   tau, pis) 
+
+bfgsC = RcppT_ase_theta_BFGS(-4, ni, ni0, pis, lbc) 
+bfgsR = update_theta(para, H0, zz_AS,RHO_AS, ni0, ni, 0.1, tauB, tau)
+c(bfgsC$LL, bfgsR$value)
+c(exp(bfgsC$PAR), bfgsR$par)
+
+#-------------------------------------------------------------
+# TReCASE
+#-------------------------------------------------------------
+
+H0 = 0
+para = log(c(KAPPA, ETA, GAMMA))
+RcppT_TReCASE_LL_KEG(para, H0, y, z, zz_AS, phi, RHO, RHO_AS, tau1, tau2, 
+          ni0, ni, log(theta), tauB, tau, lgy1, expXbeta, lbc, offsets, 
+          pis, mu) 
+RcppT_TReCASE_LL(y, phi, lgy1, mu, ni0, ni, log(theta), pis, lbc) 
+loglik.TReCASE(para, H0, y,z, zz_AS, X, betas, phi, RHO, 
+               RHO_AS, tau1, tau2,  ni0, ni, theta, tauB, tau)
+RcppT_TReCASE_grad_KEG(para, H0, y, z, zz_AS, phi, RHO, RHO_AS, tau1, tau2, 
+                     ni0, ni, log(theta), tauB, tau, lgy1, expXbeta, lbc, offsets, 
+                     pis, mu) 
+grad.TReCASE.keg(para, H0, y,z, zz_AS, X, betas, phi, RHO,
+                             RHO_AS, tau1, tau2, ni0, ni, theta, tauB, tau)
+
+H0 = 1
+para = log(c(KAPPA, GAMMA))
+RcppT_TReCASE_LL_KEG(para, H0, y, z, zz_AS, phi, RHO, RHO_AS, tau1, tau2, 
+                     ni0, ni, log(theta), tauB, tau, lgy1, expXbeta, lbc, offsets, 
+                     pis, mu) 
+RcppT_TReCASE_LL(y, phi, lgy1, mu, ni0, ni, log(theta), pis, lbc) 
+loglik.TReCASE(para, H0, y,z, zz_AS, X, betas, phi, RHO, 
+               RHO_AS, tau1, tau2,  ni0, ni, theta, tauB, tau)
+RcppT_TReCASE_grad_KEG(para, H0, y, z, zz_AS, phi, RHO, RHO_AS, tau1, tau2, 
+                       ni0, ni, log(theta), tauB, tau, lgy1, expXbeta, lbc, offsets, 
+                       pis, mu) 
+grad.TReCASE.keg(para, H0, y,z, zz_AS, X, betas, phi, RHO,
+                 RHO_AS, tau1, tau2, ni0, ni, theta, tauB, tau)
+
+
+H0 = 2
+para = log(c(KAPPA, ETA))
+RcppT_TReCASE_LL_KEG(para, H0, y, z, zz_AS, phi, RHO, RHO_AS, tau1, tau2, 
+                     ni0, ni, log(theta), tauB, tau, lgy1, expXbeta, lbc, offsets, 
+                     pis, mu) 
+RcppT_TReCASE_LL(y, phi, lgy1, mu, ni0, ni, log(theta), pis, lbc) 
+loglik.TReCASE(para, H0, y,z, zz_AS, X, betas, phi, RHO, 
+               RHO_AS, tau1, tau2,  ni0, ni, theta, tauB, tau)
+RcppT_TReCASE_grad_KEG(para, H0, y, z, zz_AS, phi, RHO, RHO_AS, tau1, tau2, 
+                       ni0, ni, log(theta), tauB, tau, lgy1, expXbeta, lbc, offsets, 
+                       pis, mu) 
+grad.TReCASE.keg(para, H0, y,z, zz_AS, X, betas, phi, RHO,
+                 RHO_AS, tau1, tau2, ni0, ni, theta, tauB, tau)
+
+
+H0 = 0
+para0 = c(0,0,0)
+RcppT_trecase_KEG_BFGS(para0, H0, y, z, zz_AS, RHO, RHO_AS, X, BETA, phi, tau1, 
+                       tau2, lgy1, ni0, ni, log(theta), tauB, tau, lbc)
+update_keg_trecase(para0, H0, y,z, zz_AS, X, betas, phi, RHO,
+                   RHO_AS, tau1, tau2, ni0, ni, theta, tauB, tau)
+TReCASE_sfitC = RcppT_trecase_sfit(H0, para0, y, z, zz_AS, RHO, RHO_AS, X,
+                                   tau1, tau2, lgy1, ni0, ni, tauB, tau, lbc) 
+TReCASE_sfitR = TReCASE_sfit(H0, para0, y, z, zz_AS, X, RHO, RHO_AS, 
+             tau1, tau2, ni0, ni, tauB, tau, maxiter =500, tol = 1e-7)
+c(exp(TReCASE_sfitC$PAR))
+c(TReCASE_sfitR$KAPPA, TReCASE_sfitR$ETA, TReCASE_sfitR$GAMMA)
+c(TReCASE_sfitC$reg_par)
+c(TReCASE_sfitR$betas, log(TReCASE_sfitR$phi))
+c(TReCASE_sfitC$LL, TReCASE_sfitR$loglik)
+c(TReCASE_sfitC$log_theta, log(TReCASE_sfitR$THETA))
+
+
+H0 = 1
+para0 = c(0,0)
+RcppT_trecase_KEG_BFGS(para0, H0, y, z, zz_AS, RHO, RHO_AS, X, BETA, phi, tau1, 
+                       tau2, lgy1, ni0, ni, log(theta), tauB, tau, lbc)
+update_keg_trecase(para0, H0, y,z, zz_AS, X, betas, phi, RHO,
+                   RHO_AS, tau1, tau2, ni0, ni, theta, tauB, tau)
+TReCASE_sfitC = RcppT_trecase_sfit(H0, para0, y, z, zz_AS, RHO, RHO_AS, X,
+                                   tau1, tau2, lgy1, ni0, ni, tauB, tau, lbc) 
+TReCASE_sfitR = TReCASE_sfit(H0, para0, y, z, zz_AS, X, RHO, RHO_AS, 
+                             tau1, tau2, ni0, ni, tauB, tau, maxiter =500, tol = 1e-7)
+c(exp(TReCASE_sfitC$PAR))
+c(TReCASE_sfitR$KAPPA, TReCASE_sfitR$ETA, TReCASE_sfitR$GAMMA)
+c(TReCASE_sfitC$reg_par)
+c(TReCASE_sfitR$betas, log(TReCASE_sfitR$phi))
+c(TReCASE_sfitC$LL, TReCASE_sfitR$loglik)
+c(TReCASE_sfitC$log_theta, log(TReCASE_sfitR$THETA))
+
+H0 = 2
+para0 = c(0,0)
+RcppT_trecase_KEG_BFGS(para0, H0, y, z, zz_AS, RHO, RHO_AS, X, BETA, phi, tau1, 
+                       tau2, lgy1, ni0, ni, log(theta), tauB, tau, lbc)
+update_keg_trecase(para0, H0, y,z, zz_AS, X, betas, phi, RHO,
+                   RHO_AS, tau1, tau2, ni0, ni, theta, tauB, tau)
+TReCASE_sfitC = RcppT_trecase_sfit(H0, para0, y, z, zz_AS, RHO, RHO_AS, X,
+                                   tau1, tau2, lgy1, ni0, ni, tauB, tau, lbc) 
+TReCASE_sfitR = TReCASE_sfit(H0, para0, y, z, zz_AS, X, RHO, RHO_AS, 
+                             tau1, tau2, ni0, ni, tauB, tau, maxiter =500, tol = 1e-7)
+c(exp(TReCASE_sfitC$PAR))
+c(TReCASE_sfitR$KAPPA, TReCASE_sfitR$ETA, TReCASE_sfitR$GAMMA)
+c(TReCASE_sfitC$reg_par)
+c(TReCASE_sfitR$betas, log(TReCASE_sfitR$phi))
+c(TReCASE_sfitC$LL, TReCASE_sfitR$loglik)
+c(TReCASE_sfitC$log_theta, log(TReCASE_sfitR$THETA))
+
+trecaseC = RcppT_trecase(y, z, zz_AS, RHO, RHO_AS, X, tau1, tau2, lgy1, ni0, 
+              ni, tauB, tau, lbc)
+trecaseR = TReCASE_test(y,z, zz_AS, X, RHO, RHO_AS, tau1, tau2, ni0, ni, 
+             tauB, tau)
+exp(c(trecaseC$PAR))
+c(trecaseR$KAPPA, trecaseR$ETA, trecaseR$GAMMA)
+(c(trecaseC$reg_par))
+c(trecaseR$betas, log(trecaseR$phi))
+c(trecaseC$p_eta, trecaseC$p_gamma)
+c(trecaseR$p.eta, trecaseR$p.gamma)
+c(trecaseC$LL, trecaseC$LL_eta, trecaseC$LL_gamma)
+c(trecaseR$loglik.full, trecaseR$loglik.eta, trecaseR$loglik.gamma)
 

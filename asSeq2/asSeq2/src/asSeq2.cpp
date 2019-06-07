@@ -2,49 +2,49 @@
 #include <Rcpp.h>
 #include <Rmath.h>
 #include <stdio.h>
-
+#include "shared.h"
 
 // [[Rcpp::depends("RcppArmadillo")]]
 
-template<typename T>
-void printR_obj(const T& obj){
-  Rcpp::Rcout << obj << std::endl;
-}
-
-const double LOG2PI = log(2*arma::datum::pi);
-
-// --------------------
-// Intermediate Functions
-// --------------------
-
-// [[Rcpp::export]]
-double Rcpp_norm(const arma::vec& a){
-  return arma::norm(a);
-}
-
-// [[Rcpp::export]]
-double Rcpp_logSumExp(const arma::vec& log_x){
-  
-  if( log_x.n_elem == 1 ){
-    return log_x.at(0);
-  } else {
-    double max_val = max(log_x);
-    
-    arma::vec log_x_2 = log_x - max_val;
-    
-    return log(arma::sum(arma::exp(log_x_2))) + max_val;
-  }
-}
-
-// [[Rcpp::export]]
-double Rcpp_min_diff(const arma::vec& x){
-  return arma::min(arma::diff(arma::sort(x)));
-}
-
-// [[Rcpp::export]]
-arma::vec Rcpp_lgy_add_1(const arma::vec& y){
-  return arma::lgamma(y + 1);
-}
+// template<typename T>
+// void printR_obj(const T& obj){
+//   Rcpp::Rcout << obj << std::endl;
+// }
+// 
+// const double LOG2PI = log(2*arma::datum::pi);
+// 
+// // --------------------
+// // Intermediate Functions
+// // --------------------
+// 
+// // [[Rcpp::export]]
+// double Rcpp_norm(const arma::vec& a){
+//   return arma::norm(a);
+// }
+// 
+// // [[Rcpp::export]]
+// double Rcpp_logSumExp(const arma::vec& log_x){
+//   
+//   if( log_x.n_elem == 1 ){
+//     return log_x.at(0);
+//   } else {
+//     double max_val = max(log_x);
+//     
+//     arma::vec log_x_2 = log_x - max_val;
+//     
+//     return log(arma::sum(arma::exp(log_x_2))) + max_val;
+//   }
+// }
+// 
+// // [[Rcpp::export]]
+// double Rcpp_min_diff(const arma::vec& x){
+//   return arma::min(arma::diff(arma::sort(x)));
+// }
+// 
+// // [[Rcpp::export]]
+// arma::vec Rcpp_lgy_add_1(const arma::vec& y){
+//   return arma::lgamma(y + 1);
+// }
 
 /* ---------------------------
  * TReC
@@ -66,27 +66,6 @@ void compute_offset(const double& bxj, const arma::vec& z,
       offsets.at(ii) = tmp1;
     }
   }
-}
-
-// [[Rcpp::export]]
-double Rcpp_loglikNB(const double& phi,const arma::vec& mu1,
-                     const arma::vec& y, const arma::vec& lgy1){
-  //lgy1 = std::lgamma(y + 1)
-  arma::uword ii;
-  double vphi = 1.0/phi;
-  double loglik = 0.0;
-  double lgvphi = lgamma(vphi);
-  
-  for(ii = 0; ii< y.n_elem; ii++){
-    if(y.at(ii) > 0){
-      loglik += lgamma(y.at(ii) + vphi) - lgvphi - lgy1.at(ii) +
-        y.at(ii) * std::log(mu1.at(ii));
-    }
-    loglik += vphi*std::log(vphi) -
-      (vphi+y.at(ii)) * std::log(vphi+mu1.at(ii));
-  }
-  
-  return loglik;
 }
 
 // [[Rcpp::export]]
@@ -149,7 +128,7 @@ double Rcpp_logLTReC(const double& bxj, const arma::vec& y,
   }
   
   if(fam_nb){
-    return Rcpp_loglikNB(phi, mu, y, lgy1);
+    return Rcpp_loglikNB(y, phi, lgy1, mu);
   }else{
     return Rcpp_loglik_pois(mu, y, lgy1);
   }
@@ -589,13 +568,13 @@ double Rcpp_reg_LL(const arma::vec& y, const arma::mat& X,
 arma::vec Rcpp_reg_grad(const arma::vec& y, const arma::mat& X,
                         const arma::vec& mu, const arma::vec& PARAMS,
                         const bool& fam_nb){
-  
+
   if(fam_nb){
     return Rcpp_NB_reg_grad(y, X, mu, PARAMS);
   }else{
     return Rcpp_pois_reg_grad(y, X, mu, PARAMS);
   }
-  
+
 }
 
 // [[Rcpp::export]]
@@ -707,12 +686,12 @@ Rcpp::List Rcpp_reg_BFGS(const arma::vec& y, const arma::mat& X,
                          const bool& fam_nb, const arma::vec& lgy1,
                          const arma::uword& max_iter = 4e3,
                          const double& eps = 1e-7, const bool& show = true){
-  
+
   arma::uword num_params = params0.n_elem;
   arma::uword iter = 0;
   arma::uword jj,uu;
   arma::uword converge = 0;
-  
+
   arma::vec xk = params0;
   arma::mat inv_Bk = arma::eye<arma::mat>(num_params,num_params);
   arma::vec curr_xk = arma::zeros<arma::vec>(num_params);
@@ -724,11 +703,11 @@ Rcpp::List Rcpp_reg_BFGS(const arma::vec& y, const arma::mat& X,
   arma::vec y_k = arma::zeros<arma::vec>(num_params);
   arma::mat ISYT = arma::zeros<arma::mat>(num_params,num_params);
   arma::vec mu = arma::zeros<arma::vec>(y.n_elem);
-  
+
   double old_LL,new_LL,inv_norm_p_k,tmp_alpha,ys;
   double fnscale = -1.0; // For maximization
   double curr_LL = 0.0;
-  
+
   while(iter < max_iter){
     //calculate direction p_k
     uu = 0;
@@ -736,18 +715,18 @@ Rcpp::List Rcpp_reg_BFGS(const arma::vec& y, const arma::mat& X,
     gr_k   = fnscale * Rcpp_reg_grad(y, X, mu, xk, fam_nb);
     p_k    = -1.0 * inv_Bk * gr_k;
     inv_norm_p_k =  1.0 / std::max(1.0, Rcpp_norm(p_k));
-    
+
     //line search for new xk
     for(jj=0; jj<15; jj++){
       tmp_alpha = inv_norm_p_k / std::pow(4, jj);
       new_xk    = xk + tmp_alpha * p_k;
       new_LL    = fnscale * Rcpp_reg_LL(y, X, offsets, new_xk, fam_nb, lgy1, mu);
-      
+
       if(new_LL < old_LL){ //minimizing
         s_k = tmp_alpha * p_k;
         y_k = fnscale * Rcpp_reg_grad(y, X, mu, new_xk,fam_nb) - gr_k;
         ys  = arma::dot(y_k, s_k);
-        
+
         if(ys > 0.0){
           // if(show) printR_obj("Update xk and inv_Bk");
           ISYT   = I_num_params - (s_k * y_k.t()) /ys;
@@ -761,7 +740,7 @@ Rcpp::List Rcpp_reg_BFGS(const arma::vec& y, const arma::mat& X,
         break;
       }
     }
-    
+
     if(uu==0){
       if(Rcpp_norm(gr_k) > 1.0){
         // if(show) printR_obj("Reset inv_Bk");
@@ -771,7 +750,7 @@ Rcpp::List Rcpp_reg_BFGS(const arma::vec& y, const arma::mat& X,
         break;
       }
     }
-    
+
     //check convergence
     if(iter > 0){
       if(std::abs(curr_LL - old_LL) < eps &&
@@ -787,7 +766,7 @@ Rcpp::List Rcpp_reg_BFGS(const arma::vec& y, const arma::mat& X,
     curr_LL = old_LL;
     iter++;
   }
-  
+
   old_LL = Rcpp_reg_LL(y, X, offsets, xk, fam_nb, lgy1, mu);
   //gr_k = Rcpp_NB_reg_grad(y, X, mu, xk);
   return Rcpp::List::create(
@@ -815,7 +794,7 @@ Rcpp::List Rcpp_reg_BFGS(const arma::vec& y, const arma::mat& X,
 //   arma::vec curr_reg_par = arma::zeros<arma::vec>(pp);
 //   arma::vec new_reg_par = arma::zeros<arma::vec>(pp);
 //   arma::vec BETA = arma::zeros<arma::vec>(pp-1);
-//
+// 
 //   // initial regression fit
 //   if(show){
 //     printR_obj("begin initial regression fit");
@@ -827,15 +806,15 @@ Rcpp::List Rcpp_reg_BFGS(const arma::vec& y, const arma::mat& X,
 //   LL0     = as<double>(new_reg["LL"]);
 //   BETA    = curr_reg_par.subvec(0, X.n_cols-1);
 //   phi     = std::exp(curr_reg_par.at(pp-1));
-//
+// 
 //   while(iter < max_iter){
-//
+// 
 //     //update bxj
 //     new_bxj_fit = Rcpp_trec_bxj_BFGS(curr_bxj, y, X,  z, BETA, phi, fam_nb, lgy1,
 //                                      max_iter, eps, false);
 //     new_bxj     = as<double>(new_bxj_fit["PAR"]);
 //     new_LL      = as<double>(new_bxj_fit["LL"]);
-//
+// 
 //     // if(as<int>(new_bxj_fit["converge"]) ==0){
 //     //   Rprintf("failed update bxj at %d iter \n bxj = %.2e\n PHI =%.2e \n",
 //     //           as<int>(new_bxj_fit["iter"]), new_bxj, phi);
@@ -846,33 +825,33 @@ Rcpp::List Rcpp_reg_BFGS(const arma::vec& y, const arma::mat& X,
 //     if(show){
 //       Rprintf("bxj updated after %d iter \n", as<int>(new_bxj_fit["iter"]));
 //     }
-//
+// 
 //     if(new_LL < curr_LL) {
 //       printR_obj("likelihood decreased for betas");
 //       break;
 //     }
-//
+// 
 //     //update BETA, phi
 //     compute_offset(new_bxj, z, offsets);
 //     new_reg     = Rcpp_reg_BFGS(y, X, offsets, curr_reg_par, fam_nb, lgy1,
 //                                 max_iter, eps, false);
-//
+// 
 //     new_LL      = as<double>(new_reg["LL"]);
 //     new_reg_par = as<arma::vec>(new_reg["PAR"]);
-//
+// 
 //     BETA = new_reg_par.subvec(0, X.n_cols-1);
 //     phi  = std::exp(new_reg_par.at(pp-1));
-//
+// 
 //     if(show){
 //       Rprintf("BETA, PHI updated after %d iter \n", as<int>(new_reg["iter"]));
 //     }
-//
+// 
 //     if(new_LL < curr_LL){
 //       printR_obj("likelihood decreased for betas");
 //       break;
 //     }
 //     //printR_obj(curr_LL);
-//
+// 
 //     if(iter > 0){
 //       if( std::abs(curr_LL - new_LL) < eps &&
 //           Rcpp_norm(curr_reg_par - new_reg_par) < eps &&
@@ -882,12 +861,12 @@ Rcpp::List Rcpp_reg_BFGS(const arma::vec& y, const arma::mat& X,
 //           as<double>(new_bxj_fit["converge"])< eps)
 //           converge = 1;
 //     }
-//
+// 
 //     curr_reg_par = new_reg_par;
 //     curr_bxj     = new_bxj;
 //     curr_LL      = new_LL;
 //     iter++;
-//
+// 
 //   }
 //   double lrt = (new_LL-LL0)*2.0;
 //   return Rcpp::List::create(
