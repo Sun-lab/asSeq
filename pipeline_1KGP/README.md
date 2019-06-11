@@ -9,7 +9,7 @@ For real data analysis I provided adding real data we provide data snippets for 
 
 # To-dos
 
-0. Check how much time does it take to run TRec or TReCASE for all genes and all SNPs. 
+0. Check how much time does it take to run TReC or TReCASE for all genes and all SNPs. 
 
 1. Compare the results from MatrixEQTL, TReC, TReCASE and RASQUAL. For example, by two-way table for different p-value cutoffs, say 0.1, 0.01, 1e-3, 1e-6, 1e-8. Consider p-value per (gene, SNP) pair instead using minimum p-value. 
 
@@ -32,6 +32,8 @@ For real data analysis I provided adding real data we provide data snippets for 
 https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1181954/
 
 + 2.2 Summarize the number of SNPs per gene and the number of independent SNPs per gene and generate a scatter plot. 
+
++ 2.3 Use an empirical Bayes approach to re-estimae intercept and slope. Using the results across all genes to estimte distribution of intercept and slopes by a normal distribution. Use those distribution as prior to re-estiamte intercept and slope. Compare the MLE vs. posterior by scatter plot. 
 
 3. Summarize the location of eQTLs. Find the strongest eQTL per gene, apply a threshold, and plot their locations by a density plot. 
 
