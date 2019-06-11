@@ -178,6 +178,11 @@ bfgsR = update_theta(para, H0, zz_AS,RHO_AS, ni0, ni, 0.1, tauB, tau)
 c(bfgsC$LL, bfgsR$value)
 c(exp(bfgsC$PAR), bfgsR$par)
 
+RcppT_ase_KEG_BFGS(para, H0, zz_AS, RHO_AS, ni0, ni, log(theta), tauB, 
+                              tau, lbc)
+update_keg_ase(para, H0, zz_AS, RHO_AS,  ni0, ni,theta, tauB, tau)
+
+
 
 H0 = 1
 para = log(c(KAPPA, GAMMA))
@@ -200,6 +205,12 @@ bfgsR = update_theta(para, H0, zz_AS,RHO_AS, ni0, ni, 0.1, tauB, tau)
 c(bfgsC$LL, bfgsR$value)
 c(exp(bfgsC$PAR), bfgsR$par)
 
+
+RcppT_ase_KEG_BFGS(para, H0, zz_AS, RHO_AS, ni0, ni, log(theta), tauB, 
+                   tau, lbc)
+update_keg_ase(para, H0, zz_AS, RHO_AS,  ni0, ni,theta, tauB, tau)
+
+
 H0 = 2
 para = log(c(KAPPA, ETA))
 RcppT_compite_pi(zz_AS, RHO_AS, KAPPA, ETA, 1, tauB, tau, pis)
@@ -220,6 +231,22 @@ bfgsC = RcppT_ase_theta_BFGS(-4, ni, ni0, pis, lbc)
 bfgsR = update_theta(para, H0, zz_AS,RHO_AS, ni0, ni, 0.1, tauB, tau)
 c(bfgsC$LL, bfgsR$value)
 c(exp(bfgsC$PAR), bfgsR$par)
+
+
+RcppT_ase_KEG_BFGS(para, H0, zz_AS, RHO_AS, ni0, ni, log(theta), tauB, 
+                   tau, lbc)
+update_keg_ase(para, H0, zz_AS, RHO_AS,  ni0, ni,theta, tauB, tau)
+
+aseC = RcppT_ase(zz_AS, RHO_AS, ni0, ni, tauB, tau, lbc)
+aseR = ASE_test(zz_AS, RHO_AS, ni0, ni,0.05, tauB, tau)
+exp(c(aseC$PAR))
+c(aseR$KAPPA, aseR$ETA, aseR$GAMMA)
+c(aseC$p_eta, aseC$p_gamma)
+c(aseR$p.eta, aseR$p.gamma)
+c(aseC$LL, aseC$LL_eta, aseC$LL_gamma)
+c(aseR$loglik.full, aseR$loglik.eta, aseR$loglik.gamma)
+
+
 
 #-------------------------------------------------------------
 # TReCASE
@@ -333,4 +360,53 @@ c(trecaseC$p_eta, trecaseC$p_gamma)
 c(trecaseR$p.eta, trecaseR$p.gamma)
 c(trecaseC$LL, trecaseC$LL_eta, trecaseC$LL_gamma)
 c(trecaseR$loglik.full, trecaseR$loglik.eta, trecaseR$loglik.gamma)
+
+
+# ----------------------------------------------------------------------
+# TReC + ASE
+# ----------------------------------------------------------------------
+KEG_EaseGase =  log(c(KAPPA, ETA, GAMMA, 1.5, 1.8))
+RcppT_TReC_ASE_LL_KEG(KEG_EaseGase, y, z, zz_AS, phi, RHO, RHO_AS, tau1, tau2, 
+                      ni0, ni, log(theta), tauB, tau, lgy1, expXbeta, lbc, offsets, 
+                      pis, mu) 
+loglik.TReC_ASE_sep(KEG_EaseGase, y,z, zz_AS, X, betas, phi, RHO, 
+                    RHO_AS, tau1, tau2, ni0, ni,  theta, tauB, tau)
+RcppT_TReCASE_LL(y, phi, lgy1, mu, ni0, ni, log(theta), pis, lbc) 
+
+
+RcppT_grad_NB(KEG_EaseGase[c(1:3)], H0, y, z, RHO, phi, tau1, tau2, expXbeta, offsets, 
+              mu)
+RcppT_grad_BB_KEG(KEG_EaseGase[c(1,4:5)], H0, zz_AS, RHO_AS, ni, ni0, 
+                  log(theta), lbc, tauB, tau, pis) 
+RcppT_TReC_ASE_grad_KEG(KEG_EaseGase, y, z, zz_AS, phi, RHO, RHO_AS, tau1, tau2, 
+                         ni0, ni, log(theta), tauB, tau, lgy1, expXbeta, lbc, offsets, 
+                         pis, mu) 
+grad.TRe_CASE.keg_sep(KEG_EaseGase, y,z, zz_AS, X, betas, phi, RHO, 
+                      RHO_AS, tau1, tau2, ni0, ni,  theta, tauB, tau)
+
+RcppT_trec_ase_KEG_BFGS(KEG_EaseGase, y, z, zz_AS, RHO, RHO_AS, X, BETA, phi, tau1, 
+                        tau2, lgy1, ni0, ni, log(theta), tauB, tau, lbc)
+update_keg_trecase_sep(KEG_EaseGase, 0, y,z, zz_AS, X, betas, phi, RHO,
+                       RHO_AS, tau1, tau2,ni0, ni, theta, tauB, tau)
+
+
+trec_aseC = RcppT_trec_ase(c(0,0,0,0,0), y, z, zz_AS, RHO, RHO_AS, X, tau1, tau2, lgy1, 
+               ni0, ni, tauB, tau, lbc, max_iter = 400)
+
+trec_aseR = TReCASE_sep_sfit(KEG_EaseGase=rep(0,5), y,z,zz_AS, X, RHO, RHO_AS, 
+                         tau1, tau2, ni0, ni, tauB, tau)
+exp(c(trec_aseC$PAR))
+c(trec_aseR$KEG)
+(c(trec_aseC$reg_par))
+c(trec_aseR$betas, log(trec_aseR$phi))
+exp(trec_aseC$log_theta)
+c(trec_aseR$THETA)
+c(trec_aseC$LL)
+c(trec_aseR$loglik)
+
+# ----------------------------------------------------------------------
+# Cis-Trans score test
+# ----------------------------------------------------------------------
+CisTrans_ScoreObs(para, y, z, zz_AS, RHO, RHO_AS, X, BETA, phi, tau1, 
+                  tau2, lgy1, ni0, ni, log(theta), tauB, tau, lbc) 
 
