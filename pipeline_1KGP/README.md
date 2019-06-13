@@ -15,6 +15,7 @@ For real data analysis I provided adding real data we provide data snippets for 
 
 1. Compare the results from MatrixEQTL, TReC, TReCASE and RASQUAL. For example, by two-way table for different p-value cutoffs, say 0.1, 0.01, 1e-3, 1e-6, 1e-8. Consider p-value per (gene, SNP) pair instead using minimum p-value. something like this. 
 
+``
               (0,1e-06] (1e-06,0.001] (0.001,0.01] (0.01,0.1] (0.1,1]   total
 (0,1e-06]         91833         10712          743        226     463  103977
 (1e-06,0.001]     20825        131456        32326       6463    2302  193372
@@ -22,6 +23,7 @@ For real data analysis I provided adding real data we provide data snippets for 
 (0.01,0.1]         4954         32365       132427     645987  295067 1110800
 (0.1,1]           15012         43271        69960     515532 5830884 6474659
 total            135668        275020       373131    1244144 6139049 8167012
+``
 
 + 1.0 Run MatrixEQTL after normal quantile transformation of gene expression gene by gene. 
 
