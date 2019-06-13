@@ -42,7 +42,7 @@ total            135668        275020       373131    1244144 6139049 8167012
 
 + 2.0 For our estimate, if the estimated number of tests is larger than the number of SNPs, we will truncated it to be the number of SNPs. 
 
-+ 2.1 We can do this for 100 genes first and compare the d_eff with some simple methods such as eigenMT: https://www.ncbi.nlm.nih.gov/pubmed/26749306 Check what they do if the number of SNPs is larger than sample size. 
++ 2.1 We can do this for 100 genes first and compare the d_eff with some simple methods such as eigenMT: https://www.ncbi.nlm.nih.gov/pubmed/26749306 
 
 + 2.2 Summarize the number of SNPs per gene and the number of independent SNPs per gene and generate a scatter plot. 
 
