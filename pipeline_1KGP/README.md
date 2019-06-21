@@ -9,9 +9,17 @@ For real data analysis I provided adding real data we provide data snippets for 
 
 # To-dos
 
+
+
 + 0.a Check how much time does it take to run TReC or TReCASE for all genes and all SNPs. 
 
 + 0.b Re-run eQTL mapping using asSeq2 and compare the results between asSeq1 and asSeq2. 
+
++ 0.c include the code of eigenMT in the repository
+
++ 0.d Get 2 x 2 table for comparing the permtution p-value and estiamated permutation pvalue
+
++ 0.e Generate p-value histogram using TReC/TReCASE, RASQUAL after permuting SNP genotype data. 
 
 1. Compare the results from MatrixEQTL, TReC, TReCASE and RASQUAL. For example, by two-way table for different p-value cutoffs, say 0.1, 0.01, 1e-3, 1e-6, 1e-8. Consider p-value per (gene, SNP) pair instead using minimum p-value. something like this. 
 
