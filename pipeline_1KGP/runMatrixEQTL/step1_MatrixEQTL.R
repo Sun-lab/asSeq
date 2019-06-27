@@ -1,6 +1,8 @@
 #module add tabix;module add gcc;module add gsl;module add r
 #export PATH=/nas/longleaf/home/zhabotyn/progs/rasqual-master/bin/:$PATH
 
+#For this script it is assumed that eigenMT is located in the next folder
+
 normscore = function(vec) {
     len  = length(na.omit(vec))+1
     rank = rank(na.omit(vec))
@@ -20,6 +22,7 @@ cnt.dir = sprintf("%s/cnt", data.dir)
 bam.dir = sprintf("%s/bam", data.dir)
 geno.dir = "../datagen" 
 info.dir = "../inf"
+eMT.dir = "../eMT"
 vcf.dir = sprintf("%s/vcf", geno.dir)
 gen.dir = sprintf("%s/gen", geno.dir)
 if(!file.exists(gen.dir))dir.create(gen.dir)
@@ -122,6 +125,19 @@ me = Matrix_eQTL_engine(
     noFDRsaveMemory = FALSE);
 
 
-me
+#adding eigenMT
+#this will output eigenMT corrected p-values for minimum p-values from matrixEQTL output
+eig.py = sprintf("%s/eigenMT.py", eMT.dir)
+chri1 = genepos[1, 2]   #we process one chromosome at a time, so first value works for all
+qtl1 = output_file_name #input to eigenMT is output from matrixEQTL
+gen1 = SNP_file_name    #reusing SNP information from matrixEQTL input
+genpos1 = snpspos_file_name#positions for the SNP_file_name, also used above
+phepos1 = genepos_file_name#positions for expression file, also used above
+out1 = gsub("output_", "eigenMT_", qtl1)
+com = sprintf("python %s --CHROM %s --QTL %s --GEN %s --GENPOS %s --PHEPOS %s --OUT %s", 
+                  eig.py, chri1, qtl1, gen1, genpos1, phepos1, out1)
+system(com)
+
+
 
 q("no")
