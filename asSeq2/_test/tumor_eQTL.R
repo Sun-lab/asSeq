@@ -754,10 +754,8 @@ CisTrans_ScoreObs <- function(para, y,z,z_AS, X, betas, phi,
   delta4 = diag(as.numeric((y-mu)/phi_mu_1^2))
   # delta5 = diag(as.numeric(1/(mu*phi_mu_1)))
   # delta6 = diag(as.numeric((y-mu)*(1+2*phi*mu)/(mu^2*phi_mu_1^2 )) )
-
   ## Ibb
   Ibb = -(t(X)%*%delta2%*%X + phi*t(X)%*%delta3%*%X)
-
   ##Ibe
   Ibe = - (t(X)%*%delta1%*%dmu + phi*t(X)%*%delta4%*%dmu)
 
@@ -832,10 +830,10 @@ CisTrans_ScoreObs <- function(para, y,z,z_AS, X, betas, phi,
 
   d2pi.dKAPPA[indhet] = -2*GAMMA*RHO_AS[indhet]*tauB[indhet]*
     tmp.indhet.Kappa/tmp2^2 + 2*tmp.indhet.Kappa^2*tmp1/tmp2^3 ## done check
-  d2pi.dETA[indhet] = - 2*(1-RHO[indhet])^2/tmp2^2 +
-    2*(1-RHO[indhet])^2*tmp1/tmp2^3 ## done check
-  d2pi.dGAMMA[indhet] = -2*(RHO[indhet]*tauB[indhet]*KAPPA)^2/tmp2^2 +
-    2*(RHO[indhet]*tauB[indhet]*KAPPA)^2*tmp1/tmp2^3 ## done check
+  d2pi.dETA[indhet] = - 2*(1-RHO_AS[indhet])^2/tmp2^2 +
+    2*(1-RHO_AS[indhet])^2*tmp1/tmp2^3 ## done check
+  d2pi.dGAMMA[indhet] = -2*(RHO_AS[indhet]*tauB[indhet]*KAPPA)^2/tmp2^2 +
+    2*(RHO_AS[indhet]*tauB[indhet]*KAPPA)^2*tmp1/tmp2^3 ## done check
 
   ## AA or BB
   d2pi.dKAPPA[indhomo] = -(2*RHO_AS[indhomo]^2*(1-RHO_AS[indhomo])*
@@ -843,16 +841,15 @@ CisTrans_ScoreObs <- function(para, y,z,z_AS, X, betas, phi,
   # d2pi.dKAPPA[indhomo] = -(2*RHO_AS[indhomo]^2*tauB[indhomo]*tau[indhomo])/
   #   tmp.homo^2 + 2*RHO_AS[indhomo]^2*tau[indhomo]^2*
   #   (1-RHO_AS[indhomo]+KAPPA*RHO_AS[indhomo]*tauB[indhomo])/tmp.homo^3 ## done check
-
   d2lASE.dKAPPA = sum(d2lASE.dpi*dpi.dKAPPA^2 + dlASE.dpi*d2pi.dKAPPA)
   d2lASE.dETA = sum(d2lASE.dpi*dpi.dETA^2 + dlASE.dpi*d2pi.dETA)
   d2lASE.dGAMMA = sum(d2lASE.dpi*dpi.dGAMMA^2 + dlASE.dpi*d2pi.dGAMMA)
 
   ## d2pi.dlambda1.dlambda2
   d2pi.dKAPPA.dETA = d2pi.dKAPPA.dGAMMA=d2pi.dETA.dGAMMA= rep(0, n_AS)
-  d2pi.dKAPPA.dETA[indhet]   = -RHO_AS[indhet]*tauB[indhet]*GAMMA*(1-RHO[indhet])/tmp2^2-
-    tmp.indhet.Kappa*(1-RHO[indhet])/tmp2^2 +
-    2*(1-RHO[indhet])*tmp1*tmp.indhet.Kappa/tmp2^3 ## done check
+  d2pi.dKAPPA.dETA[indhet]   = -RHO_AS[indhet]*tauB[indhet]*GAMMA*(1-RHO_AS[indhet])/tmp2^2-
+    tmp.indhet.Kappa*(1-RHO_AS[indhet])/tmp2^2 +
+    2*(1-RHO_AS[indhet])*tmp1*tmp.indhet.Kappa/tmp2^3 ## done check
   d2pi.dKAPPA.dGAMMA[indhet] = RHO_AS[indhet]*tauB[indhet]/tmp2 -
     (RHO_AS[indhet]*tauB[indhet])^2*KAPPA*GAMMA/tmp2^2 -
     tmp.indhet.Kappa*RHO_AS[indhet]*tauB[indhet]*KAPPA/tmp2^2 -
@@ -867,7 +864,7 @@ CisTrans_ScoreObs <- function(para, y,z,z_AS, X, betas, phi,
                                dlASE.dpi*d2pi.dKAPPA.dGAMMA)
   d2lASE.dETA.dGAMMA =sum(d2lASE.dpi*dpi.dETA*dpi.dGAMMA +
                             dlASE.dpi*d2pi.dETA.dGAMMA )
-
+  
   ## Iee2
   Iee[1,1] = Iee[1,1] + d2lASE.dKAPPA
   Iee[2,2] = Iee[2,2] + d2lASE.dETA
@@ -890,6 +887,10 @@ CisTrans_ScoreObs <- function(para, y,z,z_AS, X, betas, phi,
   Iae[2,1] = d2lASE.dKAPPA.dGAMMA
   Iae[2,3] = d2lASE.dGAMMA
 
+  # print(Iaa)
+  # print(Iae)
+  # print(score_alpha)
+  # print(Iee)
   ##Itt theta
   W = -(digamma(D+vTHETA)+digamma(pis*vTHETA)*pis+digamma(pis_1*vTHETA)*pis_1 -
           digamma(A+pis*vTHETA)*pis-digamma(D-A+pis_1*vTHETA)*pis_1-
@@ -900,14 +901,13 @@ CisTrans_ScoreObs <- function(para, y,z,z_AS, X, betas, phi,
                            trigamma(vTHETA) - trigamma(vTHETA+D))
   dlASE.dTHETA = -sum(vTHETA^2*W)
   Itt = sum(2*vTHETA^3*W - vTHETA^2*dW.dTHETA)
-
+  
   ##Iat  alpha, theta (2,1) same as ETA,GAMMA x Theta
   d2lASE.dTHETA.dpi = -vTHETA^2*(digamma(vTHETA*pis+A) - digamma(vTHETA*pis) -
                                    digamma(vTHETA*pis_1+D-A) +
-                                   digamma(vTHETA*pis_1)) -
+                                   digamma(vTHETA*pis_1))  -
     vTHETA^3*pis*(trigamma(vTHETA*pis+A) - trigamma(vTHETA*pis)) +
     vTHETA^3*pis_1*(trigamma(vTHETA*pis_1+D-A) - trigamma(vTHETA*pis_1)) ##mathmetica
-
   d2lASE.dTHETA.dKAPPA = sum(d2lASE.dTHETA.dpi*dpi.dKAPPA)
   d2lASE.dTHETA.dETA = sum(d2lASE.dTHETA.dpi*dpi.dETA)
   d2lASE.dTHETA.dGAMMA = sum(d2lASE.dTHETA.dpi*dpi.dGAMMA)
@@ -915,7 +915,6 @@ CisTrans_ScoreObs <- function(para, y,z,z_AS, X, betas, phi,
   Iat = rbind(d2lASE.dTHETA.dETA, d2lASE.dTHETA.dGAMMA)
   ##Iet KEG, theta
   Iet = rbind(d2lASE.dTHETA.dKAPPA, Iat)
-
   # ---------------------------------
   # Final Information matrix
   # ---------------------------------
@@ -945,6 +944,7 @@ CisTrans_ScoreObs <- function(para, y,z,z_AS, X, betas, phi,
   OImat[(np+6):(np+7),(np+6):(np+7)] = Iaa
   OImat[1:(np+5),(np+6):(np+7)] = M2
   OImat[(np+6):(np+7),1:(np+5)] = t(M2)
+
 
   M2M1 = t(M2)%*%solve(M1)%*%M2
   score_alpha = data.matrix(score_alpha)
@@ -1062,6 +1062,8 @@ CisTrans_Score <- function(para, y,z,z_AS, X, betas, phi,
   Ibe = - (t(X)%*%delta1%*%dmu)
 
   ## Ibb, Ibe similar to Obs
+  # print(Iee)
+  # print(Ibe)
   # ---------------------------------
   # Score and Information (ASE)
   # RHO_AS, z_AS
@@ -1120,7 +1122,6 @@ CisTrans_Score <- function(para, y,z,z_AS, X, betas, phi,
   ## Iee
   d2lASE.dpi = vTHETA^2*(Expmat[3,] + Expmat[4,]-
                            trigamma(vTHETA*pis) - trigamma(vTHETA*pis_1))
-
   ## d2pi.dlambda
   # AB or BA
   # tmp1 = RHO_AS[indhet]*tauB[indhet]*GAMMA*KAPPA+(1-RHO_AS[indhet])*ETA
@@ -1133,10 +1134,10 @@ CisTrans_Score <- function(para, y,z,z_AS, X, betas, phi,
 
   d2pi.dKAPPA[indhet] = -2*GAMMA*RHO_AS[indhet]*tauB[indhet]*
     tmp.indhet.Kappa/tmp2^2 + 2*tmp.indhet.Kappa^2*tmp1/tmp2^3 ## done check
-  d2pi.dETA[indhet] = - 2*(1-RHO[indhet])^2/tmp2^2 +
-    2*(1-RHO[indhet])^2*tmp1/tmp2^3 ## done check
-  d2pi.dGAMMA[indhet] = -2*(RHO[indhet]*tauB[indhet]*KAPPA)^2/tmp2^2 +
-    2*(RHO[indhet]*tauB[indhet]*KAPPA)^2*tmp1/tmp2^3 ## done check
+  d2pi.dETA[indhet] = - 2*(1-RHO_AS[indhet])^2/tmp2^2 +
+    2*(1-RHO_AS[indhet])^2*tmp1/tmp2^3 ## done check
+  d2pi.dGAMMA[indhet] = -2*(RHO_AS[indhet]*tauB[indhet]*KAPPA)^2/tmp2^2 +
+    2*(RHO_AS[indhet]*tauB[indhet]*KAPPA)^2*tmp1/tmp2^3 ## done check
 
   ## AA or BB
   d2pi.dKAPPA[indhomo] = -(2*RHO_AS[indhomo]^2*(1-RHO_AS[indhomo])*
@@ -1151,9 +1152,9 @@ CisTrans_Score <- function(para, y,z,z_AS, X, betas, phi,
 
   ## d2pi.dlambda1.dlambda2
   d2pi.dKAPPA.dETA = d2pi.dKAPPA.dGAMMA=d2pi.dETA.dGAMMA= rep(0, n_AS)
-  d2pi.dKAPPA.dETA[indhet]   = -RHO_AS[indhet]*tauB[indhet]*GAMMA*(1-RHO[indhet])/tmp2^2-
-    tmp.indhet.Kappa*(1-RHO[indhet])/tmp2^2 +
-    2*(1-RHO[indhet])*tmp1*tmp.indhet.Kappa/tmp2^3 ## done check
+  d2pi.dKAPPA.dETA[indhet]   = -RHO_AS[indhet]*tauB[indhet]*GAMMA*(1-RHO_AS[indhet])/tmp2^2-
+    tmp.indhet.Kappa*(1-RHO_AS[indhet])/tmp2^2 +
+    2*(1-RHO_AS[indhet])*tmp1*tmp.indhet.Kappa/tmp2^3 ## done check
   d2pi.dKAPPA.dGAMMA[indhet] = RHO_AS[indhet]*tauB[indhet]/tmp2 -
     (RHO_AS[indhet]*tauB[indhet])^2*KAPPA*GAMMA/tmp2^2 -
     tmp.indhet.Kappa*RHO_AS[indhet]*tauB[indhet]*KAPPA/tmp2^2 -
@@ -1177,7 +1178,7 @@ CisTrans_Score <- function(para, y,z,z_AS, X, betas, phi,
   Iee[1,3] = Iee[3,1] = Iee[3,1] + d2lASE.dKAPPA.dGAMMA
   Iee[2,3] = Iee[3,2] = Iee[2,3] + d2lASE.dETA.dGAMMA
   ## Iee similar to Obs
-
+  
   ## Iaa alpha, alpha
   Iaa = matrix(0, 2,2)
   Iaa[1,1] = d2lASE.dETA
@@ -1245,7 +1246,7 @@ CisTrans_Score <- function(para, y,z,z_AS, X, betas, phi,
   OImat[(np+5):(np+6),(np+5):(np+6)] = Iaa
   OImat[1:(np+4),(np+5):(np+6)] = M2
   OImat[(np+5):(np+6),1:(np+4)] = t(M2)
-
+  
   M2M1 = t(M2)%*%solve(M1)%*%M2
   score_alpha = data.matrix(score_alpha)
   Score = t(score_alpha) %*% solve(Iaa - M2M1) %*% (score_alpha)

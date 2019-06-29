@@ -1955,3 +1955,653 @@ Rcpp::List RcppT_trec_ase(const arma::vec& para0,
 // Cis-Trans Score test
 // ----------------------------------------------------------------------
 
+// [[Rcpp::export]]
+Rcpp::List RcppT_CisTrans_ScoreObs(const arma::vec& para, const arma::vec& y,
+                       const arma::vec& z, const arma::vec& z_AS,
+                       const arma::vec& RHO, const arma::vec& RHO_AS,
+                       const arma::mat& X, const arma::vec& BETA,
+                       const double& phi,
+                       const arma::vec& tau1, const arma::vec& tau2,
+                       const arma::vec& lgy1,
+                       const arma::vec& ni0, const arma::vec& ni,
+                       const double& log_theta, const arma::vec& tauB,
+                       const arma::vec& tau, const arma::vec& lbc){
+
+  double KAPPA, ETA, GAMMA;
+  arma::uword ii;
+  arma::uword n= RHO.n_elem;
+  arma::uword n_AS = RHO_AS.n_elem;
+  arma::uword beta_npara = BETA.n_elem;
+  
+  double vphi = 1/phi;
+  double divphi = R::digamma(vphi);
+  double trvphi = R::trigamma(vphi);
+  //TReC
+  arma::vec offsets  = arma::zeros<arma::vec>(n);
+  arma::vec expXbeta = arma::zeros<arma::vec>(n);
+  arma::vec mu       = arma::zeros<arma::vec>(n);
+  arma::mat dmu_keg = arma::zeros<arma::mat>(1,3);
+  //information matrix
+  arma::mat Iee = arma::zeros<arma::mat>(3,3);  //KEG
+  arma::mat Ibb = arma::zeros<arma::mat>(beta_npara, beta_npara);  //beta
+  arma::mat Ibe = arma::zeros<arma::mat>(beta_npara, 3);  //beta*keg
+  arma::mat Iep = arma::zeros<arma::mat>(3, 1);  //beta*phi
+  arma::mat Ibp = arma::zeros<arma::mat>(beta_npara, 1);  //beta*keg
+  double    Ipp = 0.0; // phi
+  
+  double dltrec_dmu, d2ltrec_dmu, phi_mu_1, phi_y_1,
+    dmu_dkappa, dmu_deta, dmu_dgamma, d2mu_dkappa_dgamma;
+
+  //ASE
+  double vtheta = 1/exp(log_theta);
+  double divtheta = R::digamma(vtheta);
+  double trvtheta = R::trigamma(vtheta);
+  double Itt = 0.0;
+  arma::vec pis  = arma::zeros<arma::vec>(n_AS);
+  arma::vec score_alpha  = arma::zeros<arma::vec>(2);
+  arma::mat Iaa = arma::zeros<arma::mat>(2, 2);  //alpha
+  arma::mat Iae = arma::zeros<arma::mat>(2, 3);  //alpha*KEG
+  arma::mat Iat = arma::zeros<arma::mat>(2, 1);  //theta*KEG
+  arma::mat Iet = arma::zeros<arma::mat>(3, 1);  //theta*KEG
+  
+  double dlASE_dpi, d2lASE_dpi, tmp1, tmp2, tmp3, tmp4, tmp_kappa, 
+    dpi_dkappa, dpi_deta, dpi_dgamma,
+    d2pi_dkappa, d2pi_deta, d2pi_dgamma,
+    d2pi_dkappa_eta, d2pi_dkappa_gamma, d2pi_deta_gamma; 
+  
+  double W, dW_dTHETA, dlASE_dTHETA, d2lASE_dTHETA_dpi, pval;
+  KAPPA = exp(para.at(0));
+  ETA   = exp(para.at(1));
+  GAMMA = exp(para.at(2));
+  
+  //final information matrix
+  arma::mat M1    = arma::zeros<arma::mat>(beta_npara+5, beta_npara+5); 
+  arma::mat M2    = arma::zeros<arma::mat>(beta_npara+5, 2); 
+  arma::mat OIMat = arma::zeros<arma::mat>(beta_npara+7, beta_npara+7); 
+  arma::mat Score = arma::zeros<arma::mat>(1, 1);
+  
+  /*
+  * Information matrix (TReC)
+  */
+
+  RcppT_compute_offset(z, RHO, KAPPA, ETA, GAMMA, tau1, tau2, offsets);
+  RcppT_compute_expXbeta(X, BETA, expXbeta);
+  mu = exp(offsets) % expXbeta;
+  
+  for(ii =0; ii<n; ii++){
+    phi_mu_1    = 1.0 + phi*mu.at(ii);
+    phi_y_1     = 1.0 + phi*y.at(ii);
+    dltrec_dmu  = y.at(ii)/mu.at(ii) - phi_y_1/phi_mu_1;
+    d2ltrec_dmu = -y.at(ii)/pow(mu.at(ii), 2.0) + phi*phi_y_1/pow(phi_mu_1,2);
+    
+    if(z.at(ii) == 0){
+      dmu_dkappa = (tau1.at(ii) + tau2.at(ii))*expXbeta.at(ii)*RHO.at(ii);
+      dmu_deta   = 0;
+      dmu_dgamma = 0;
+      
+      d2mu_dkappa_dgamma = 0;
+      
+    }else if(z.at(ii) == 1){
+
+      dmu_dkappa = (tau1.at(ii) + tau2.at(ii)*GAMMA)*expXbeta.at(ii)*RHO.at(ii);
+      dmu_deta   = (1-RHO.at(ii))*expXbeta.at(ii);
+      dmu_dgamma = tau2.at(ii)*RHO.at(ii)*KAPPA*expXbeta.at(ii);
+  
+      d2mu_dkappa_dgamma = tau2.at(ii)*RHO.at(ii)*expXbeta.at(ii);
+  
+    }else if(z.at(ii) == 2){
+
+      dmu_dkappa = (tau1.at(ii)*GAMMA + tau2.at(ii))*expXbeta.at(ii)*RHO.at(ii);
+      dmu_deta   = (1-RHO.at(ii))*expXbeta.at(ii);
+      dmu_dgamma = tau1.at(ii)*RHO.at(ii)*KAPPA*expXbeta.at(ii);
+      
+      d2mu_dkappa_dgamma = tau1.at(ii)*RHO.at(ii)*expXbeta.at(ii);
+      
+    }else{
+      dmu_dkappa = (tau1.at(ii)+tau2.at(ii))*GAMMA*expXbeta.at(ii)*RHO.at(ii);
+      dmu_deta   = 2*(1-RHO.at(ii))*expXbeta.at(ii);
+      dmu_dgamma = (tau1.at(ii)+tau2.at(ii))*KAPPA*expXbeta.at(ii)*RHO.at(ii);
+      
+      d2mu_dkappa_dgamma = (tau1.at(ii)+tau2.at(ii))*RHO.at(ii)*expXbeta.at(ii);
+      
+    }
+    dmu_keg.at(0,0) = dmu_dkappa;
+    dmu_keg.at(0,1) = dmu_deta;
+    dmu_keg.at(0,2) = dmu_dgamma;
+    
+    Iee.at(0,0) += d2ltrec_dmu*pow(dmu_dkappa, 2.0);  // kappa^2
+    Iee.at(1,1) += d2ltrec_dmu*pow(dmu_deta, 2.0);    // eta^2
+    Iee.at(2,2) += d2ltrec_dmu*pow(dmu_dgamma, 2.0);  // gamma^2
+    
+    Iee.at(0,1) += d2ltrec_dmu*dmu_dkappa*dmu_deta; // kappa*eta
+    Iee.at(0,2) += d2ltrec_dmu*dmu_dkappa*dmu_dgamma + 
+      dltrec_dmu*d2mu_dkappa_dgamma;                //kappa*gamma
+    Iee.at(1,2) += d2ltrec_dmu*dmu_deta*dmu_dgamma; //eta*gamma
+    
+    Ipp += 2.0*pow(vphi, 3.0)*(R::digamma(y.at(ii)+vphi)-divphi-log(phi_mu_1)) +
+      pow(vphi, 4.0)*(R::trigamma(y.at(ii)+vphi)-trvphi) +
+      pow(vphi, 2.0)*(2.0*mu.at(ii)/phi_mu_1 - y.at(ii)) +
+      (vphi+y.at(ii))*pow(mu.at(ii),2.0)/pow(phi_mu_1,2.0);
+      
+    Ibb -= (mu.at(ii)/phi_mu_1 + 
+      phi*mu.at(ii)*(y.at(ii)-mu.at(ii))/pow(phi_mu_1,2.0))*
+      X.row(ii).t()*X.row(ii);
+    
+    Iep -= (y.at(ii)-mu.at(ii))/pow(phi_mu_1,2.0)*dmu_keg.t();
+    
+    Ibe -= (1/phi_mu_1+(y.at(ii)-mu.at(ii))*phi/pow(phi_mu_1,2.0))*
+      X.row(ii).t()*dmu_keg;
+    
+    Ibp -= ((y.at(ii)-mu.at(ii))*mu.at(ii)/pow(phi_mu_1,2.0))*X.row(ii).t();
+  }
+
+  // printR_obj(Iee);
+  // printR_obj(Ipp);
+  // printR_obj(Ibb);
+  // printR_obj(Ibp);
+  // printR_obj(Ibe);
+  // printR_obj(Iep);
+  
+  /*
+   * Information matrix (ASE)
+   */
+  
+  RcppT_compite_pi(z_AS, RHO_AS, KAPPA, ETA, GAMMA, tauB, tau, pis);
+  
+  for(ii =0; ii<n_AS; ii++){
+    double aa = pis.at(ii) * vtheta; 
+    double bb = vtheta - aa;
+    double diaa = R::digamma(aa);
+    double dibb =  R::digamma(bb);
+    double diaa_ni0 = R::digamma(aa + ni0.at(ii));
+    double dibb_ni1 = R::digamma(bb + ni.at(ii) - ni0.at(ii));
+    double triaa = R::trigamma(aa);
+    double tribb =  R::trigamma(bb);
+    double triaa_ni0 = R::trigamma(aa + ni0.at(ii));
+    double tribb_ni1 = R::trigamma(bb + ni.at(ii) - ni0.at(ii));
+    
+    dlASE_dpi  = vtheta*(diaa_ni0 - dibb_ni1 - diaa + dibb);
+    d2lASE_dpi = pow(vtheta, 2.0)*(triaa_ni0 + tribb_ni1 - triaa -
+      tribb);
+    
+    if(z_AS.at(ii) == 0 | z_AS.at(ii) == 3){
+      tmp1 = RHO_AS.at(ii)*tau.at(ii)*KAPPA + 2*(1 - RHO_AS.at(ii));
+      tmp2 = RHO_AS.at(ii)*tauB.at(ii)/tmp1;
+      tmp3 = RHO_AS.at(ii)*tau.at(ii)*(RHO_AS.at(ii)*tauB.at(ii)*KAPPA + 
+        (1 - RHO_AS.at(ii)))/pow(tmp1, 2.0);
+      dpi_dkappa = tmp2 - tmp3;
+      dpi_deta   = 0;
+      dpi_dgamma = 0;
+      
+      d2pi_dkappa = -(2.0*pow(RHO_AS.at(ii),2.0)*(1.0-RHO_AS.at(ii))*
+        (2.0*tauB.at(ii) -tau.at(ii))*tau.at(ii))/pow(tmp1, 3.0);
+      d2pi_deta = d2pi_dgamma  = d2pi_dkappa_eta = 
+        d2pi_dkappa_gamma = d2pi_deta_gamma = 0;
+      
+    }else{
+      tmp1 = RHO_AS.at(ii)*tauB.at(ii)*GAMMA*KAPPA + (1 - RHO_AS.at(ii))*ETA;
+      tmp2 = RHO_AS.at(ii)*(tau.at(ii) - tauB.at(ii))*KAPPA +
+        (1 - RHO_AS.at(ii)) + tmp1;
+      tmp3 = tmp1/pow(tmp2, 2.0);
+      tmp4 = 1/tmp2 -tmp3; 
+      dpi_dkappa = RHO_AS.at(ii)*tauB.at(ii)*GAMMA*tmp4 -
+        RHO_AS.at(ii)*(tau.at(ii) - tauB.at(ii))*tmp3;
+      dpi_deta   = (1 - RHO_AS.at(ii))*tmp4;
+      dpi_dgamma = RHO_AS.at(ii)*tauB.at(ii)*KAPPA*tmp4;
+      
+      tmp3 = tmp1/pow(tmp2, 3.0); // changed tmp3
+      tmp_kappa = RHO_AS.at(ii)*(tau.at(ii) - tauB.at(ii)) + 
+        RHO_AS.at(ii)* tauB.at(ii)*GAMMA;
+      d2pi_dkappa = -2.0*GAMMA*RHO_AS.at(ii)*tauB.at(ii)*tmp_kappa/pow(tmp2,2.0) +
+        2.0*pow(tmp_kappa,2.0)*tmp3;
+      d2pi_deta   = -2.0*pow(1-RHO_AS.at(ii), 2.0)*(1/pow(tmp2, 2.0) - tmp3);
+      d2pi_dgamma = -2.0*pow(RHO_AS.at(ii)*tauB.at(ii)*KAPPA,2.0)*
+        (1/pow(tmp2, 2.0) - tmp3);
+      d2pi_dkappa_eta  = (-RHO_AS.at(ii)*tauB.at(ii)*GAMMA*(1-RHO_AS.at(ii)) -
+        tmp_kappa*(1-RHO_AS.at(ii)))/pow(tmp2, 2.0) +
+        2.0*(1-RHO_AS.at(ii))*tmp_kappa*tmp3;
+      d2pi_dkappa_gamma = RHO_AS.at(ii)*tauB.at(ii)/tmp2 -
+        (pow(RHO_AS.at(ii)*tauB.at(ii), 2.0)*KAPPA*GAMMA + 
+        tmp_kappa*RHO_AS.at(ii)*tauB.at(ii)*KAPPA)/pow(tmp2, 2.0) -
+        RHO_AS.at(ii)*tauB.at(ii)*tmp3*tmp2 +
+        2.0*tmp_kappa*RHO_AS.at(ii)*tauB.at(ii)*KAPPA*tmp3;
+      d2pi_deta_gamma   = -2.0*KAPPA*(1-RHO_AS.at(ii))*RHO_AS.at(ii)*tauB.at(ii)/pow(tmp2,2.0) +
+        2.0*KAPPA*(1.0-RHO_AS.at(ii))*RHO_AS.at(ii)*tauB.at(ii)*tmp3;
+    }
+    
+    Iee.at(0,0) += d2lASE_dpi*pow(dpi_dkappa, 2.0)  + dlASE_dpi*d2pi_dkappa;
+    Iae.at(0,1) += d2lASE_dpi*pow(dpi_deta, 2.0)    + dlASE_dpi*d2pi_deta;
+    Iae.at(1,2) += d2lASE_dpi*pow(dpi_dgamma, 2.0)  + dlASE_dpi*d2pi_dgamma; 
+    Iae.at(0,0) += d2lASE_dpi*dpi_dkappa*dpi_deta   + dlASE_dpi*d2pi_dkappa_eta; 
+    Iae.at(1,0) += d2lASE_dpi*dpi_dkappa*dpi_dgamma + dlASE_dpi*d2pi_dkappa_gamma;
+    Iae.at(0,2) += d2lASE_dpi*dpi_deta*dpi_dgamma   + dlASE_dpi*d2pi_deta_gamma; 
+    
+    score_alpha.at(0) += dlASE_dpi*dpi_deta;
+    score_alpha.at(1) += dlASE_dpi*dpi_dgamma;
+    
+    W = -(R::digamma(ni.at(ii)+vtheta)+diaa*pis.at(ii) +dibb*(1.0-pis.at(ii)) -
+      diaa_ni0*pis.at(ii)-dibb_ni1*(1.0-pis.at(ii)) - divtheta);
+    dW_dTHETA = -pow(vtheta, 2.0)*(pow(pis.at(ii), 2.0)*(triaa_ni0 - triaa) +
+      pow(1-pis.at(ii), 2.0)*(tribb_ni1 - tribb) +
+      trvtheta - R::trigamma(vtheta+ni.at(ii)));
+    Itt += 2.0*pow(vtheta,3.0)*W - pow(vtheta, 2.0)*dW_dTHETA;
+    
+    
+    d2lASE_dTHETA_dpi = - pow(vtheta, 2.0)*(diaa_ni0 - diaa -
+      dibb_ni1 + dibb) -
+      pow(vtheta,3.0)*pis.at(ii)*(triaa_ni0 - triaa) +
+      pow(vtheta,3.0)*(1.0-pis.at(ii))*(tribb_ni1 - tribb);
+    // printR_obj(d2lASE_dTHETA_dpi);
+    Iet.at(0,0) += d2lASE_dTHETA_dpi*dpi_dkappa;
+    Iet.at(1,0) += d2lASE_dTHETA_dpi*dpi_deta;
+    Iet.at(2,0) += d2lASE_dTHETA_dpi*dpi_dgamma;
+  }
+  // printR_obj(Iee);
+  
+  Iae.at(1,1) = Iae.at(0,2);
+  Iaa = Iae.submat(0,1,1,2);
+  
+  Iee.at(0,1) += Iae.at(0,0);
+  Iee.at(1,1) += Iae.at(0,1);
+  Iee.at(1,2) += Iae.at(0,2);
+  Iee.at(0,2) += Iae.at(1,0);
+  Iee.at(2,2) += Iae.at(1,2);
+  
+  Iee.at(1,0) = Iee.at(0,1);
+  Iee.at(2,0) = Iee.at(0,2);
+  Iee.at(2,1) = Iee.at(1,2);
+  
+  Iat = Iet.submat(1,0,2,0);
+  // printR_obj(score_alpha);
+  // printR_obj(Iee);
+  // printR_obj(Iae);
+  // printR_obj(Iaa);
+  // printR_obj(Itt);
+  // printR_obj(Iet);
+  // printR_obj(Iat);
+  
+  /*
+   * Final information matrix
+   */
+
+  arma::uword np = beta_npara -1;
+  M1.submat(0,0,np,np)             = Ibb;
+  M1.submat(0,np+1,np,np+3)        = Ibe;
+  M1.submat(np+1,0,np+3,np)        = Ibe.t();
+  M1.submat(0,np+4,np,np+4)        = Ibp;
+  M1.submat(np+4,0,np+4,np)        = Ibp.t();
+  M1.submat(np+1,np+1,np+3,np+3)   = Iee;
+  M1.submat(np+1,np+5,np+3,np+5)   = Iet;
+  M1.submat(np+5,np+1,np+5,np+3)   = Iet.t();
+  M1.submat(np+1,np+4,np+3,np+4)   = Iep;
+  M1.submat(np+4,np+1,np+4,np+3)   = Iep.t();
+  M1.at((np+5),(np+5))             = Itt;
+  M1.at((np+4),(np+4))             = Ipp;
+  M2.rows(np+1,np+3) = Iae.t();
+  M2.row(5+np)    = Iat.t();
+  // printR_obj(M1);
+  // printR_obj(M2);
+
+  M1 = -M1;
+  M2 = -M2;
+  Iaa = -Iaa;
+  
+  
+  OIMat.submat(0,0,(np+5),(np+5))           = M1;
+  OIMat.submat(0,(np+6),(np+5),(np+7))      = M2;
+  OIMat.submat((np+6),0,(np+7),(np+5))      = M2.t();
+  OIMat.submat((np+6),(np+6),(np+7),(np+7)) = Iaa;
+  
+  
+  // printR_obj(OIMat);
+  if(!OIMat.is_sympd()){
+    Score.at(0,0) = -6.0;
+    pval  = 1.0;
+  }else{
+    Score = score_alpha.t()*((Iaa - M2.t()*M1.i()*M2).i())*score_alpha;
+    pval  = R::pchisq(Score.at(0,0),2,0,0);
+  }
+  
+  if(std::isnan(Score.at(0,0))){
+    Score.at(0,0) = -6.0;
+    pval = 1.0;
+  }
+  return Rcpp::List::create(
+    Rcpp::Named("Score", Score.at(0,0)),
+    Rcpp::Named("pval", pval)
+  );
+}
+
+
+// [[Rcpp::export]]
+void RcppT_ASE_ExpFunc(const double& ni, const double& pis_i, 
+                 const double& vtheta, arma::vec& Expvec){
+  //   Expvec[0] = Expected value of digamma(vTHETA*pi+A)
+  //   Expvec[1] = Expected value of digamma(vTHETA*(1.0-pi)+D-A)
+  //   Expvec[2] = Expected value of trigamma(vTHETA*pi+A)
+  //   Expvec[3] = Expected value of trigamma(vTHETA*(1.0-pi)+D-A)
+  int ni00;
+  double lpmf, pmf;
+  for(ni00 = 0; ni00<(ni+1); ni00++){
+    lpmf = R::lchoose(ni, ni00) + lgamma(ni00+pis_i*vtheta) + 
+      lgamma(ni-ni00+(1.0-pis_i)*vtheta) + lgamma(vtheta) -
+      lgamma(ni+vtheta)-lgamma(pis_i*vtheta)-
+      lgamma((1.0-pis_i)*vtheta);
+    pmf = exp(lpmf);
+    Expvec.at(0) += R::digamma(vtheta*pis_i + ni00)*pmf;
+    Expvec.at(1) += R::digamma(vtheta*(1.0-pis_i) + ni-ni00)*pmf;
+    Expvec.at(2) += R::trigamma(vtheta*pis_i + ni00)*pmf;
+    Expvec.at(3) += R::trigamma(vtheta*(1.0-pis_i) + ni-ni00)*pmf;
+  }
+  
+}
+
+
+// [[Rcpp::export]]
+Rcpp::List RcppT_CisTrans_Score(const arma::vec& para, const arma::vec& y,
+                                const arma::vec& z, const arma::vec& z_AS,
+                                const arma::vec& RHO, const arma::vec& RHO_AS,
+                                const arma::mat& X, const arma::vec& BETA,
+                                const double& phi,
+                                const arma::vec& tau1, const arma::vec& tau2,
+                                const arma::vec& lgy1,
+                                const arma::vec& ni0, const arma::vec& ni,
+                                const double& log_theta, const arma::vec& tauB,
+                                const arma::vec& tau, const arma::vec& lbc){
+  
+  double KAPPA, ETA, GAMMA;
+  arma::uword ii;
+  arma::uword n= RHO.n_elem;
+  arma::uword n_AS = RHO_AS.n_elem;
+  arma::uword beta_npara = BETA.n_elem;
+  
+  double vphi = 1/phi;
+  double divphi = R::digamma(vphi);
+  double trvphi = R::trigamma(vphi);
+  //TReC
+  arma::vec offsets  = arma::zeros<arma::vec>(n);
+  arma::vec expXbeta = arma::zeros<arma::vec>(n);
+  arma::vec mu       = arma::zeros<arma::vec>(n);
+  arma::mat dmu_keg = arma::zeros<arma::mat>(1,3);
+  //information matrix
+  arma::mat Iee = arma::zeros<arma::mat>(3,3);  //KEG
+  arma::mat Ibb = arma::zeros<arma::mat>(beta_npara, beta_npara);  //beta
+  arma::mat Ibe = arma::zeros<arma::mat>(beta_npara, 3);  //beta*keg
+  arma::mat Iep = arma::zeros<arma::mat>(3, 1);  //beta*phi
+  arma::mat Ibp = arma::zeros<arma::mat>(beta_npara, 1);  //beta*keg
+  double    Ipp = 0.0; // phi
+  
+  double dltrec_dmu, d2ltrec_dmu, phi_mu_1, phi_y_1,
+  dmu_dkappa, dmu_deta, dmu_dgamma, d2mu_dkappa_dgamma;
+  
+  //ASE
+  double vtheta = 1/exp(log_theta);
+  double divtheta = R::digamma(vtheta);
+  double trvtheta = R::trigamma(vtheta);
+  double Itt = 0.0;
+  arma::vec pis  = arma::zeros<arma::vec>(n_AS);
+  arma::vec score_alpha  = arma::zeros<arma::vec>(2);
+  arma::mat Iaa = arma::zeros<arma::mat>(2, 2);  //alpha
+  arma::mat Iae = arma::zeros<arma::mat>(2, 3);  //alpha*KEG
+  arma::mat Iat = arma::zeros<arma::mat>(2, 1);  //theta*KEG
+  arma::mat Iet = arma::zeros<arma::mat>(3, 1);  //theta*KEG
+  
+  //   Expvec[1] = Expected value of digamma(vTHETA*pi+A)
+  //   Expvec[2] = Expected value of digamma(vTHETA*(1.0-pi)+D-A)
+  //   Expvec[3] = Expected value of trigamma(vTHETA*pi+A)
+  //   Expvec[4] = Expected value of trigamma(vTHETA*(1.0-pi)+D-A)
+  arma::vec Expvec = arma::zeros<arma::vec>(4);  
+  
+  double dlASE_dpi, d2lASE_dpi, tmp1, tmp2, tmp3, tmp4, tmp_kappa, 
+  dpi_dkappa, dpi_deta, dpi_dgamma,
+  d2pi_dkappa, d2pi_deta, d2pi_dgamma,
+  d2pi_dkappa_eta, d2pi_dkappa_gamma, d2pi_deta_gamma; 
+  
+  double W, dW_dTHETA, dlASE_dTHETA, d2lASE_dTHETA_dpi, pval;
+  KAPPA = exp(para.at(0));
+  ETA   = exp(para.at(1));
+  GAMMA = exp(para.at(2));
+  
+  //final information matrix
+  arma::mat M1    = arma::zeros<arma::mat>(beta_npara+4, beta_npara+4); 
+  arma::mat M2    = arma::zeros<arma::mat>(beta_npara+4, 2); 
+  arma::mat OIMat = arma::zeros<arma::mat>(beta_npara+6, beta_npara+6); 
+  arma::mat Score = arma::zeros<arma::mat>(1, 1);
+  
+  /*
+  * Information matrix (TReC)
+  */
+  
+  RcppT_compute_offset(z, RHO, KAPPA, ETA, GAMMA, tau1, tau2, offsets);
+  RcppT_compute_expXbeta(X, BETA, expXbeta);
+  mu = exp(offsets) % expXbeta;
+  
+  for(ii =0; ii<n; ii++){
+    phi_mu_1    = 1.0 + phi*mu.at(ii);
+    phi_y_1     = 1.0 + phi*y.at(ii);
+    // dltrec_dmu  = y.at(ii)/mu.at(ii) - (1.0 + phi*y.at(ii))/phi_mu_1;
+    d2ltrec_dmu = -1.0/(mu.at(ii)*phi_mu_1);
+    
+    if(z.at(ii) == 0){
+      dmu_dkappa = (tau1.at(ii) + tau2.at(ii))*expXbeta.at(ii)*RHO.at(ii);
+      dmu_deta   = 0;
+      dmu_dgamma = 0;
+      
+      d2mu_dkappa_dgamma = 0;
+      
+    }else if(z.at(ii) == 1){
+      
+      dmu_dkappa = (tau1.at(ii) + tau2.at(ii)*GAMMA)*expXbeta.at(ii)*RHO.at(ii);
+      dmu_deta   = (1-RHO.at(ii))*expXbeta.at(ii);
+      dmu_dgamma = tau2.at(ii)*RHO.at(ii)*KAPPA*expXbeta.at(ii);
+      
+      d2mu_dkappa_dgamma = tau2.at(ii)*RHO.at(ii)*expXbeta.at(ii);
+      
+    }else if(z.at(ii) == 2){
+      
+      dmu_dkappa = (tau1.at(ii)*GAMMA + tau2.at(ii))*expXbeta.at(ii)*RHO.at(ii);
+      dmu_deta   = (1-RHO.at(ii))*expXbeta.at(ii);
+      dmu_dgamma = tau1.at(ii)*RHO.at(ii)*KAPPA*expXbeta.at(ii);
+      
+      d2mu_dkappa_dgamma = tau1.at(ii)*RHO.at(ii)*expXbeta.at(ii);
+      
+    }else{
+      dmu_dkappa = (tau1.at(ii)+tau2.at(ii))*GAMMA*expXbeta.at(ii)*RHO.at(ii);
+      dmu_deta   = 2*(1-RHO.at(ii))*expXbeta.at(ii);
+      dmu_dgamma = (tau1.at(ii)+tau2.at(ii))*KAPPA*expXbeta.at(ii)*RHO.at(ii);
+      
+      d2mu_dkappa_dgamma = (tau1.at(ii)+tau2.at(ii))*RHO.at(ii)*expXbeta.at(ii);
+      
+    }
+    dmu_keg.at(0,0) = dmu_dkappa;
+    dmu_keg.at(0,1) = dmu_deta;
+    dmu_keg.at(0,2) = dmu_dgamma;
+    
+    Iee.at(0,0) += d2ltrec_dmu*pow(dmu_dkappa, 2.0);  // kappa^2
+    Iee.at(1,1) += d2ltrec_dmu*pow(dmu_deta, 2.0);    // eta^2
+    Iee.at(2,2) += d2ltrec_dmu*pow(dmu_dgamma, 2.0);  // gamma^2
+    
+    Iee.at(0,1) += d2ltrec_dmu*dmu_dkappa*dmu_deta; // kappa*eta
+    Iee.at(0,2) += d2ltrec_dmu*dmu_dkappa*dmu_dgamma;              //kappa*gamma
+    Iee.at(1,2) += d2ltrec_dmu*dmu_deta*dmu_dgamma; //eta*gamma
+    
+    // Ipp += 2.0*pow(vphi, 3.0)*(R::digamma(y.at(ii)+vphi)-divphi-log(phi_mu_1)) +
+    //   pow(vphi, 4.0)*(R::trigamma(y.at(ii)+vphi)-trvphi) +
+    //   pow(vphi, 2.0)*(2.0*mu.at(ii)/phi_mu_1 - y.at(ii)) +
+    //   (vphi+y.at(ii))*pow(mu.at(ii),2.0)/pow(phi_mu_1,2.0);
+    
+    Ibb -= (mu.at(ii)/phi_mu_1)*X.row(ii).t()*X.row(ii);
+    
+    // Iep -= (y.at(ii)-mu.at(ii))/pow(phi_mu_1,2.0)*dmu_keg.t();
+    
+    Ibe -= (1/phi_mu_1)*X.row(ii).t()*dmu_keg;
+    
+    // Ibp -= ((y.at(ii)-mu.at(ii))*mu.at(ii)/pow(phi_mu_1,2.0))*X.row(ii).t();
+  }
+  
+  // printR_obj(Iee);
+  // printR_obj(Ibb);
+  // printR_obj(Ibp);
+  // printR_obj(Ibe);
+
+  /*
+  * Information matrix (ASE)
+  */
+  
+  RcppT_compite_pi(z_AS, RHO_AS, KAPPA, ETA, GAMMA, tauB, tau, pis);
+  
+  for(ii =0; ii<n_AS; ii++){
+    double aa = pis.at(ii) * vtheta; 
+    double bb = vtheta - aa;
+    double diaa = R::digamma(aa);
+    double dibb =  R::digamma(bb);
+    double diaa_ni0 = R::digamma(aa + ni0.at(ii));
+    double dibb_ni1 = R::digamma(bb + ni.at(ii) - ni0.at(ii));
+    double triaa = R::trigamma(aa);
+    double tribb =  R::trigamma(bb);
+    // double triaa_ni0 = R::trigamma(aa + ni0.at(ii));
+    // double tribb_ni1 = R::trigamma(bb + ni.at(ii) - ni0.at(ii));
+    Expvec.zeros();
+    RcppT_ASE_ExpFunc(ni.at(ii), pis.at(ii), vtheta, Expvec);
+
+    dlASE_dpi  = vtheta*(diaa_ni0 - dibb_ni1 - diaa + dibb);
+    d2lASE_dpi = pow(vtheta, 2.0)*(Expvec.at(2) + Expvec.at(3) - 
+      triaa - tribb);
+    if(z_AS.at(ii) == 0 | z_AS.at(ii) == 3){
+      tmp1 = RHO_AS.at(ii)*tau.at(ii)*KAPPA + 2*(1 - RHO_AS.at(ii));
+      tmp2 = RHO_AS.at(ii)*tauB.at(ii)/tmp1;
+      tmp3 = RHO_AS.at(ii)*tau.at(ii)*(RHO_AS.at(ii)*tauB.at(ii)*KAPPA + 
+        (1 - RHO_AS.at(ii)))/pow(tmp1, 2.0);
+      dpi_dkappa = tmp2 - tmp3;
+      dpi_deta   = 0;
+      dpi_dgamma = 0;
+      
+      d2pi_dkappa = -(2.0*pow(RHO_AS.at(ii),2.0)*(1.0-RHO_AS.at(ii))*
+        (2.0*tauB.at(ii) -tau.at(ii))*tau.at(ii))/pow(tmp1, 3.0);
+      d2pi_deta = d2pi_dgamma  = d2pi_dkappa_eta = 
+        d2pi_dkappa_gamma = d2pi_deta_gamma = 0;
+      
+    }else{
+      tmp1 = RHO_AS.at(ii)*tauB.at(ii)*GAMMA*KAPPA + (1 - RHO_AS.at(ii))*ETA;
+      tmp2 = RHO_AS.at(ii)*(tau.at(ii) - tauB.at(ii))*KAPPA +
+        (1 - RHO_AS.at(ii)) + tmp1;
+      tmp3 = tmp1/pow(tmp2, 2.0);
+      tmp4 = 1/tmp2 -tmp3; 
+      dpi_dkappa = RHO_AS.at(ii)*tauB.at(ii)*GAMMA*tmp4 -
+        RHO_AS.at(ii)*(tau.at(ii) - tauB.at(ii))*tmp3;
+      dpi_deta   = (1 - RHO_AS.at(ii))*tmp4;
+      dpi_dgamma = RHO_AS.at(ii)*tauB.at(ii)*KAPPA*tmp4;
+      
+      tmp3 = tmp1/pow(tmp2, 3.0); // changed tmp3
+      tmp_kappa = RHO_AS.at(ii)*(tau.at(ii) - tauB.at(ii)) + 
+        RHO_AS.at(ii)* tauB.at(ii)*GAMMA;
+      d2pi_dkappa = -2.0*GAMMA*RHO_AS.at(ii)*tauB.at(ii)*tmp_kappa/pow(tmp2,2.0) +
+        2.0*pow(tmp_kappa,2.0)*tmp3;
+      d2pi_deta   = -2.0*pow(1-RHO_AS.at(ii), 2.0)*(1/pow(tmp2, 2.0) - tmp3);
+      d2pi_dgamma = -2.0*pow(RHO_AS.at(ii)*tauB.at(ii)*KAPPA,2.0)*
+        (1/pow(tmp2, 2.0) - tmp3);
+      d2pi_dkappa_eta  = (-RHO_AS.at(ii)*tauB.at(ii)*GAMMA*(1-RHO_AS.at(ii)) -
+        tmp_kappa*(1-RHO_AS.at(ii)))/pow(tmp2, 2.0) +
+        2.0*(1-RHO_AS.at(ii))*tmp_kappa*tmp3;
+      d2pi_dkappa_gamma = RHO_AS.at(ii)*tauB.at(ii)/tmp2 -
+        (pow(RHO_AS.at(ii)*tauB.at(ii), 2.0)*KAPPA*GAMMA + 
+        tmp_kappa*RHO_AS.at(ii)*tauB.at(ii)*KAPPA)/pow(tmp2, 2.0) -
+        RHO_AS.at(ii)*tauB.at(ii)*tmp3*tmp2 +
+        2.0*tmp_kappa*RHO_AS.at(ii)*tauB.at(ii)*KAPPA*tmp3;
+      d2pi_deta_gamma   = -2.0*KAPPA*(1-RHO_AS.at(ii))*RHO_AS.at(ii)*tauB.at(ii)/pow(tmp2,2.0) +
+        2.0*KAPPA*(1.0-RHO_AS.at(ii))*RHO_AS.at(ii)*tauB.at(ii)*tmp3;
+    }
+    
+    Iee.at(0,0) += d2lASE_dpi*pow(dpi_dkappa, 2.0)  + dlASE_dpi*d2pi_dkappa;
+    Iae.at(0,1) += d2lASE_dpi*pow(dpi_deta, 2.0)    + dlASE_dpi*d2pi_deta;
+    Iae.at(1,2) += d2lASE_dpi*pow(dpi_dgamma, 2.0)  + dlASE_dpi*d2pi_dgamma; 
+    Iae.at(0,0) += d2lASE_dpi*dpi_dkappa*dpi_deta   + dlASE_dpi*d2pi_dkappa_eta; 
+    Iae.at(1,0) += d2lASE_dpi*dpi_dkappa*dpi_dgamma + dlASE_dpi*d2pi_dkappa_gamma;
+    Iae.at(0,2) += d2lASE_dpi*dpi_deta*dpi_dgamma   + dlASE_dpi*d2pi_deta_gamma; 
+    
+    score_alpha.at(0) += dlASE_dpi*dpi_deta;
+    score_alpha.at(1) += dlASE_dpi*dpi_dgamma;
+    
+    W = -(R::digamma(ni.at(ii)+vtheta)+diaa*pis.at(ii) +dibb*(1.0-pis.at(ii)) -
+      Expvec.at(0)*pis.at(ii)-Expvec.at(1)*(1.0-pis.at(ii)) - divtheta);
+    dW_dTHETA = -pow(vtheta, 2.0)*(pow(pis.at(ii), 2.0)*(Expvec.at(2) - triaa) +
+      pow(1-pis.at(ii), 2.0)*(Expvec.at(3) - tribb) +
+      trvtheta - R::trigamma(vtheta+ni.at(ii)));
+    Itt += 2.0*pow(vtheta,3.0)*W - pow(vtheta, 2.0)*dW_dTHETA;
+    
+    
+    d2lASE_dTHETA_dpi = - pow(vtheta, 2.0)*(Expvec.at(0) - diaa -
+      Expvec.at(1) + dibb) -
+      pow(vtheta,3.0)*pis.at(ii)*(Expvec.at(2) - triaa) +
+      pow(vtheta,3.0)*(1.0-pis.at(ii))*(Expvec.at(3) - tribb);
+    Iet.at(0,0) += d2lASE_dTHETA_dpi*dpi_dkappa;
+    Iet.at(1,0) += d2lASE_dTHETA_dpi*dpi_deta;
+    Iet.at(2,0) += d2lASE_dTHETA_dpi*dpi_dgamma;
+  }
+
+  Iae.at(1,1) = Iae.at(0,2);
+  Iaa = Iae.submat(0,1,1,2);
+  
+  Iee.at(0,1) += Iae.at(0,0);
+  Iee.at(1,1) += Iae.at(0,1);
+  Iee.at(1,2) += Iae.at(0,2);
+  Iee.at(0,2) += Iae.at(1,0);
+  Iee.at(2,2) += Iae.at(1,2);
+  
+  Iee.at(1,0) = Iee.at(0,1);
+  Iee.at(2,0) = Iee.at(0,2);
+  Iee.at(2,1) = Iee.at(1,2);
+  
+  Iat = Iet.submat(1,0,2,0);
+
+  /*
+  * Final information matrix
+  */
+  
+  arma::uword np = beta_npara -1;
+  M1.submat(0,0,np,np)             = Ibb;
+  M1.submat(0,np+1,np,np+3)        = Ibe;
+  M1.submat(np+1,0,np+3,np)        = Ibe.t();
+  M1.submat(np+1,np+1,np+3,np+3)   = Iee;
+  M1.submat(np+1,np+4,np+3,np+4)   = Iet;
+  M1.submat(np+4,np+1,np+4,np+3)   = Iet.t();
+  M1.at((np+4),(np+4))             = Itt;
+  M2.rows(np+1,np+3) = Iae.t();
+  M2.row(4+np)       = Iat.t();
+
+  
+  M1 = -M1;
+  M2 = -M2;
+  Iaa = -Iaa;
+  
+  
+  OIMat.submat(0,0,(np+4),(np+4))           = M1;
+  OIMat.submat(0,(np+5),(np+4),(np+6))      = M2;
+  OIMat.submat((np+5),0,(np+6),(np+4))      = M2.t();
+  OIMat.submat((np+5),(np+5),(np+6),(np+6)) = Iaa;
+  
+  // printR_obj(score_alpha);
+  // printR_obj(Iee);
+  // printR_obj(Iae);
+  // printR_obj(Iaa);
+  // printR_obj(Itt);
+  // printR_obj(Iet);
+  // printR_obj(OIMat);
+  if(!OIMat.is_sympd()){
+    Score.at(0,0) = -6.0;
+    pval  = 1.0;
+  }else{
+    Score = score_alpha.t()*((Iaa - M2.t()*M1.i()*M2).i())*score_alpha;
+    pval  = R::pchisq(Score.at(0,0),2,0,0);
+  }
+  
+  if(std::isnan(Score.at(0,0))){
+    Score.at(0,0) = -6.0;
+    pval = 1.0;
+  }
+  return Rcpp::List::create(
+    Rcpp::Named("Score", Score.at(0,0)),
+    Rcpp::Named("pval", pval)
+  );
+}
+

@@ -1,6 +1,6 @@
 trecase <-
-  function(Y, Y1 = NULL, Y2 = NULL, Z, XX, SNPloc, geneloc, fam_nb = T,
-           file_trec = "trec.txt", file_trecase = "trecase.txt",
+  function(Y, Y1 = NULL, Y2 = NULL, Z, XX, SNPloc, geneloc, GeneSnpList = list(),
+           fam_nb = T, file_trec = "trec.txt", file_trecase = "trecase.txt",
            cis_window = 1e5L, useASE = 1L, min_ASE_total = 8L, min_nASE = 5L,
            min_nASE_het = 5L, eps = 5e-5, max_iter = 400L, show = FALSE)
   {
@@ -115,7 +115,7 @@ trecase <-
       stop("colnames of SNPloc has to be c('gene', chr, 'start','end')")
     }
     
-    # sort geneloc and snploc by chr and pos 
+    # geneloc has to be sorted by chromosome
     geneloc$chr = gsub("chr", "", geneloc$chr)
     geneloc$chr[which(geneloc$chr == "X")] = 23
     geneloc$chr[which(geneloc$chr == "Y")] = 24
@@ -130,9 +130,10 @@ trecase <-
     SNPloc$chr = as.integer(SNPloc$chr)
     SNPloc$pos = as.integer(SNPloc$pos)
 
-    # geneloc = geneloc[order(geneloc$chr, geneloc$start), ]
-    # SNPloc  = SNPloc[order(SNPloc$chr, SNPloc$pos), ]
-
+    if(any(sort(geneloc$chr) != geneloc$chr)){
+      stop("geneloc has to be sorted by chromosome\n") 
+    }
+    
     if(useASE){
       
       ## ----------------------------
@@ -160,8 +161,14 @@ trecase <-
       Y2 = Y1 = Y
     }
     
+    if(length(GeneSnpList) != 0 & length(GeneSnpList) !=  nGene){
+      stop("dimensions of GeneSnpList does not correct\n")
+    }
+    
+    
+    
     Rcpp_trecase_mtest(Y, Y1, Y2, Z, XX, SNPloc$pos, SNPloc$chr, fam_nb, 
-                       geneloc$start, geneloc$end, geneloc$chr,
+                       geneloc$start, geneloc$end, geneloc$chr, GeneSnpList,
                        file_trec, file_trecase,
                        cis_window, useASE, min_ASE_total, min_nASE,
                        min_nASE_het,

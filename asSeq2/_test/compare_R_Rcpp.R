@@ -370,7 +370,7 @@ Y2 = cbind(y2,y2)
 
 
 time1 = Sys.time()
-trecase(Y, Y1, Y2 , ZZ, XX, SNPloc, geneloc, fam_nb = T,eps=5e-5, show = F, useASE = 1)
+trecase(Y, Y1, Y2 , ZZ, XX, SNPloc, geneloc, list(),fam_nb = T,eps=5e-5, show = F, useASE = 1)
 time2 = Sys.time()
 time2-time1
 

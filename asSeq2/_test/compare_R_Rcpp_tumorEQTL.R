@@ -407,6 +407,24 @@ c(trec_aseR$loglik)
 # ----------------------------------------------------------------------
 # Cis-Trans score test
 # ----------------------------------------------------------------------
-CisTrans_ScoreObs(para, y, z, zz_AS, RHO, RHO_AS, X, BETA, phi, tau1, 
+para = log(c(KAPPA, ETA, GAMMA))
+source("./tumor_eQTL.R")
+CisTrans_ScoreObs(para, y,z,zz_AS, X, BETA, phi,
+                  RHO, RHO_AS, tau1, tau2, ni0, ni, tauB, tau, theta,
+                  Power = F)
+
+RcppT_CisTrans_ScoreObs(para, y, z, zz_AS, RHO, RHO_AS, X, BETA, phi, tau1, 
                   tau2, lgy1, ni0, ni, log(theta), tauB, tau, lbc) 
+
+Expvec = c(0,0,0,0)
+RcppT_ASE_ExpFunc(14, 0.5, 1/0.1, Expvec)
+Expvec
+ASE_ExpFunc(14, 0.5, 1/0.1)
+
+CisTrans_Score(para, y,z,zz_AS, X, BETA, phi,
+                  RHO, RHO_AS, tau1, tau2, ni0, ni, tauB, tau, theta,
+                  Power = F)
+
+RcppT_CisTrans_Score(para, y, z, zz_AS, RHO, RHO_AS, X, BETA, phi, tau1, 
+                    tau2, lgy1, ni0, ni, log(theta), tauB, tau, lbc) 
 
