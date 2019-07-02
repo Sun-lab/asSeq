@@ -1,0 +1,172 @@
+
+R version 3.4.1 (2017-06-30) -- "Single Candle"
+Copyright (C) 2017 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> #root.dir = "/pine/scr/z/h/zhabotyn/R01"
+> #pipe.dir = sprintf("%s/omnipipe", root.dir)
+> #wrk.dir = sprintf("%s/2018_10_30c", pipe.dir)
+> #setwd(wrk.dir)
+> 
+> tot = read.table("gene_tot.dat", as.is=T)
+> a1 = read.table("gene_a1.dat", as.is=T)
+> a2 = read.table("gene_a2.dat", as.is=T)
+> inf = read.table("gene_inf.dat", as.is=T)
+> gens = read.table("gene_gens.dat", as.is=T)
+> vcfs = read.table("gene_vcfs.dat", as.is=T)
+> sam = read.table("Xmat.dat", as.is=T, header=F)
+> sam = matrix(unlist(sam), nrow=nrow(sam))
+> 
+> tot = matrix(unlist(tot), nrow=1)
+> a1 = matrix(unlist(a1), nrow=1)
+> a2 = matrix(unlist(a2), nrow=1)
+> 
+> nr=nrow(gens)
+> gens = matrix(as.numeric(unlist(gens)),nrow=nr)
+> chri = inf[1,2]
+> #v1     
+> library(asSeq)#, lib.loc="/nas/longleaf/home/zhabotyn/progs/Rlib"
+Warning message:
+package ‘asSeq’ was built under R version 3.4.2 
+> mChr = rep(chri, nr)
+> eChr = rep(chri, nrow(tot))
+> 
+> res.fil = sprintf("v1_licai_%s", inf[,1])
+> res.lon = sprintf("%s_eqtl.txt", res.fil)
+> 
+> 
+> ePos = inf[,3]
+> eEnd = inf[,4]
+> eExt = eEnd-ePos
+> pos = round((ePos+eEnd)/2)
+> vcfi = vcfs[,1]
+> posi = vcfs[,2]
+> 
+> trecase(Y=t(tot), Y1=t(a1), Y2=t(a2), X=sam, Z=t(gens[,-1]), output.tag=res.fil, p.cut=1,
++         eChr=eChr, ePos=pos, mChr=mChr, mPos=gens[,1], local.distance=2e5)
+
+--------------------------------------------------
+(nY, nZ, nX, N, maxit) = (1, 2, 4, 280, 100)
+(useOffset, min_nT, min_N, min_Nhet) = (0, 5, 5, 5)
+P_cut=1.000000e+00
+--------------------------------------------------
+
+i=0
+
+  i=0, j=0, h0=135, fail to estimate theta in joint model
+  theta=1.3140e-03, gradience=1.2075e-04, fail=52
+
+  g=100, paraDiff=5.437e-04, reach max iteration in glmNBlog
+  convSNPj@glmNB = 1
+
+------------------------------------------------------
+total time spent is 1 secs
+------------------------------------------------------
+$succeed
+[1] 1
+
+$yFailBaselineModel
+[1] 0
+
+> 
+> eqtl = read.table(res.lon, header=T, as.is=T)
+> eqtl[,1] = posi[eqtl[,2]]; colnames(eqtl)[1] = "Pos"
+> eqtl[,2] = vcfi[eqtl[,2]]
+> write.table(eqtl, res.lon, row.names=F, col.names=T, quote=F, sep="\t")
+> message("done version 1")
+done version 1
+> 
+> 
+> 
+> #v2
+> res.fil = sprintf("v2_licai_%s", inf[,1])
+> res.trecase = sprintf("%s_trecase.txt", res.fil)
+> res.trec = sprintf("%s_trec.txt", res.fil)
+> 
+> for(geni in 2:ncol(gens)){
++   kp = gens[,geni] == 3
++   gens[kp, geni] = 2
++   kp = gens[,geni] == 4
++   gens[kp, geni] = 3
++ }
+> 
+> pos = round((ePos+eEnd)/2)
+> geneloc = inf
+> str(geneloc)
+'data.frame':	1 obs. of  4 variables:
+ $ V1: chr "ENSG00000002549.10"
+ $ V2: int 4
+ $ V3: int 17577192
+ $ V4: int 17607972
+> colnames(geneloc) = c("gene", "chr", "start", "end")
+> SNPloc = data.frame(snp=sprintf("SNP%s",1:nrow(gens)),
++                     chr=rep(inf[1,2],nrow(gens)),
++                     pos=gens[,1], stringsAsFactors = F)
+> str(SNPloc)
+'data.frame':	2 obs. of  3 variables:
+ $ snp: chr  "SNP1" "SNP2"
+ $ chr: int  4 4
+ $ pos: num  17577268 17632590
+> 
+> 
+> detach("package:asSeq")
+> library(asSeq2)#, lib.loc="/nas/longleaf/home/zhabotyn/progs/Rlib/"
+> res = trecase(Y=t(tot), Y1=t(a1), Y2=t(a2), XX=sam, Z=t(gens[,-1]),
++               file_trecase=res.trecase, file_trec=res.trec, geneloc=geneloc, 
++               SNPloc=SNPloc, cis_window=2e5)
+gene 1 
+> 
+> eqtl2 = read.table(res.trecase, header=T, as.is=T)
+> eqtl2[,1] = posi[eqtl2[,2]]; colnames(eqtl2)[1] = "Pos"
+> eqtl2[,2] = vcfi[eqtl2[,2]]
+> write.table(eqtl2, res.trecase, row.names=F, col.names=T, quote=F, sep="\t")
+> 
+> # teqtl2 = read.table(res.trec, header=T, as.is=T)
+> # teqtl2[,1] = posi[teqtl2[,2]]; colnames(eqtl)[1] = "Pos"
+> # teqtl2[,2] = vcfi[teqtl2[,2]]
+> # write.table(teqtl2, res.trec, row.names=F, col.names=T, quote=F, sep="\t")
+> 
+> eqtl2
+       Pos             MarkerRowID TReC_b TReC_Chisq TReC_Pvalue TReC_beta0
+1 17577268 rs10939735:17578891:A:G -0.132      25.10  5.3690e-07      -7.76
+2 17632590  rs6825562:17634213:A:G -0.142       2.12  1.4501e-01      -7.53
+  TReC_beta1 TReC_beta2 TReC_beta3 TReC_beta4 TReC_phi   ASE_b ASE_theta
+1       2.27      -1.87     -0.962       1.05   0.0207 -0.0472   0.00126
+2       2.25      -1.88     -0.799       1.03   0.0224  0.0151   0.00161
+  ASE_Chisq ASE_Pvalue Joint_b Joint_Chisq Joint_Pvalue Joint_beta0 Joint_beta1
+1    15.500 8.2498e-05 -0.0617        31.7   1.8206e-08       -7.76        2.27
+2     0.175 6.7544e-01      NA          NA           NA          NA          NA
+  Joint_beta2 Joint_beta3 Joint_beta4 Joint_phi Joint_theta Converge
+1       -1.88      -0.902        1.05    0.0212     0.00131        1
+2          NA          NA          NA        NA          NA        4
+  CisTrans_Chisq CisTrans_Pvalue    p.final
+1           8.95       0.0027752 1.8206e-08
+2             NA              NA 1.4501e-01
+> eqtl
+       Pos             MarkerRowID    TReC_b TReC_Chisq TReC_df TReC_Pvalue
+1 17577268 rs10939735:17578891:A:G -0.132150     25.127       1    5.37e-07
+2 17632590  rs6825562:17634213:A:G -0.076334      2.127       1    1.45e-01
+      ASE_b ASE_Chisq ASE_df ASE_Pvalue Joint_b Joint_Chisq Joint_df
+1 -0.047200    15.485      1   8.32e-05      NA          NA       NA
+2  0.015136     0.176      1   6.75e-01      NA          NA       NA
+  Joint_Pvalue n_TReC n_ASE n_ASE_Het trans_Chisq trans_Pvalue final_Pvalue
+1           NA    280   135        98          NA           NA     5.37e-07
+2           NA    280   135         8          NA           NA     1.45e-01
+> 
+> proc.time()
+   user  system elapsed 
+  2.806   0.108   3.000 
