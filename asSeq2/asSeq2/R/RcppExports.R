@@ -141,8 +141,8 @@ Rcpp_ase_mtest <- function(Y1, Y2, Z, SNP_pos, sChr, gene_start, gene_end, gChr,
     invisible(.Call(`_asSeq2_Rcpp_ase_mtest`, Y1, Y2, Z, SNP_pos, sChr, gene_start, gene_end, gChr, file_ase, cis_window, min_ASE_total, min_nASE, min_nASE_het, eps, max_iter, show))
 }
 
-Rcpp_trecase_mtest <- function(Y, Y1, Y2, Z, XX, SNP_pos, sChr, fam_nb, gene_start, gene_end, gChr, file_trec = "trec.txt", file_trecase = "trecase.txt", cis_window = 1e5, useASE = 1L, min_ASE_total = 8L, min_nASE = 5L, min_nASE_het = 5L, eps = 1e-5, max_iter = 4000L, show = FALSE) {
-    invisible(.Call(`_asSeq2_Rcpp_trecase_mtest`, Y, Y1, Y2, Z, XX, SNP_pos, sChr, fam_nb, gene_start, gene_end, gChr, file_trec, file_trecase, cis_window, useASE, min_ASE_total, min_nASE, min_nASE_het, eps, max_iter, show))
+Rcpp_trecase_mtest <- function(Y, Y1, Y2, Z, XX, SNP_pos, sChr, fam_nb, gene_start, gene_end, gChr, GeneSnpList, file_trec = "trec.txt", file_trecase = "trecase.txt", cis_window = 1e5, useASE = 1L, min_ASE_total = 8L, min_nASE = 5L, min_nASE_het = 5L, eps = 1e-5, max_iter = 4000L, show = FALSE) {
+    invisible(.Call(`_asSeq2_Rcpp_trecase_mtest`, Y, Y1, Y2, Z, XX, SNP_pos, sChr, fam_nb, gene_start, gene_end, gChr, GeneSnpList, file_trec, file_trecase, cis_window, useASE, min_ASE_total, min_nASE, min_nASE_het, eps, max_iter, show))
 }
 
 Rcpp_norm <- function(a) {
@@ -223,5 +223,73 @@ RcppT_loglikBB_THETA <- function(ni, ni0, log_theta, pis, lbc) {
 
 RcppT_grad_BB_THETA <- function(ni, ni0, log_theta, pis) {
     .Call(`_asSeq2_RcppT_grad_BB_THETA`, ni, ni0, log_theta, pis)
+}
+
+RcppT_ase_theta_BFGS <- function(lg_theta, ni, ni0, pis, lbc, max_iter = 4e3L, eps = 1e-7, show = TRUE) {
+    .Call(`_asSeq2_RcppT_ase_theta_BFGS`, lg_theta, ni, ni0, pis, lbc, max_iter, eps, show)
+}
+
+RcppT_ase_KEG_BFGS <- function(para0, H0, z_AS, RHO_AS, ni0, ni, log_theta, tauB, tau, lbc, max_iter = 4e3L, eps = 1e-7, show = TRUE) {
+    .Call(`_asSeq2_RcppT_ase_KEG_BFGS`, para0, H0, z_AS, RHO_AS, ni0, ni, log_theta, tauB, tau, lbc, max_iter, eps, show)
+}
+
+RcppT_ase_sfit <- function(H0, para0, z_AS, RHO_AS, ni0, ni, tauB, tau, lbc, max_iter = 4e3L, eps = 1e-7, show = FALSE) {
+    .Call(`_asSeq2_RcppT_ase_sfit`, H0, para0, z_AS, RHO_AS, ni0, ni, tauB, tau, lbc, max_iter, eps, show)
+}
+
+RcppT_ase <- function(z_AS, RHO_AS, ni0, ni, tauB, tau, lbc, max_iter = 4e3L, eps = 1e-7, show = FALSE) {
+    .Call(`_asSeq2_RcppT_ase`, z_AS, RHO_AS, ni0, ni, tauB, tau, lbc, max_iter, eps, show)
+}
+
+RcppT_TReCASE_LL_KEG <- function(para, H0, y, z, z_AS, phi, RHO, RHO_AS, tau1, tau2, ni0, ni, log_theta, tauB, tau, lgy1, expXbeta, lbc, offsets, pis, mu) {
+    .Call(`_asSeq2_RcppT_TReCASE_LL_KEG`, para, H0, y, z, z_AS, phi, RHO, RHO_AS, tau1, tau2, ni0, ni, log_theta, tauB, tau, lgy1, expXbeta, lbc, offsets, pis, mu)
+}
+
+RcppT_TReCASE_LL <- function(y, phi, lgy1, mu, ni0, ni, log_theta, pis, lbc) {
+    .Call(`_asSeq2_RcppT_TReCASE_LL`, y, phi, lgy1, mu, ni0, ni, log_theta, pis, lbc)
+}
+
+RcppT_TReCASE_grad_KEG <- function(para, H0, y, z, z_AS, phi, RHO, RHO_AS, tau1, tau2, ni0, ni, log_theta, tauB, tau, lgy1, expXbeta, lbc, offsets, pis, mu) {
+    .Call(`_asSeq2_RcppT_TReCASE_grad_KEG`, para, H0, y, z, z_AS, phi, RHO, RHO_AS, tau1, tau2, ni0, ni, log_theta, tauB, tau, lgy1, expXbeta, lbc, offsets, pis, mu)
+}
+
+RcppT_trecase_KEG_BFGS <- function(para0, H0, y, z, z_AS, RHO, RHO_AS, X, BETA, phi, tau1, tau2, lgy1, ni0, ni, log_theta, tauB, tau, lbc, max_iter = 4e3L, eps = 1e-7, show = TRUE) {
+    .Call(`_asSeq2_RcppT_trecase_KEG_BFGS`, para0, H0, y, z, z_AS, RHO, RHO_AS, X, BETA, phi, tau1, tau2, lgy1, ni0, ni, log_theta, tauB, tau, lbc, max_iter, eps, show)
+}
+
+RcppT_trecase_sfit <- function(H0, para0, y, z, z_AS, RHO, RHO_AS, X, tau1, tau2, lgy1, ni0, ni, tauB, tau, lbc, max_iter = 4e3L, eps = 1e-7, show = FALSE) {
+    .Call(`_asSeq2_RcppT_trecase_sfit`, H0, para0, y, z, z_AS, RHO, RHO_AS, X, tau1, tau2, lgy1, ni0, ni, tauB, tau, lbc, max_iter, eps, show)
+}
+
+RcppT_trecase <- function(y, z, z_AS, RHO, RHO_AS, X, tau1, tau2, lgy1, ni0, ni, tauB, tau, lbc, max_iter = 4e3L, eps = 1e-7, show = FALSE) {
+    .Call(`_asSeq2_RcppT_trecase`, y, z, z_AS, RHO, RHO_AS, X, tau1, tau2, lgy1, ni0, ni, tauB, tau, lbc, max_iter, eps, show)
+}
+
+RcppT_TReC_ASE_LL_KEG <- function(KEG_EaseGase, y, z, z_AS, phi, RHO, RHO_AS, tau1, tau2, ni0, ni, log_theta, tauB, tau, lgy1, expXbeta, lbc, offsets, pis, mu) {
+    .Call(`_asSeq2_RcppT_TReC_ASE_LL_KEG`, KEG_EaseGase, y, z, z_AS, phi, RHO, RHO_AS, tau1, tau2, ni0, ni, log_theta, tauB, tau, lgy1, expXbeta, lbc, offsets, pis, mu)
+}
+
+RcppT_TReC_ASE_grad_KEG <- function(KEG_EaseGase, y, z, z_AS, phi, RHO, RHO_AS, tau1, tau2, ni0, ni, log_theta, tauB, tau, lgy1, expXbeta, lbc, offsets, pis, mu) {
+    .Call(`_asSeq2_RcppT_TReC_ASE_grad_KEG`, KEG_EaseGase, y, z, z_AS, phi, RHO, RHO_AS, tau1, tau2, ni0, ni, log_theta, tauB, tau, lgy1, expXbeta, lbc, offsets, pis, mu)
+}
+
+RcppT_trec_ase_KEG_BFGS <- function(para0, y, z, z_AS, RHO, RHO_AS, X, BETA, phi, tau1, tau2, lgy1, ni0, ni, log_theta, tauB, tau, lbc, max_iter = 4e3L, eps = 1e-7, show = TRUE) {
+    .Call(`_asSeq2_RcppT_trec_ase_KEG_BFGS`, para0, y, z, z_AS, RHO, RHO_AS, X, BETA, phi, tau1, tau2, lgy1, ni0, ni, log_theta, tauB, tau, lbc, max_iter, eps, show)
+}
+
+RcppT_trec_ase <- function(para0, y, z, z_AS, RHO, RHO_AS, X, tau1, tau2, lgy1, ni0, ni, tauB, tau, lbc, max_iter = 4e3L, eps = 1e-7, show = FALSE) {
+    .Call(`_asSeq2_RcppT_trec_ase`, para0, y, z, z_AS, RHO, RHO_AS, X, tau1, tau2, lgy1, ni0, ni, tauB, tau, lbc, max_iter, eps, show)
+}
+
+RcppT_CisTrans_ScoreObs <- function(para, y, z, z_AS, RHO, RHO_AS, X, BETA, phi, tau1, tau2, lgy1, ni0, ni, log_theta, tauB, tau, lbc) {
+    .Call(`_asSeq2_RcppT_CisTrans_ScoreObs`, para, y, z, z_AS, RHO, RHO_AS, X, BETA, phi, tau1, tau2, lgy1, ni0, ni, log_theta, tauB, tau, lbc)
+}
+
+RcppT_ASE_ExpFunc <- function(ni, pis_i, vtheta, Expvec) {
+    invisible(.Call(`_asSeq2_RcppT_ASE_ExpFunc`, ni, pis_i, vtheta, Expvec))
+}
+
+RcppT_CisTrans_Score <- function(para, y, z, z_AS, RHO, RHO_AS, X, BETA, phi, tau1, tau2, lgy1, ni0, ni, log_theta, tauB, tau, lbc) {
+    .Call(`_asSeq2_RcppT_CisTrans_Score`, para, y, z, z_AS, RHO, RHO_AS, X, BETA, phi, tau1, tau2, lgy1, ni0, ni, log_theta, tauB, tau, lbc)
 }
 

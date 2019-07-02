@@ -112,7 +112,7 @@ trecase <-
     }
     
     if(!all(colnames(geneloc) == c("gene", "chr", "start", 'end'))){
-      stop("colnames of SNPloc has to be c('gene', chr, 'start','end')")
+      stop("colnames of geneloc has to be c('gene', chr, 'start','end')")
     }
     
     # geneloc has to be sorted by chromosome
