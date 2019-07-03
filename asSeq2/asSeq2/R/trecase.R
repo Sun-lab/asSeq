@@ -1,6 +1,7 @@
 trecase <-
   function(Y, Y1 = NULL, Y2 = NULL, Z, XX, SNPloc, geneloc, GeneSnpList = list(),
-           fam_nb = T, file_trec = "trec.txt", file_trecase = "trecase.txt",
+           fam_nb = T, file_trec = "trec.txt", file_trecase = "trecase.txt", 
+           transTestP = 0.01,
            cis_window = 1e5L, useASE = 1L, min_ASE_total = 8L, min_nASE = 5L,
            min_nASE_het = 5L, eps = 5e-5, max_iter = 400L, show = FALSE)
   {
@@ -169,7 +170,7 @@ trecase <-
     
     Rcpp_trecase_mtest(Y, Y1, Y2, Z, XX, SNPloc$pos, SNPloc$chr, fam_nb, 
                        geneloc$start, geneloc$end, geneloc$chr, GeneSnpList,
-                       file_trec, file_trecase,
+                       file_trec, file_trecase, transTestP, 
                        cis_window, useASE, min_ASE_total, min_nASE,
                        min_nASE_het,
                        eps, max_iter, show)

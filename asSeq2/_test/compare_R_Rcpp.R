@@ -368,9 +368,20 @@ y2 = dat$total_phased - y1
 Y1 = cbind(y1,y1)
 Y2 = cbind(y2,y2)
 
+library(asSeq2)
+time1 = Sys.time()
+trecase(Y=Y, Y1=Y1, Y2=Y2, Z=ZZ, XX=XX, SNPloc=SNPloc, geneloc=geneloc,
+        GeneSnpList = list(), transTestP = 0.05,
+        file_trecase = "trecase2.txt",
+        fam_nb = T, eps=5e-5, show = F, useASE = 1)
+time2 = Sys.time()
+time2-time1
 
 time1 = Sys.time()
-trecase(Y, Y1, Y2 , ZZ, XX, SNPloc, geneloc, list(),fam_nb = T,eps=5e-5, show = F, useASE = 1)
+trecase(Y=Y, Y1=Y1, Y2=Y2, Z=ZZ, XX=XX, SNPloc=SNPloc, geneloc=geneloc,
+        GeneSnpList = list(NULL, c(47,60, 69)), transTestP = 0.05,
+        file_trecase = "trecase2.txt",
+        fam_nb = T, eps=5e-5, show = F, useASE = 1)
 time2 = Sys.time()
 time2-time1
 

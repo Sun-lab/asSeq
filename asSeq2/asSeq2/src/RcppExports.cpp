@@ -630,8 +630,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // Rcpp_trecase_mtest
-void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1, const arma::mat& Y2, const arma::mat& Z, const arma::mat& XX, const arma::vec& SNP_pos, const arma::uvec& sChr, const bool& fam_nb, const arma::vec& gene_start, const arma::vec& gene_end, const arma::uvec& gChr, const List& GeneSnpList, const char* file_trec, const char* file_trecase, const double& cis_window, const bool& useASE, const int& min_ASE_total, const int& min_nASE, const int& min_nASE_het, const double& eps, const arma::uword& max_iter, const bool& show);
-RcppExport SEXP _asSeq2_Rcpp_trecase_mtest(SEXP YSEXP, SEXP Y1SEXP, SEXP Y2SEXP, SEXP ZSEXP, SEXP XXSEXP, SEXP SNP_posSEXP, SEXP sChrSEXP, SEXP fam_nbSEXP, SEXP gene_startSEXP, SEXP gene_endSEXP, SEXP gChrSEXP, SEXP GeneSnpListSEXP, SEXP file_trecSEXP, SEXP file_trecaseSEXP, SEXP cis_windowSEXP, SEXP useASESEXP, SEXP min_ASE_totalSEXP, SEXP min_nASESEXP, SEXP min_nASE_hetSEXP, SEXP epsSEXP, SEXP max_iterSEXP, SEXP showSEXP) {
+void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1, const arma::mat& Y2, const arma::mat& Z, const arma::mat& XX, const arma::vec& SNP_pos, const arma::uvec& sChr, const bool& fam_nb, const arma::vec& gene_start, const arma::vec& gene_end, const arma::uvec& gChr, const List& GeneSnpList, const char* file_trec, const char* file_trecase, const double& transTestP, const double& cis_window, const bool& useASE, const int& min_ASE_total, const int& min_nASE, const int& min_nASE_het, const double& eps, const arma::uword& max_iter, const bool& show);
+RcppExport SEXP _asSeq2_Rcpp_trecase_mtest(SEXP YSEXP, SEXP Y1SEXP, SEXP Y2SEXP, SEXP ZSEXP, SEXP XXSEXP, SEXP SNP_posSEXP, SEXP sChrSEXP, SEXP fam_nbSEXP, SEXP gene_startSEXP, SEXP gene_endSEXP, SEXP gChrSEXP, SEXP GeneSnpListSEXP, SEXP file_trecSEXP, SEXP file_trecaseSEXP, SEXP transTestPSEXP, SEXP cis_windowSEXP, SEXP useASESEXP, SEXP min_ASE_totalSEXP, SEXP min_nASESEXP, SEXP min_nASE_hetSEXP, SEXP epsSEXP, SEXP max_iterSEXP, SEXP showSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::mat& >::type Y(YSEXP);
@@ -648,6 +648,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const List& >::type GeneSnpList(GeneSnpListSEXP);
     Rcpp::traits::input_parameter< const char* >::type file_trec(file_trecSEXP);
     Rcpp::traits::input_parameter< const char* >::type file_trecase(file_trecaseSEXP);
+    Rcpp::traits::input_parameter< const double& >::type transTestP(transTestPSEXP);
     Rcpp::traits::input_parameter< const double& >::type cis_window(cis_windowSEXP);
     Rcpp::traits::input_parameter< const bool& >::type useASE(useASESEXP);
     Rcpp::traits::input_parameter< const int& >::type min_ASE_total(min_ASE_totalSEXP);
@@ -656,7 +657,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const double& >::type eps(epsSEXP);
     Rcpp::traits::input_parameter< const arma::uword& >::type max_iter(max_iterSEXP);
     Rcpp::traits::input_parameter< const bool& >::type show(showSEXP);
-    Rcpp_trecase_mtest(Y, Y1, Y2, Z, XX, SNP_pos, sChr, fam_nb, gene_start, gene_end, gChr, GeneSnpList, file_trec, file_trecase, cis_window, useASE, min_ASE_total, min_nASE, min_nASE_het, eps, max_iter, show);
+    Rcpp_trecase_mtest(Y, Y1, Y2, Z, XX, SNP_pos, sChr, fam_nb, gene_start, gene_end, gChr, GeneSnpList, file_trec, file_trecase, transTestP, cis_window, useASE, min_ASE_total, min_nASE, min_nASE_het, eps, max_iter, show);
     return R_NilValue;
 END_RCPP
 }
@@ -1469,7 +1470,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_asSeq2_Rcpp_trecase_BFGS", (DL_FUNC) &_asSeq2_Rcpp_trecase_BFGS, 16},
     {"_asSeq2_Rcpp_trecase", (DL_FUNC) &_asSeq2_Rcpp_trecase, 17},
     {"_asSeq2_Rcpp_ase_mtest", (DL_FUNC) &_asSeq2_Rcpp_ase_mtest, 16},
-    {"_asSeq2_Rcpp_trecase_mtest", (DL_FUNC) &_asSeq2_Rcpp_trecase_mtest, 22},
+    {"_asSeq2_Rcpp_trecase_mtest", (DL_FUNC) &_asSeq2_Rcpp_trecase_mtest, 23},
     {"_asSeq2_Rcpp_norm", (DL_FUNC) &_asSeq2_Rcpp_norm, 1},
     {"_asSeq2_Rcpp_logSumExp", (DL_FUNC) &_asSeq2_Rcpp_logSumExp, 1},
     {"_asSeq2_Rcpp_min_diff", (DL_FUNC) &_asSeq2_Rcpp_min_diff, 1},

@@ -141,8 +141,8 @@ Rcpp_ase_mtest <- function(Y1, Y2, Z, SNP_pos, sChr, gene_start, gene_end, gChr,
     invisible(.Call(`_asSeq2_Rcpp_ase_mtest`, Y1, Y2, Z, SNP_pos, sChr, gene_start, gene_end, gChr, file_ase, cis_window, min_ASE_total, min_nASE, min_nASE_het, eps, max_iter, show))
 }
 
-Rcpp_trecase_mtest <- function(Y, Y1, Y2, Z, XX, SNP_pos, sChr, fam_nb, gene_start, gene_end, gChr, GeneSnpList, file_trec = "trec.txt", file_trecase = "trecase.txt", cis_window = 1e5, useASE = 1L, min_ASE_total = 8L, min_nASE = 5L, min_nASE_het = 5L, eps = 1e-5, max_iter = 4000L, show = FALSE) {
-    invisible(.Call(`_asSeq2_Rcpp_trecase_mtest`, Y, Y1, Y2, Z, XX, SNP_pos, sChr, fam_nb, gene_start, gene_end, gChr, GeneSnpList, file_trec, file_trecase, cis_window, useASE, min_ASE_total, min_nASE, min_nASE_het, eps, max_iter, show))
+Rcpp_trecase_mtest <- function(Y, Y1, Y2, Z, XX, SNP_pos, sChr, fam_nb, gene_start, gene_end, gChr, GeneSnpList, file_trec = "trec.txt", file_trecase = "trecase.txt", transTestP = 0.01, cis_window = 1e5, useASE = 1L, min_ASE_total = 8L, min_nASE = 5L, min_nASE_het = 5L, eps = 1e-5, max_iter = 4000L, show = FALSE) {
+    invisible(.Call(`_asSeq2_Rcpp_trecase_mtest`, Y, Y1, Y2, Z, XX, SNP_pos, sChr, fam_nb, gene_start, gene_end, gChr, GeneSnpList, file_trec, file_trecase, transTestP, cis_window, useASE, min_ASE_total, min_nASE, min_nASE_het, eps, max_iter, show))
 }
 
 Rcpp_norm <- function(a) {

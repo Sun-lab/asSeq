@@ -2284,6 +2284,7 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
                         const List& GeneSnpList, 
                         const char* file_trec = "trec.txt",
                         const char* file_trecase = "trecase.txt",
+                        const double& transTestP = 0.01,
                         const double& cis_window=1e5,
                         const bool& useASE = 1, const int& min_ASE_total=8,
                         const int& min_nASE= 5, const int& min_nASE_het=5,
@@ -2350,9 +2351,11 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
   if(GeneSnpList.length() > 0){
     for(gg=0; gg<GeneSnpList.length(); gg++){
       
+      if(GeneSnpList[gg]==R_NilValue){
+        continue;
+      }
       Rprintf("gene %d \n", gg+1);
       y  = Y.col(gg);
-      
       
       ini_bxj = 0.0;
       lgy1 = Rcpp_lgy_add_1(y); //lgamma(y + 1)
@@ -2412,14 +2415,11 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
         // }
       }
       
-      if(GeneSnpList[gg]==R_NilValue){
-        continue;
-      }
       arma::vec ssVec = GeneSnpList[gg]; 
       
       for(ssBegin = 0; ssBegin < ssVec.n_elem; ssBegin++){
         
-        ss = ssVec.at(ssBegin);
+        ss = ssVec.at(ssBegin)-1;
         arma::vec zz2 = Z.col(ss);
         arma::vec zz  = Z.col(ss);
         
@@ -2538,7 +2538,7 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
                       as<double>(res_trecase["Trec_pval"]));
             }else{  
               
-              if(as<double>(res_trecase["CisTrans_pval"]) < 0.01){
+              if(as<double>(res_trecase["CisTrans_pval"]) >= transTestP){
                 pfinal = as<double>(res_trecase["pval"]);
               }
               fprintf(f2, "%.2e\t%.2e\t%.4e\t",
@@ -2835,7 +2835,7 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
                       as<double>(res_trecase["Trec_pval"]));
             }else{  
               
-              if(as<double>(res_trecase["CisTrans_pval"]) < 0.01){
+              if(as<double>(res_trecase["CisTrans_pval"]) >= transTestP){
                 pfinal = as<double>(res_trecase["pval"]);
               }
               fprintf(f2, "%.2e\t%.2e\t%.4e\t",
