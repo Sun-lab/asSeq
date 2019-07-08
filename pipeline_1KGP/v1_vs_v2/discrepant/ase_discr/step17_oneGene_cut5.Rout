@@ -1,0 +1,173 @@
+
+R version 3.3.1 (2016-06-21) -- "Bug in Your Hair"
+Copyright (C) 2016 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+>   tot = read.table("gene_tot.dat", as.is=T)
+>   a1 = read.table("gene_a1.dat", as.is=T)
+>   a2 = read.table("gene_a2.dat", as.is=T)
+>   inf = read.table("gene_inf.dat", as.is=T)
+>   gens = read.table("gene_gens.dat", as.is=T)
+>   vcfs = read.table("gene_vcfs.dat", as.is=T)
+>   sam = read.table("Xmat.dat", as.is=T, header=F)
+>   sam = matrix(unlist(sam), nrow=nrow(sam))
+>   
+>   tot = matrix(unlist(tot), nrow=1)
+>   a1 = matrix(unlist(a1), nrow=1)
+>   a2 = matrix(unlist(a2), nrow=1)
+>   
+>   nr=nrow(gens)
+>   gens = matrix(as.numeric(unlist(gens)),nrow=nr)
+>   chri = as.numeric(gsub("chr", "", inf[1,2]))
+>   #v1     
+>   #detach("package:asSeq2")
+>   library(asSeq, lib.loc="/nas/longleaf/home/zhabotyn/progs/Rlib")
+>   mChr = rep(chri, nr)
+>   eChr = rep(chri, nrow(tot))
+>   
+>   res.fil = sprintf("v1_%s", inf[,1])
+>   res.lon = sprintf("%s_eqtl.txt", res.fil)
+>   
+>   
+>   ePos = inf[,3]
+>   eEnd = inf[,4]
+>   eExt = eEnd-ePos
+>   pos = round((ePos+eEnd)/2)
+>   vcfi = vcfs[,1]
+>   posi = vcfs[,2]
+>   
+>   trecase(Y=t(tot), Y1=t(a1), Y2=t(a2), X=sam, Z=t(gens[,-1]), output.tag=res.fil, p.cut=1,
++   eChr=eChr, ePos=pos, mChr=mChr, mPos=gens[,1], local.distance=2e5)
+
+--------------------------------------------------
+(nY, nZ, nX, N, maxit) = (1, 18, 4, 280, 100)
+(useOffset, min_nT, min_N, min_Nhet) = (0, 5, 5, 5)
+P_cut=1.000000e+00
+--------------------------------------------------
+
+i=0
+
+------------------------------------------------------
+total time spent is 3 secs
+------------------------------------------------------
+$succeed
+[1] 1
+
+$yFailBaselineModel
+[1] 0
+
+>   
+>   eqtl = read.table(res.lon, header=T, as.is=T)
+>   eqtl[,1] = posi[eqtl[,2]]; colnames(eqtl)[1] = "Pos"
+>   eqtl[,2] = vcfi[eqtl[,2]]
+>   write.table(eqtl, res.lon, row.names=F, col.names=T, quote=F, sep="\t")
+>   message("done version 1")
+done version 1
+>   
+>   
+>   
+>   #v2
+>   res.fil = sprintf("v2_%s", inf[,1])
+>   res.trecase = sprintf("%s_trecase.txt", res.fil)
+>   res.trec = sprintf("%s_trec.txt", res.fil)
+>   
+>   for(geni in 2:ncol(gens)){
++     kp = gens[,geni] == 3
++     gens[kp, geni] = 2
++     kp = gens[,geni] == 4
++     gens[kp, geni] = 3
++   }
+>   
+> pos = round((ePos+eEnd)/2)
+> geneloc = inf
+> colnames(geneloc) = c("gene", "chr", "start", "end")
+> 
+> SNPloc = data.frame(snp=sprintf("SNP%s",1:nrow(gens)),
++                     chr=rep(inf[1,2],nrow(gens)),
++                     pos=gens[,1], stringsAsFactors = F)
+> str(SNPloc)
+'data.frame':	18 obs. of  3 variables:
+ $ snp: chr  "SNP1" "SNP2" "SNP3" "SNP4" ...
+ $ chr: int  7 7 7 7 7 7 7 7 7 7 ...
+ $ pos: num  1.32e+08 1.32e+08 1.32e+08 1.32e+08 1.32e+08 ...
+>   
+>   detach("package:asSeq")
+>   library(asSeq2, lib.loc="/nas/longleaf/home/zhabotyn/progs/Rlib/")
+> res = trecase(Y=t(tot), Y1=t(a1), Y2=t(a2), XX=sam, Z=t(gens[,-1]), min_ASE_total = 5, min_nASE = 5,
++               file_trecase=res.trecase, file_trec=res.trec, geneloc=geneloc, SNPloc=SNPloc, cis_window=2e5)
+gene 1 
+> 
+> 
+> eqtl2 = read.table(res.trecase, header=T, as.is=T)
+> eqtl2[,1] = posi[eqtl2[,2]]; colnames(eqtl2)[1] = "Pos"
+> eqtl2[,2] = vcfi[eqtl2[,2]]
+> write.table(eqtl2, res.trecase, row.names=F, col.names=T, quote=F, sep="\t")
+> 
+> 
+> eqtl2[1:4,]
+        Pos              MarkerRowID TReC_b TReC_Chisq TReC_Pvalue TReC_beta0
+1 131660390       chr7:131345149:T:C 0.0375      0.220     0.63886      -6.21
+2 131661436       chr7:131346195:G:A 0.0816      0.971     0.32438      -6.20
+3 131662250  rs3885619:131347009:T:C 0.0907      1.190     0.27598      -6.23
+4 131664613 rs34042412:131349372:A:G 0.0816      0.971     0.32438      -6.20
+  TReC_beta1 TReC_beta2 TReC_beta3 TReC_beta4 TReC_phi ASE_b ASE_theta
+1       1.42      0.678      0.937      -1.49    0.134 -6.63   9.1e-06
+2       1.42      0.675      0.883      -1.48    0.133 -6.63   9.1e-06
+3       1.43      0.672      0.869      -1.49    0.133 -6.63   9.1e-06
+4       1.42      0.675      0.883      -1.48    0.133 -6.63   9.1e-06
+  ASE_Chisq ASE_Pvalue Joint_b Joint_Chisq Joint_Pvalue Joint_beta0 Joint_beta1
+1      96.8 7.5352e-23  -0.182        5.05     0.024581       -6.11        1.42
+2      96.8 7.5352e-23  -0.156        3.46     0.063031       -6.17        1.42
+3      96.8 7.5352e-23  -0.150        3.16     0.075486       -6.14        1.42
+4      96.8 7.5352e-23  -0.156        3.46     0.063031       -6.17        1.42
+  Joint_beta2 Joint_beta3 Joint_beta4 Joint_phi Joint_theta Converge
+1       0.774       0.918       -1.31     0.138        88.0        1
+2       0.735       1.030       -1.41     0.138        89.2        1
+3       0.735       1.040       -1.41     0.138        89.5        1
+4       0.735       1.030       -1.41     0.138        89.2        1
+  CisTrans_Chisq CisTrans_Pvalue  p.final
+1           92.0      8.6586e-22 0.024581
+2           94.4      2.6433e-22 0.063031
+3           94.9      2.0410e-22 0.075486
+4           94.4      2.6433e-22 0.063031
+> eqtl[1:4,]
+        Pos              MarkerRowID   TReC_b TReC_Chisq TReC_df TReC_Pvalue
+1 131660390       chr7:131345149:T:C 0.037476      0.220       1       0.639
+2 131661436       chr7:131346195:G:A 0.081588      0.971       1       0.324
+3 131662250  rs3885619:131347009:T:C 0.090728      1.187       1       0.276
+4 131664613 rs34042412:131349372:A:G 0.081588      0.971       1       0.324
+    ASE_b ASE_Chisq ASE_df ASE_Pvalue Joint_b Joint_Chisq Joint_df Joint_Pvalue
+1 -4.2623    88.507      1   5.07e-21      NA          NA       NA           NA
+2 -4.2623    88.507      1   5.07e-21      NA          NA       NA           NA
+3 -4.2623    88.507      1   5.07e-21      NA          NA       NA           NA
+4 -4.2623    88.507      1   5.07e-21      NA          NA       NA           NA
+  n_TReC n_ASE n_ASE_Het trans_Chisq trans_Pvalue final_Pvalue
+1    280    69        69          NA           NA        0.639
+2    280    69        69          NA           NA        0.324
+3    280    69        69          NA           NA        0.276
+4    280    69        69          NA           NA        0.324
+> 
+> log10(eqtl2$ASE_Pvalue)-log10(eqtl$ASE_Pvalue)
+ [1] -1.827913 -1.827913 -1.827913 -1.827913 -1.112052 -1.827913 -1.827913
+ [8] -1.827913 -1.827913 -1.112052 -1.827913 -1.827913 -1.827913 -1.827913
+[15] -1.112052 -1.827913 -1.827913 -1.827913
+> 
+> 
+> q("no")
+> proc.time()
+   user  system elapsed 
+  4.303   0.037   4.378 
