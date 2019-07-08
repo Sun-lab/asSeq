@@ -65,29 +65,19 @@ str(SNPloc)
   
   detach("package:asSeq")
   library(asSeq2, lib.loc="/nas/longleaf/home/zhabotyn/progs/Rlib/")
-# (Y, Y1 = NULL, Y2 = NULL, Z, XX, SNPloc, geneloc, GeneSnpList = list(), 
-#    fam_nb = T, file_trec = "trec.txt", file_trecase = "trecase.txt", 
-#    cis_window = 100000L, useASE = 1L, min_ASE_total = 8L, min_nASE = 5L, 
-#    min_nASE_het = 5L, eps = 5e-05, max_iter = 400L, show = FALSE) 
 res = trecase(Y=t(tot), Y1=t(a1), Y2=t(a2), XX=sam, Z=t(gens[,-1]), min_ASE_total = 5, min_nASE = 5,
               file_trecase=res.trecase, file_trec=res.trec, geneloc=geneloc, SNPloc=SNPloc, cis_window=2e5)
 
-#res = trecase(Y=t(tot), Y1=t(a1), Y2=t(a2), XX=sam, Z=t(gens[,-1]),
-#              file_trecase=res.trecase, file_trec=res.trec, geneloc=geneloc, 
-#              SNPloc=SNPloc, cis_window=2e5)
 
 eqtl2 = read.table(res.trecase, header=T, as.is=T)
 eqtl2[,1] = posi[eqtl2[,2]]; colnames(eqtl2)[1] = "Pos"
 eqtl2[,2] = vcfi[eqtl2[,2]]
 write.table(eqtl2, res.trecase, row.names=F, col.names=T, quote=F, sep="\t")
 
-#teqtl2 = read.table(res.trec, header=T, as.is=T)
-#teqtl2[,1] = posi[teqtl2[,2]]; colnames(eqtl)[1] = "Pos"
-#teqtl2[,2] = vcfi[teqtl2[,2]]
-#write.table(teqtl2, res.trec, row.names=F, col.names=T, quote=F, sep="\t")
 
-eqtl2
-eqtl
+eqtl2[1:4,]
+eqtl[1:4,]
 
+log10(eqtl2$Joint_Pvalue)-log10(eqtl$Joint_Pvalue)
 
 q("no")

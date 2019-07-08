@@ -15,7 +15,6 @@
   gens = matrix(as.numeric(unlist(gens)),nrow=nr)
   chri = inf[1,2]
   #v1     
-  #detach("package:asSeq2")
   library(asSeq, lib.loc="/nas/longleaf/home/zhabotyn/progs/Rlib")
   mChr = rep(chri, nr)
   eChr = rep(chri, nrow(tot))
@@ -54,14 +53,12 @@
     gens[kp, geni] = 3
   }
   
-pos = round((ePos+eEnd)/2)
-geneloc = inf
-colnames(geneloc) = c("gene", "chr", "start", "end")
-
-SNPloc = data.frame(snp=sprintf("SNP%s",1:nrow(gens)),
-                    chr=rep(inf[1,2],nrow(gens)),
-                    pos=gens[,1], stringsAsFactors = F)
-str(SNPloc)
+  pos = round((ePos+eEnd)/2)
+  geneloc = inf
+  colnames(geneloc) = c("gene", "chr", "start", "end")
+  SNPloc = cbind(sprintf("SNP%s",1:nrow(gens)),rep(inf[1,2],nrow(gens)), gens[,1])
+  SNPloc = data.frame(SNPloc)
+  colnames(SNPloc) = c("id", "")
   
   detach("package:asSeq")
   library(asSeq2, lib.loc="/nas/longleaf/home/zhabotyn/progs/Rlib/")
@@ -72,19 +69,15 @@ str(SNPloc)
 res = trecase(Y=t(tot), Y1=t(a1), Y2=t(a2), XX=sam, Z=t(gens[,-1]), min_ASE_total = 5, min_nASE = 5,
               file_trecase=res.trecase, file_trec=res.trec, geneloc=geneloc, SNPloc=SNPloc, cis_window=2e5)
 
-#res = trecase(Y=t(tot), Y1=t(a1), Y2=t(a2), XX=sam, Z=t(gens[,-1]),
-#              file_trecase=res.trecase, file_trec=res.trec, geneloc=geneloc, 
-#              SNPloc=SNPloc, cis_window=2e5)
-
 eqtl2 = read.table(res.trecase, header=T, as.is=T)
 eqtl2[,1] = posi[eqtl2[,2]]; colnames(eqtl2)[1] = "Pos"
 eqtl2[,2] = vcfi[eqtl2[,2]]
 write.table(eqtl2, res.trecase, row.names=F, col.names=T, quote=F, sep="\t")
 
-#teqtl2 = read.table(res.trec, header=T, as.is=T)
-#teqtl2[,1] = posi[teqtl2[,2]]; colnames(eqtl)[1] = "Pos"
-#teqtl2[,2] = vcfi[teqtl2[,2]]
-#write.table(teqtl2, res.trec, row.names=F, col.names=T, quote=F, sep="\t")
+teqtl2 = read.table(res.trec, header=T, as.is=T)
+teqtl2[,1] = posi[teqtl2[,2]]; colnames(eqtl)[1] = "Pos"
+teqtl2[,2] = vcfi[teqtl2[,2]]
+write.table(teqtl2, res.trec, row.names=F, col.names=T, quote=F, sep="\t")
 
 eqtl2
 eqtl
