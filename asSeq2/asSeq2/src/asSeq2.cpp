@@ -2236,6 +2236,7 @@ void Rcpp_ase_mtest(const arma::mat& Y1, const arma::mat& Y2,
               zeta.at(h0) = 1;
               h1++;
             }
+            lbc.at(h0) = R::lchoose(ni.at(h0), y1.at(ii));
             h0++;
           }
         }
@@ -2446,11 +2447,12 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
                 zeta.at(h0) = 1;
                 h1++;
               }
+              lbc.at(h0) = R::lchoose(ni.at(h0), y1.at(ii));
               h0++;
             }
           }
           
-          if(h1 < min_nASE_het){
+          if(h1 < min_nASE_het | h0 < min_nASE){
             // can still run trec model
             // Rprintf("sample size of heterzygous genotype is not enough for SNP %d\n",
             //         ss+1);
@@ -2747,7 +2749,7 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
             }
           }
           
-          if(h1 < min_nASE_het){
+          if(h1 < min_nASE_het | h0 < min_nASE){
             // can still run trec model
             // Rprintf("sample size of heterzygous genotype is not enough for SNP %d\n",
             //         ss+1);

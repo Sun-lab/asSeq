@@ -5,11 +5,11 @@
 #include "shared.h"
 
 // [[Rcpp::depends("RcppArmadillo")]]
-
-template<typename T>
-void printR_obj(const T& obj){
-  Rcpp::Rcout << obj << std::endl;
-}
+// 
+// template<typename T>
+// void printR_obj(const T& obj){
+//   Rcpp::Rcout << obj << std::endl;
+// }
 
 // ----------------------------------------------------------------------
 // Negative Binomial (TREC)
@@ -2603,5 +2603,369 @@ Rcpp::List RcppT_CisTrans_Score(const arma::vec& para, const arma::vec& y,
     Rcpp::Named("Score", Score.at(0,0)),
     Rcpp::Named("pval", pval)
   );
+}
+
+/* ---------------------------
+ * SNP-GENE pair
+ ---------------------------*/
+
+// [[Rcpp::export]]
+void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
+                         const arma::mat& Y2, const arma::mat& Z,
+                         const arma::mat& XX, const arma::vec& RHO,
+                         const arma::mat& CNV1, const arma::mat& CNV2,
+                         const arma::vec& SNP_pos,
+                         const arma::uvec& sChr,
+                         const arma::vec& gene_start,
+                         const arma::vec& gene_end,
+                         const arma::uvec& gChr,
+                         const List& GeneSnpList,
+                         const char* file_trec = "trecT.txt",
+                         const char* file_trecase = "trecaseT.txt",
+                         const bool& useLRT = false,
+                         const double& transTestP = 0.01,
+                         const double& cis_window=1e5,
+                         const bool& useASE = 1, const int& min_ASE_total=8,
+                         const int& min_nASE= 5, const int& min_nASE_het=5,
+                         const double& eps=1e-5,
+                         const arma::uword& max_iter=4000L,
+                         const bool& show=false){
+  arma::uword gg, ss, ii, xi, h1, h0, z0;
+  arma::uword ssBegin = 0;
+  double nSam = Y.n_rows;
+  double ctcode = -1.0;
+  double CisTrans_Chisq, CisTrans_Pval, log_theta, phi;
+  int converge =0;
+  // double pp = XX.n_cols+1;;
+  arma::vec _y      = arma::zeros<arma::vec>(nSam);
+  arma::vec y       = arma::zeros<arma::vec>(nSam);
+  arma::vec z       = arma::zeros<arma::vec>(nSam);
+  
+  arma::vec y1      = arma::zeros<arma::vec>(nSam);
+  arma::vec y2      = arma::zeros<arma::vec>(nSam);
+  arma::vec RHO1    = arma::zeros<arma::vec>(nSam);
+  
+  arma::vec RHO_AS  = arma::zeros<arma::vec>(nSam);
+  
+  arma::vec _tau1   = arma::zeros<arma::vec>(nSam);
+  arma::vec _tau2   = arma::zeros<arma::vec>(nSam);
+  
+  arma::vec tau1    = arma::zeros<arma::vec>(nSam);
+  arma::vec tau2    = arma::zeros<arma::vec>(nSam);
+  arma::vec tauB    = arma::zeros<arma::vec>(nSam);
+  arma::vec tau     = arma::zeros<arma::vec>(nSam);
+  arma::mat X       = arma::zeros<arma::mat>(nSam, XX.n_cols);
+  
+  arma::vec ni   = arma::zeros<arma::vec>(nSam);
+  arma::vec lbc  = arma::zeros<arma::vec>(nSam);
+  arma::vec ni0  = arma::zeros<arma::vec>(nSam);
+  arma::vec z_AS = arma::zeros<arma::vec>(nSam);
+  
+  // arma::vec offsets = arma::zeros<arma::vec>(nSam);
+  
+  Rcpp::List res_trec, res_trecase, CT_score, res_ase, res_trec_ase;
+  arma::vec PAR = arma::zeros<arma::vec>(3);
+  arma::vec reg_par = arma::zeros<arma::vec>(XX.n_cols);
+  
+  //create files for TReC and TReCASE results
+  FILE * f1, * f2;
+  
+  if(useASE){
+    
+    f2 = fopen(file_trecase, "w");
+    
+    fprintf(f2, "GeneRowID\tMarkerRowID\tTReCASE_kappa\tTReCASE_eta\tTReCASE_gamma\t");
+    fprintf(f2, "TReCASE_LL.full\tTReCASE_pEta\tTReCASE_pGamma\t");
+    for(xi=0;xi<XX.n_cols;xi++){
+      fprintf(f2, "TReCASE_beta%d\t", xi);
+    }
+    fprintf(f2, "TReCASE_phi\tTReCASE_theta\t");
+    fprintf(f2, "Converge\tCisTrans_Chisq\t");
+    fprintf(f2, "CisTrans_Pvalue\tnSam\tnHet\n");
+  }else{
+    f1 = fopen(file_trec, "w");
+    fprintf(f1, "GeneRowID\tMarkerRowID\tTReC_kappa\tTReC_eta\tTReC_gamma\t");
+    fprintf(f1, "TReC_LL.full\tTReC_pEta\tTReC_pGamma\tTReC_Conv\t");
+    for(xi=0;xi<XX.n_cols;xi++){
+      fprintf(f1, "beta%d\t", xi);
+    }
+    fprintf(f1, "phi\tnSam\n");
+  }
+  
+  if(GeneSnpList.length() > 0){
+    
+    for(gg=0; gg<GeneSnpList.length(); gg++){
+      
+      Rprintf("gene %d \n", gg+1);
+      
+      if(GeneSnpList[gg]==R_NilValue){
+        continue;
+      }
+      _y    = Y.col(gg);
+      _tau1 = CNV1.col(gg);
+      _tau2 = CNV2.col(gg);
+      if(useASE){
+        y1 = Y1.col(gg);
+        y2 = Y2.col(gg);
+      }
+      
+      //loop through the matrix to exclude NA value
+      //organize tau1 tau2 tauB tau 
+      arma::vec ssVec = GeneSnpList[gg]; 
+      
+      for(ssBegin = 0; ssBegin < ssVec.n_elem; ssBegin++){
+        ss = ssVec.at(ssBegin)-1;
+        Rprintf("ss %d \n", ss+1);
+        
+        arma::vec zz2 = Z.col(ss);
+        h1 = 0, h0 = 0, z0 = 0;
+        X.zeros();
+        z.zeros();
+        y.zeros();
+        z_AS.zeros();
+        ni.zeros();
+        ni0.zeros();
+        tau1.zeros();
+        tau2.zeros();
+        tauB.zeros();
+        tau.zeros();
+        RHO1.zeros();
+        RHO_AS.zeros();
+        lbc.zeros();
+        
+        for(ii=0;ii<nSam;ii++){
+          
+          if(zz2.at(ii) != -9 & _tau1.at(ii) != -9 | _tau2.at(ii) != -9){
+            z.at(z0)    = zz2.at(ii);
+            X.row(z0)   = XX.row(ii);
+            y.at(z0)    = _y.at(ii);
+            tau1.at(z0) = _tau1.at(ii);
+            tau2.at(z0) = _tau2.at(ii);
+            RHO1.at(z0) = RHO.at(ii);
+            if(zz2.at(ii)==2){
+              z.at(z0) = 1;
+            }else if(zz2.at(ii)==3){
+              z.at(z0) = 2;
+            }
+            
+            if(useASE){
+              if(y1.at(ii) + y2.at(ii) >= min_ASE_total){
+                
+                z_AS.at(h0) = zz2.at(ii);
+                ni.at(h0)   = y1.at(ii) + y2.at(ii);
+                tau.at(h0)  = _tau1.at(ii) + _tau2.at(ii);
+                RHO_AS.at(h0) = RHO.at(ii);
+                
+                if(zz2.at(ii)==1){
+                  ni0.at(h0) = y2.at(ii);
+                  tauB.at(h0) = _tau2.at(ii); 
+                  h1++;
+                }else if(zz2.at(ii)==2){
+                  ni0.at(h0) = y1.at(ii);
+                  tauB.at(h0) = _tau1.at(ii);
+                  h1++;
+                }else if(zz2.at(ii)==0){
+                  tauB.at(h0) = _tau2.at(ii); 
+                  ni0.at(h0)  = y2.at(ii);
+                }else if(zz2.at(ii)==3){
+                  tauB.at(h0) = _tau1.at(ii);
+                  ni0.at(h0)  = y1.at(ii);
+                }
+                lbc.at(h0) = R::lchoose(ni.at(h0), ni0.at(h0));
+                h0++;
+              }
+            }
+            z0++;
+          }
+        }        
+        arma::vec lgy1 = Rcpp_lgy_add_1(y.subvec(0, z0-1)); //lgamma(y + 1)
+        
+        // begin tracase
+        if(useASE & h1 >= min_nASE_het & h0 >= min_nASE){
+          res_trecase = RcppT_trecase(y.subvec(0, z0-1), z.subvec(0, z0-1), 
+                                      z_AS.subvec(0, h0-1), RHO1.subvec(0, z0-1), 
+                                      RHO_AS.subvec(0, h0-1), X.rows(0, z0-1),
+                                      tau1.subvec(0, z0-1), tau2.subvec(0, z0-1), 
+                                      lgy1,
+                                      ni0.subvec(0, h0-1), ni.subvec(0, h0-1), 
+                                      tauB.subvec(0, h0-1), tau.subvec(0, h0-1), 
+                                      lbc.subvec(0, h0-1),
+                                      max_iter, eps, show);
+          PAR = as<arma::vec>(res_trecase["PAR"]); 
+          reg_par = as<arma::vec>(res_trecase["reg_par"]);
+          arma::vec BETA = reg_par.subvec(0,X.n_cols-1);
+          phi = exp(reg_par.at(X.n_cols));
+          log_theta = res_trecase["log_theta"];
+          converge = res_trecase["converge"];
+          Rprintf("phi %.2f\n",phi);
+          Rprintf("log_theta %.2f\n",log_theta);
+          Rprintf("trecase converge %d\n",converge);
+          
+          if(converge){
+            if(!useLRT){
+              Rprintf("OBS");
+              CT_score = RcppT_CisTrans_ScoreObs(PAR, y.subvec(0, z0-1),
+                                                 z.subvec(0, z0-1), 
+                                                 z_AS.subvec(0, h0-1), RHO1.subvec(0, z0-1), 
+                                                 RHO_AS.subvec(0, h0-1), X.rows(0, z0-1), 
+                                                 BETA, phi,
+                                                 tau1.subvec(0, z0-1), tau2.subvec(0, z0-1),
+                                                 lgy1,
+                                                 ni0.subvec(0, h0-1), ni.subvec(0, h0-1), 
+                                                 log_theta,
+                                                 tauB.subvec(0, h0-1), tau.subvec(0, h0-1), 
+                                                 lbc.subvec(0, h0-1));
+              CisTrans_Chisq = as<double>(CT_score["Score"]);
+              CisTrans_Pval = as<double>(CT_score["pval"]);
+              
+              if(CisTrans_Chisq < 0.0){
+                Rprintf("EXP");
+                CT_score = RcppT_CisTrans_Score(PAR, y.subvec(0, z0-1),
+                                                z.subvec(0, z0-1), 
+                                                z_AS.subvec(0, h0-1), RHO1.subvec(0, z0-1), 
+                                                RHO_AS.subvec(0, h0-1), X.rows(0, z0-1), 
+                                                BETA, phi,
+                                                tau1.subvec(0, z0-1), tau2.subvec(0, z0-1),
+                                                lgy1,
+                                                ni0.subvec(0, h0-1), ni.subvec(0, h0-1), 
+                                                log_theta,
+                                                tauB.subvec(0, h0-1), tau.subvec(0, h0-1), 
+                                                lbc.subvec(0, h0-1));
+
+                
+              }
+              CisTrans_Chisq = as<double>(CT_score["Score"]);
+              CisTrans_Pval = as<double>(CT_score["pval"]);
+              ctcode = CisTrans_Chisq; 
+              if(CisTrans_Pval < transTestP){
+                ctcode = -2.0;
+              }
+              Rprintf("pval %.8f\n",CisTrans_Pval);
+              Rprintf("ct code %.2f\n",ctcode);
+              
+            }
+            
+            if(useLRT | CisTrans_Chisq < 0){ 
+              Rprintf("lrt\n");
+              arma::vec para0 = arma::zeros<arma::vec>(5);
+              res_trec_ase = RcppT_trec_ase(para0, y.subvec(0, z0-1), z.subvec(0, z0-1),
+                                            z_AS.subvec(0, h0-1), RHO1.subvec(0, z0-1),
+                                            RHO_AS.subvec(0, h0-1), X.rows(0, z0-1),
+                                            tau1.subvec(0, z0-1), tau2.subvec(0, z0-1), 
+                                            lgy1,
+                                            ni0.subvec(0, h0-1), ni.subvec(0, h0-1), 
+                                            tauB.subvec(0, h0-1), tau.subvec(0, h0-1), 
+                                            lbc.subvec(0, h0-1), max_iter, eps, show);
+              if(as<bool>(res_trec_ase["converge"])){
+                CisTrans_Chisq = -2.0*(as<double>(res_trecase["LL"]) - as<double>(res_trec_ase["LL"]));
+                CisTrans_Pval =  R::pchisq(CisTrans_Chisq,2,0,0);
+                ctcode = CisTrans_Chisq; 
+              }else{
+                CisTrans_Chisq  = -6.0;
+                CisTrans_Pval =  1.0;
+                ctcode = -3.0;
+              }
+              
+              Rprintf("lrt pval %.8f\n",CisTrans_Pval);
+              
+              if(CisTrans_Pval < transTestP){
+                ctcode = -2.0;
+              }
+              }
+          }else{
+            CisTrans_Chisq  = -5.0;
+            CisTrans_Pval  = R_NaN;
+          }
+          
+        }
+        
+        if(useASE == 0 | ctcode < 0.0 | 
+           h1 < min_nASE_het | h0 < min_nASE | !converge){
+          Rprintf("trec\n");
+          
+          res_trec = RcppT_trec(y.subvec(0, z0-1), z.subvec(0, z0-1), 
+                                RHO1.subvec(0, z0-1), X.rows(0, z0-1),
+                                tau1.subvec(0, z0-1), tau2.subvec(0, z0-1), lgy1,
+                                max_iter, eps, show); 
+          PAR = as<arma::vec>(res_trec["PAR"]); 
+          reg_par = as<arma::vec>(res_trec["reg_par"]);
+          converge = res_trec["converge"];
+          Rprintf("trec converge %d\n",converge);
+          if(useASE){
+
+            // fprintf(f2, "GeneRowID\tMarkerRowID\tTReCASE_kappa\tTReCASE_eta\tTReCASE_gamma\t");
+            fprintf(f2, "%d\t%d\t%.2e\t%.2e\t%.2e\t",
+                    gg+1,ss+1,exp(PAR.at(0)),
+                    exp(PAR.at(1)), exp(PAR.at(2)));
+            // fprintf(f2, "TReCASE_LL.full\tTReCASE_pEta\tTReCASE_pGamma\t");
+            fprintf(f2, "%.2e\t%.4e\t%.4e\t", 
+                    as<double>(res_trec["LL"]),
+                    as<double>(res_trec["p_eta"]), 
+                    as<double>(res_trec["p_gamma"]));
+            for(xi=0;xi<XX.n_cols;xi++){
+              fprintf(f2, "%.2e\t", reg_par.at(xi));
+            }
+            // fprintf(f2, "TReCASE_phi\tTReCASE_theta\t");
+            fprintf(f2, "%.2e\tNA\t",exp(reg_par.at(XX.n_cols)));
+            // fprintf(f2, "Converge\tCisTrans_Chisq\t");
+            fprintf(f2, "%d\t%.2f\t", converge, CisTrans_Chisq);
+            // fprintf(f2, "CisTrans_Pvalue\tnSam\tnHetn");
+            fprintf(f2, "%.4e\t%d\t%d\n",CisTrans_Pval, z0, h0);
+              
+          }else{
+            // fprintf(f1, "GeneRowID\tMarkerRowID\tTReC_kappa\tTReC_eta\tTReC_gamma\t");
+            fprintf(f1, "%d\t%d\t%.2e\t%.2e\t%.2e\t",
+                    gg+1,ss+1,exp(PAR.at(0)),
+                    exp(PAR.at(1)), exp(PAR.at(2)));
+            fprintf(f1, "%.2e\t%.4e\t%.4e\t%d\t", 
+                    as<double>(res_trec["LL"]),
+                    as<double>(res_trec["p_eta"]), 
+                    as<double>(res_trec["p_gamma"]),
+                    converge);
+            for(xi=0;xi<XX.n_cols;xi++){
+              fprintf(f1, "%.2e\t", reg_par.at(xi));
+            }
+            fprintf(f1, "%.2e\t%d\n", exp(reg_par.at(xi)), z0);
+          }
+          
+          
+        }else{
+          
+          // fprintf(f2, "GeneRowID\tMarkerRowID\tTReCASE_kappa\tTReCASE_eta\tTReCASE_gamma\t");
+          fprintf(f2, "%d\t%d\t%.2e\t%.2e\t%.2e\t",
+                  gg+1,ss+1,exp(PAR.at(0)),
+                  exp(PAR.at(1)), exp(PAR.at(2)));
+          // fprintf(f2, "TReCASE_LL.full\tTReCASE_pEta\tTReCASE_pGamma\t");
+          fprintf(f2, "%.2e\t%.4e\t%.4e\t", 
+                  as<double>(res_trecase["LL"]),
+                  as<double>(res_trecase["p_eta"]), 
+                  as<double>(res_trecase["p_gamma"]));
+          for(xi=0;xi<XX.n_cols;xi++){
+            fprintf(f2, "%.2e\t", reg_par.at(xi));
+          }
+          // fprintf(f2, "TReCASE_phi\tTReCASE_theta\t");
+          fprintf(f2, "%.2e\t%.2e\t",phi, 
+                  exp(log_theta));
+          // fprintf(f2, "Converge\tCisTrans_Chisq\t");
+          fprintf(f2, "%d\t%.2f\t", 
+                  converge,
+                  CisTrans_Chisq);
+          // fprintf(f2, "CisTrans_Pvalue\tnSam\tnHetn");
+          fprintf(f2, "%.4e\t%d\t%d\n",CisTrans_Pval, z0, h0);
+          
+        }
+        
+        
+        
+      }
+    }
+    
+  }
+  if(useASE){
+    fclose(f2);
+  }else{
+    fclose(f1);
+  }
+  
 }
 

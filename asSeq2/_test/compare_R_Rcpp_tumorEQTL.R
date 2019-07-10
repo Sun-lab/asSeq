@@ -428,3 +428,13 @@ CisTrans_Score(para, y,z,zz_AS, X, BETA, phi,
 RcppT_CisTrans_Score(para, y, z, zz_AS, RHO, RHO_AS, X, BETA, phi, tau1, 
                     tau2, lgy1, ni0, ni, log(theta), tauB, tau, lbc) 
 
+
+RcppT_trecase_mtest(data.matrix(dat$total), data.matrix(dat$hapA),
+                    data.matrix(dat$hapB), data.matrix(ZZ), data.matrix(XX), 
+                    RHO, data.matrix(dat$tau1), data.matrix(dat$tau2),
+                    SNP_pos=as.vector(1:100), sChr=as.vector(rep(1,100)), gene_start=as.vector(1), 
+                    gene_end=as.vector(1), gChr=as.vector(1), GeneSnpList=list(1:100),
+                    useLRT = 0, useASE = 1)
+
+
+
