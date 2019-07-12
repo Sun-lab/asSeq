@@ -86,5 +86,54 @@ plots don't show strong outliers
 (in progress)
 
 4. Check whether GWAS signals are enriched in eQTL sites, for example, using LD regression. 
+you can use the information from this page
+
+https://github.com/bulik/ldsc/wiki/Partitioned-Heritability
+
+https://github.com/bulik/ldsc/wiki/Cell-type-specific-analyses
+
+LD regressoin use GWAS test statistic as response variable, covariates are the LD score, which calculate the summation of R2 of this SNP versus all nearby SNPs. Some example codes are here
+
+#!/bin/bash
+module load anaconda2
+source activate ldsc
+ml bedtools
+ct="selected.Astro"
+for chr in {1..22}
+do
+python make_annot.py \
+		--gene-set-file ../data/${ct}.txt \
+		--gene-coord-file ../data/geneList_all_hg19_final.txt \
+		--windowsize 100000 \
+		--bimfile 1000G_EUR_Phase3_plink/1000G.EUR.QC.${chr}.bim \
+		--annot-file ../data/${ct}.${chr}.annot.gz
+done
+
+for chr in {1..22}
+do
+python ldsc.py --l2 --bfile 1000G_EUR_Phase3_plink/1000G.EUR.QC.${chr} \
+    --ld-wind-cm 1 --annot ../data/${ct}.${chr}.annot.gz --thin-annot \
+    --out ../data/${ct}.${chr} --print-snps hapmap3_snps/hm.${chr}.snp
+done
+source deactivate
+
+
+python munge_sumstats.py \
+--sumstats ../data/clozuk_pgc2.meta.sumstats.txt.gz \
+--out ../data/clozuk_pgc2.meta.sumstats \
+--N 105318 --merge-alleles \
+../data/clozuk_pgc2.meta.sumstats.info9.snplist.txt.gz
+
+
+
+python ldsc.py \
+--h2-cts ../data/clozuk_pgc2.meta.sumstats_with_rsid.gz \
+--ref-ld-chr 1000G_EUR_Phase3_baseline/baseline. \
+--out ../data/clozuk_pgc2.meta_ct6 \
+--ref-ld-chr-cts ../data/ct6.ldcts \
+--w-ld-chr weights_hm3_no_hla/weights.
+
+
+
 
 (in progress)
