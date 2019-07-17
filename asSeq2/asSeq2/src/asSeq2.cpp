@@ -1543,13 +1543,13 @@ Rcpp::List Rcpp_ase(const arma::vec& ni, const arma::vec& ni0,
                     const double& LL_null_ase = 0.0,
                     const arma::uword& max_iter = 4e3,
                     const double& eps = 1e-7, const bool& show = true){
-  
+
   Rcpp::List opH0, opH1;
   arma::vec par = arma::zeros<arma::vec>(2);
   double LL0, lg_theta;
-  
-  if(theta0 < 0.0){
-    opH0 = Rcpp_ase_theta_BFGS(ni, ni0, zeta, 0.0, -2.0, lbc, 
+
+  if(theta0 <= 0.0){
+    opH0 = Rcpp_ase_theta_BFGS(ni, ni0, zeta, 0.0, -2.0, lbc,
                                max_iter, eps, show);
     lg_theta = as<double>(opH0["PAR"]);
     LL0 = as<double>(opH0["LL"]);
@@ -1557,16 +1557,16 @@ Rcpp::List Rcpp_ase(const arma::vec& ni, const arma::vec& ni0,
     lg_theta = std::log(theta0);
     LL0 = LL_null_ase;
   }
-  
+
     par.at(0) = 0.0;
-    par.at(1) = lg_theta; 
+    par.at(1) = lg_theta;
     opH1 = Rcpp_ase_BFGS(ni, ni0, zeta, par, lbc, max_iter, eps, show);
 
 
-  
+
   //printR_obj(par);
-  
-  
+
+
   double lrt = (as<double>(opH1["LL"]) - LL0)*2.0;
   return Rcpp::List::create(
     Rcpp::Named("par0", lg_theta),
@@ -1578,6 +1578,88 @@ Rcpp::List Rcpp_ase(const arma::vec& ni, const arma::vec& ni0,
     Rcpp::Named("converge",  opH1["converge"] )
   );
 }
+
+// // [[Rcpp::export]]
+// Rcpp::List Rcpp_ase(const arma::vec& ni, const arma::vec& ni0,
+//                     const arma::vec& zeta, const arma::vec& lbc,
+//                     const double& theta0 = 0.0,
+//                     const double& LL_null_ase = 0.0,
+//                     const arma::uword& max_iter = 4e3,
+//                     const double& eps = 1e-7, const bool& show = true){
+//   arma::uword iter1 = 0;
+//   arma::uword converge = 0;
+//   Rcpp::List new_bxj_fit, new_theta_fit;
+//   arma::vec par = arma::zeros<arma::vec>(2);
+//   double LL0, lg_theta, curr_lg_theta, new_lg_theta, new_LL, curr_LL;
+//   double new_bxj=0.0, curr_bxj = 0.0;
+//   
+//   
+//   if(theta0 <= 0.0){
+//     new_theta_fit = Rcpp_ase_theta_BFGS(ni, ni0, zeta, 0.0, -2.0, lbc,
+//                                max_iter, eps, show);
+//     lg_theta = as<double>(new_theta_fit["PAR"]);
+//     LL0 = as<double>(new_theta_fit["LL"]);
+//   }else{
+//     lg_theta = std::log(theta0);
+//     LL0 = LL_null_ase;
+//   }
+//   curr_lg_theta = lg_theta; 
+//   //printR_obj(curr_reg_par);
+//   while(iter1 < max_iter){
+//     
+//     //update bxj trecase
+//     new_bxj_fit = Rcpp_ase_Pi_BFGS(ni, ni0, zeta, curr_bxj, curr_lg_theta,
+//                      lbc, max_iter, eps, false);
+//     new_bxj     = as<double>(new_bxj_fit["PAR"]);
+//     new_LL      = new_bxj_fit["LL"];
+// 
+//     if(new_lg_theta > -11.5){
+//       new_theta_fit = Rcpp_ase_theta_BFGS(ni, ni0, zeta, new_bxj, curr_lg_theta,
+//                                           lbc, max_iter, eps, false);
+//       new_lg_theta =  as<double>(new_theta_fit["PAR"]);
+//     }
+//     
+//     if(iter1 > 0){
+//       if( std::abs(curr_LL - new_LL) < eps &&
+//           std::abs(curr_bxj - new_bxj) < eps &&
+//           std::abs(curr_lg_theta - new_lg_theta) < eps){
+//         if(((curr_LL - new_LL > 0.0 && 
+//            as<double>(new_bxj_fit["norm_GRAD"]) > 0.01)) ){
+//           // magnitude of log-like decrease is samll but gradient is large
+//           // still consider not converged
+//           converge = 0;
+//         }else{
+//           converge = 1;
+//         }
+//         break;
+//         
+//       }
+//     }
+//     curr_bxj     = new_bxj;
+//     curr_LL      = new_LL;
+//     curr_lg_theta = new_lg_theta;
+//     iter1++;
+//     //rintR_obj(iter1);
+//   }
+//   if(show){
+//     Rprintf("ASE converges after %d iter \n", iter1);
+//   }
+//   
+//   //printR_obj(par);
+//   par.at(0) = curr_bxj;
+//   par.at(1) = curr_lg_theta;
+//   
+//   double lrt = (curr_LL - LL0)*2.0;
+//   return Rcpp::List::create(
+//     Rcpp::Named("par0", lg_theta),
+//     Rcpp::Named("par", par),
+//     Rcpp::Named("LL0", LL0),
+//     Rcpp::Named("LL", curr_LL),
+//     Rcpp::Named("lrt", lrt),
+//     Rcpp::Named("pvalue", R::pchisq(lrt, 1, 0, 0)),
+//     Rcpp::Named("converge",  converge)
+//   );
+// }
 
 /* ---------------------------
  * TRECASE
@@ -1882,7 +1964,7 @@ Rcpp::List Rcpp_trecase(const arma::vec& y, const arma::mat& X,
     // Rcpp::Named("LL0", LL0),
     // Rcpp::Named("LL", new_LL),
     Rcpp::Named("lrt", lrt),
-    Rcpp::Named("pval", R::pchisq(lrt, 1, 0, 0)),
+    Rcpp::Named("pval", R::pchisq(lrt, 2, 0, 0)),
     Rcpp::Named("converge", converge),
     Rcpp::Named("Trec_lrt", trec_fit["lrt"]),
     Rcpp::Named("Trec_pval", trec_fit["pvalue"]),

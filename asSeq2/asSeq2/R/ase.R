@@ -127,28 +127,31 @@ ase <-
       stop("colnames of SNPloc has to be c('gene', chr, 'start','end')")
     }
   
-    # sort geneloc and snploc by chr and pos 
+    # geneloc has to be sorted by chromosome
     geneloc$chr = gsub("chr", "", geneloc$chr)
     geneloc$chr[which(geneloc$chr == "X")] = 23
     geneloc$chr[which(geneloc$chr == "Y")] = 24
     
-    geneloc$chr   = as.integer(geneloc$chr)
-    geneloc$start = as.integer(geneloc$star)
-    geneloc$end   = as.integer(geneloc$end)
+    geneloc$chr   = as.integer(as.character(geneloc$chr))
+    geneloc$start = as.integer(as.character(geneloc$star))
+    geneloc$end   = as.integer(as.character(geneloc$end))
     
     SNPloc$chr = gsub("chr", "", SNPloc$chr)
     SNPloc$chr[which(SNPloc$chr == "X")] = 23
     SNPloc$chr[which(SNPloc$chr == "Y")] = 24
-    SNPloc$chr = as.integer(SNPloc$chr)
-    SNPloc$pos = as.integer(SNPloc$pos)
+    SNPloc$chr = as.integer(as.character(SNPloc$chr))
+    SNPloc$pos = as.integer(as.character(SNPloc$pos))
     
+    if(any(sort(geneloc$chr) != geneloc$chr)){
+      stop("geneloc has to be sorted by chromosome\n") 
+    }
     
     # check chr number are at same order 
     if(!all(unique(SNPloc$chr) == unique(geneloc$chr))){
       stop("SNPloc and geneloc does not have same chromosome order.")
     }
     
-    Rcpp_ase_mtest(Y1, Y2, ZZ, SNPloc$pos, SNPloc$chr, 
+    Rcpp_ase_mtest(Y1, Y2, Z, SNPloc$pos, SNPloc$chr, 
                    geneloc$start, geneloc$end, geneloc$chr, 
                    file_ase, cis_window, min_ASE_total, 
                    min_nASE, min_nASE_het, eps, max_iter, show)
