@@ -2267,7 +2267,7 @@ void Rcpp_ase_mtest(const arma::mat& Y1, const arma::mat& Y2,
     for(ii=0;ii<nSam;ii++){
       if(yA.at(ii) >= min_ASE_total){
         ni.at(h0) = yA.at(ii);
-        // lbc.at(h0) = R::lchoose(ni.at(h0), y1.at(ii));
+        lbc.at(h0) = R::lchoose(ni.at(h0), y1.at(ii));
         ni0.at(h0) = y1.at(ii);
         h0++;
       }
@@ -2318,12 +2318,12 @@ void Rcpp_ase_mtest(const arma::mat& Y1, const arma::mat& Y2,
               zeta.at(h0) = 1;
               h1++;
             }
-            lbc.at(h0) = R::lchoose(ni.at(h0), y1.at(ii));
+            // lbc.at(h0) = R::lchoose(ni.at(h0), y1.at(ii));
             h0++;
           }
         }
         
-        if(h0 < min_nASE){
+        if(h1 < min_nASE_het | h0 < min_nASE){
           // Rprintf("sample size of heterzygous genotype is not enoug \n",
           //         ss+1);
         }else{
@@ -2334,7 +2334,7 @@ void Rcpp_ase_mtest(const arma::mat& Y1, const arma::mat& Y2,
                              max_iter, eps, show);
           NumericVector ase_pars = res_ase["par"];
           fprintf(f2, "%d\t%d\t%.2e\t%.2e\t%.4e\t%.4e\t%d\n",
-                  gg+1,ss+1, ase_pars[0], ase_pars[1],
+                  gg+1,ss+1, ase_pars[0], exp(ase_pars[1]),
                                                   as<double>(res_ase["lrt"]),
                                                   as<double>(res_ase["pvalue"]),
                                                   as<int>(res_ase["converge"]));
@@ -2463,17 +2463,17 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
         y1 = Y1.col(gg);
         y2 = Y2.col(gg);
         yA = y1 + y2;
-        zeta = arma::zeros<arma::vec>(nSam);
-        ni = arma::zeros<arma::vec>(nSam);
-        lbc = arma::zeros<arma::vec>(nSam);
-        ni0 = arma::zeros<arma::vec>(nSam);
+        zeta.zeros();
+        ni.zeros();
+        lbc.zeros();
+        ni0.zeros();
         h0 = 0;
         
         for(ii=0;ii<nSam;ii++){
           
           if(yA.at(ii) >= min_ASE_total){
             ni.at(h0) = yA.at(ii);
-            // lbc.at(h0) = R::lchoose(ni.at(h0), y1.at(ii));
+            lbc.at(h0) = R::lchoose(ni.at(h0), y1.at(ii));
             ni0.at(h0) = y1.at(ii);
             h0++;
           }
@@ -2529,7 +2529,7 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
                 zeta.at(h0) = 1;
                 h1++;
               }
-              lbc.at(h0) = R::lchoose(ni.at(h0), y1.at(ii));
+              // lbc.at(h0) = R::lchoose(ni.at(h0), y1.at(ii));
               h0++;
             }
           }
@@ -2751,17 +2751,17 @@ void Rcpp_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
       y1 = Y1.col(gg);
       y2 = Y2.col(gg);
       yA = y1 + y2;
-      zeta = arma::zeros<arma::vec>(nSam);
-      ni = arma::zeros<arma::vec>(nSam);
-      lbc = arma::zeros<arma::vec>(nSam);
-      ni0 = arma::zeros<arma::vec>(nSam);
+      zeta.zeros();
+      ni.zeros();
+      lbc.zeros();
+      ni0.zeros();
       h0 = 0;
       
       for(ii=0;ii<nSam;ii++){
         
         if(yA.at(ii) >= min_ASE_total){
           ni.at(h0) = yA.at(ii);
-          // lbc.at(h0) = R::lchoose(ni.at(h0), y1.at(ii));
+          lbc.at(h0) = R::lchoose(ni.at(h0), y1.at(ii));
           ni0.at(h0) = y1.at(ii);
           h0++;
         }

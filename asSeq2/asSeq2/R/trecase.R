@@ -2,7 +2,7 @@ trecase <-
   function(Y, Y1 = NULL, Y2 = NULL, Z, XX, SNPloc, geneloc, GeneSnpList = list(),
            fam_nb = T, file_trec = "trec.txt", file_trecase = "trecase.txt", 
            transTestP = 0.01,
-           cis_window = 1e5L, useASE = 1L, min_ASE_total = 8L, min_nASE = 5L,
+           cis_window = 1e5L, useASE = 1L, min_ASE_total = 5L, min_nASE = 5L,
            min_nASE_het = 5L, eps = 5e-5, max_iter = 400L, show = FALSE)
   {
     ## Y: matrix of total read count. Each row is a sample, and each column is a
@@ -16,8 +16,12 @@ trecase <-
     ## file_trec/file_trecase: output file name of trec/trecase 
     ## cis_window:
     ## useASE:
-    ## min_ASE_total:
-    ## min_nASE:
+    ## min_ASE_total: The minimum number of Allele Specific reads a subject must 
+    ##    have to be included in the ASE analysis
+    ## min_nASE: The minimum number of subjects that must exceed the min_ASE_Total 
+    ##    threshold in order for ASE data to be included. 
+    ## min_nASE_het: The minimum number of subjects having heterozygous SNP 
+    ##    genotype in order for ASE data to be included
     ## eps:
     ## max_iter:
     ## show:
