@@ -5,6 +5,8 @@ provide data snippets for two genes that can go throught the analysis
 
 0. Add up the total amount of time for asSeq1/asSeq2, RASQUAL, and TReCASE score test for 5000 permutations, and our new appraoch with 1000 permuatations for 20 replicates, and add them in Supplementary Materials. 
 
+0.1 add the bamtools to asSeq2
+
 1. Setup the whole workflow
 
 + 1.1 Run DEseq2 to replace outliers (what is the threshold for cook's distance, 99 percentile (their default), 1, or 4/n?). Need to include all the covariates other than SNP genotype in this model. 
