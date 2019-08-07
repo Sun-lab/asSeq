@@ -33,10 +33,28 @@ provide data snippets for two genes that can go throught the analysis
 
 3. Summarize the location of eQTLs. Find the strongest eQTL per gene, apply a threshold, and plot their locations by a density plot. 
 
-+ 3.1 Make this plot for all three methods, MatrixEQTL, RASQUAL, and asSeq2
++ 3.1 Make this plot for all three methods, MatrixEQTL, RASQUAL, and asSeq2, if overlapping of three density curves are not clear, you can just draw another one for two methods MatrixEQTL and asSeq2. May split the positve and negative strand. 
+
++3.2 Make this plot for the eQTLs identified only by Matrix EQTL, only by asSeq2 and by both. two eQTLs are the same if their R2 is > 0.8. 
 
 
-4. Check whether GWAS signals are enriched in eQTL sites, for example, using LD regression. 
+4. Summarize the resutls by comparing annotations. 
+
+Compare the reuslts of matrixEQTL vs. asSeq2, how frequent the resutls of one method overlap with some annotated regions, such as promoter, enhancer
+
+
++ 4.1 https://egg2.wustl.edu/roadmap/web_portal/chr_state_learning.html#core_15state
+STATES FOR EACH 200bp BIN: 
+https://egg2.wustl.edu/roadmap/data/byFileType/chromhmmSegmentations/ChmmModels/coreMarks/jointModel/final/STATEBYLINE/
+
+This should give you the state of each genomic location across many tissues and cell lines. find the cell line that match with our data, lymphoblast, if there is no such cell line, we should discuss which one is most similar. 
+
+
++4.2. https://egg2.wustl.edu/roadmap/web_portal/DNase_reg.html#delieation
+
+
+
+6. Check whether GWAS signals are enriched in eQTL sites, for example, using LD regression. 
 you can use the information from this page
 
 https://github.com/bulik/ldsc/wiki/Partitioned-Heritability
