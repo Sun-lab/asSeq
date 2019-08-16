@@ -5,7 +5,9 @@ provide data snippets for two genes that can go throught the analysis
 
 0. Add up the total amount of time for asSeq1/asSeq2, RASQUAL, and TReCASE score test for 5000 permutations, and our new appraoch with 1000 permuatations for 20 replicates, and add them in Supplementary Materials. 
 
-0.1 add the bamtools to asSeq2
++ 0.1 add the bamtools to asSeq2.
+
++ 0.2 check why TReC return NAs.
 
 1. Setup the whole workflow
 
