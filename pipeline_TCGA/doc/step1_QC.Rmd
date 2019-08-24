@@ -1,0 +1,395 @@
+---
+title: "Step1 asSeq QC"
+output:
+  html_document:
+    theme: united
+    toc: true
+    toc_float: 
+      collapsed: true
+      smooth_scroll: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## 1. Total number of reads (TReC) per sample versus the total number of allele-specific reads (ASE) per sample
+### 1.1 Read in Total read counts
+```{r TReC vs ASE}
+library(ggplot2)
+library(scales)
+
+proj_input = "../R_batch1/stepC_collect_read_count/output"
+ASCN_input = '..'
+step5_file = "gene_level_counts_filterIt_total_after_filter_low_expressed_gene.txt"
+step4a_file = "gene_level_counts_filterIt_hap1.txt"
+step4b_file = "gene_level_counts_filterIt_hap2.txt"
+
+TReC = read.table(file = sprintf("%s/step5_TReC_per_gene_filterIt/%s",proj_input,step5_file), 
+                  as.is = T, sep = "\t", check.names = F)
+TReC = data.matrix(TReC)
+dim(TReC)
+TReC[1:5,1:5]
+```
+
+### 1.2 Read in allele-specific copy number  
+```{r}
+ASCN = readRDS(sprintf('%s/data/TCGA_SCNA/COAD_ASCAT_by_gene.rds', ASCN_input))
+ASCN$CN1[1:5,1:5]
+
+gene2kp = intersect(rownames(TReC), rownames(ASCN$CN1))
+length(gene2kp)
+
+ASCN$CN1 = ASCN$CN1[gene2kp, ]
+ASCN$CN2 = ASCN$CN2[gene2kp, ]
+TReC = TReC[gene2kp, ]
+
+```
+
+###1.3 Read in allele-specific read counts 
+```{r}
+ASE1 = read.table(sprintf("%s/step4a_ASReC_per_gene_hap1_filterIt/%s", proj_input, step4a_file),
+                  sep ='\t', header = T, check.names = F)
+ASE1 = data.matrix(ASE1)
+ASE1[1:5,1:5]
+
+ASE2 = read.table(sprintf("%s/step4b_ASReC_per_gene_hap2_filterIt/%s", proj_input, step4b_file),
+                  sep ='\t', header = T, check.names = F)
+ASE2 = data.matrix(ASE2)
+
+
+ASE1= ASE1[gene2kp, ]
+ASE2 = ASE2[gene2kp, ]
+ASEtot = (ASE1 + ASE2)
+ASEtot[ASEtot <20] = NA
+
+colnames(ASE1) = substr(colnames(ASE1), 1, 16)
+colnames(ASE2) = substr(colnames(ASE2), 1, 16)
+table(colnames(ASE1) == colnames(ASE2))
+
+TReC <- TReC[,colnames(ASE2)]
+
+ASEt =  apply(ASEtot, 2, sum, na.rm = T)
+TReCt = apply(TReC, 2, sum, na.rm = T)
+
+n_gene_ASE_per_sam = apply(ASEtot, 2, function(x) sum(!is.na(x)))
+pASE1 = ASE1/ASEtot 
+pASE1_bi0.1 = apply(pASE1, 2, function(x) sum(x < 0.1 | x>0.9 , na.rm = T) ) / n_gene_ASE_per_sam
+
+plot_data = data.frame(log10TReCt = log10(TReCt), log10ASEt = log10(ASEt),
+                       n_gene_ASE_per_sam, pASE1_bi0.1)
+
+```
+
+###1.4 TReC vs ASE
+
+```{r}
+hist(n_gene_ASE_per_sam, xlab = '# of genes having total ASE>20 per sample',
+     main = 'histograms of # of genes per sample')
+```
+
+There is bimodal in the above histogram of numbers of genes have total allele-specific reads large than 20 and it shows that there are two cluster of people, one with larger number of genes than another cluster. 
+
+In the following scatter-plot of total number of reads per sample versus the total number of allele-specific reads per sample, 2500 genes is used as a cut-off and two clusters can be clearly seen. There are three points ( 'TCGA-A6-3810-01A', 'TCGA-A6-2684-01A', 'TCGA-A6-2674-01A') have unexpected low total allele-specific reads, and they are exluded in the further analysis.  
+
+We define the pASE1 to be proportion of allele-specific reads of allele 1 over total allele-specific reads and define the extreme pASE to be proportion of pASE1 having value between 0 to 0.1 or between 0.9 to 1. 
+
+```{r}
+ggplot(plot_data, aes(log10TReCt, log10ASEt, 
+       shape = cut(n_gene_ASE_per_sam, breaks = c(0, 2500,max(n_gene_ASE_per_sam + 1)), right = F), 
+       color = cut(pASE1_bi0.1, breaks = c(0, 0.1, 0.2, 0.3, 1)))) + 
+  geom_point() + labs(color = 'extreme pASE1', x = 'log10 TReC', y = 'log10 ASE') + 
+  scale_shape_manual(values=c(3, 20), name = '# of genes', labels=c('<2500','>=2500')) + 
+  scale_color_manual(values=c('#999999','#E69F00', '#56B4E9','red')) 
+hist(plot_data$log10TReCt, xlab = "log10 total read counts per sample", main = "")
+hist(plot_data$log10ASEt, xlab = "log10 total allele specific per sample", main = "")
+
+```
+
+
+###1.5 Remove outliers and duplicated samples
+
+```{r remove outliers and duplicated samples}
+
+outlier = c('TCGA-A6-3810-01A', 'TCGA-A6-2684-01A', 'TCGA-A6-2674-01A')
+ind = which(colnames(ASE1) %in% outlier)
+ASE1 = ASE1[, -ind]
+ASE2 = ASE2[, -ind]
+
+samASE = substr(colnames(ASE1), 1, 12)
+
+# keep primary tumor
+vial = substr(colnames(ASE1), 14, 16)
+sam2kp = grep('01', vial)
+
+
+ASE1 = ASE1[,sam2kp]
+ASE2 = ASE2[,sam2kp]
+
+samASE = substr(colnames(ASE1), 1, 12)
+tp = table(samASE)
+
+TReC = TReC[, colnames(ASE1)]
+TReCt = apply(TReC, 2, sum, na.rm = T)
+
+
+samASE = substr(colnames(ASE1), 1, 12)
+tp = table(samASE)
+
+vial = substr(colnames(ASE1), 14, 16)
+
+samASCN = substr(colnames(ASCN$CN1), 1, 16)
+samASCN[1:5]
+
+samASE = substr(colnames(ASE1), 1, 16)
+
+
+sam2kp = intersect(samASCN, samASE)
+length(sam2kp)
+
+ind3 = match(sam2kp, samASCN)
+
+ASCN$CN1 = ASCN$CN1[, ind3]
+ASCN$CN2 = ASCN$CN2[, ind3]
+ASE1 = ASE1[, match(sam2kp, samASE)]
+ASE2 = ASE2[, match(sam2kp, samASE)]
+TReC = TReC[, colnames(ASE2)]
+
+ASEtot = (ASE1 + ASE2)
+ASEtot[ASEtot <20] = NA
+
+n_sam_ASE_per_gene= apply(ASEtot, 1, function(x) sum(!is.na(x)))
+n_gene_ASE_per_sam = apply(ASEtot, 2, function(x) sum(!is.na(x)))
+
+pASE1 = ASE1/ASEtot 
+pASE1_bi0.1 = apply(pASE1, 2, function(x) 
+  sum(x < 0.1 | x>0.9 , na.rm = T) ) / n_gene_ASE_per_sam
+
+pASE1_bi0.2 = apply(pASE1, 2, function(x) 
+  sum((x < 0.2 & x>0.1) | (x>0.8 & x<0.9) , na.rm = T) ) / n_gene_ASE_per_sam
+
+
+TReC = TReC[, colnames(ASE1)]
+table(colnames(TReC) == colnames(ASE1))
+ASEt =  apply(ASEtot, 2, sum, na.rm = T)
+TReCt = apply(TReC, 2, sum, na.rm = T)
+cor(ASEt, TReCt)
+
+n_gene_ASE_per_sam = apply(ASEtot, 2, function(x) sum(!is.na(x)))
+pASE1 = ASE1/ASEtot 
+pASE1_bi0.1 = apply(pASE1, 2, function(x) 
+  sum(x < 0.1 | x>0.9 , na.rm = T) ) / n_gene_ASE_per_sam
+
+plot_data = data.frame(log10TReCt = log10(TReCt), log10ASEt = log10(ASEt),
+                       n_gene_ASE_per_sam, pASE1_bi0.1)
+
+ggplot(plot_data, aes(log10TReCt, log10ASEt, 
+       shape = cut(n_gene_ASE_per_sam, breaks = c(0, 2500,max(n_gene_ASE_per_sam + 1)), right = F), 
+       color = cut(pASE1_bi0.1, breaks = c(0, 0.1, 0.2, 0.3, 1)))) + 
+  geom_point() + labs(color = 'extrems pASE', x = 'log10 TReC', y = 'log10 ASE') + 
+  scale_shape_manual(values=c(3, 20), name = 'Num of genes', labels=c('<2500','>=2500')) + 
+  scale_color_manual(values=c('#999999','#E69F00', '#56B4E9','red')) 
+
+
+```
+
+After removing the outliers and duplicated samples, we redraw the scatter-plot of total number of reads per sample versus the total number of allele-specific reads per sample.
+
+## 2. Copy number variation consideration
+### 2.1 Before remove copy number altered genes
+
+```{r before remove CN altered genes}
+par(mfrow=c(1,2))
+plot(pASE1_bi0.1, pASE1_bi0.2, xlab = 'pASE1 < 0.1 or > 0.9'
+     , ylab = 'pASE1 in (0.1, 0.2) or in (0.8, 0.9)', pch = 20)
+# abline(v = 0.3, col = 2, lty =2)
+hist(pASE1_bi0.1, xlab = 'pASE1 < 0.1 or > 0.9', main ='')
+# abline(v = 0.3, col = 2)
+
+```
+
+###2.2 After remove copy number altered genes
+
+Gene with Allele-specific copy number other than (1,1) or (2,2) are removed.
+
+```{r remove CN altered genes and find cut-off}
+
+ASEtot_rm= ASEtot
+AStot = ASCN$CN1 + ASCN$CN2
+
+ASEtot_rm = data.matrix(ASEtot_rm)
+ASEtot_rm[is.na(ASCN$CN1) | is.na(ASCN$CN2) | (AStot) > 4] <- NA
+ASEtot_rm[(ASCN$CN1 != ASCN$CN2) ] <- NA
+
+ASEt =  apply(ASEtot_rm, 2, sum, na.rm = T)
+
+n_gene_ASE_per_sam_rm= apply(ASEtot_rm, 2, function(x) sum(!is.na(x)))
+
+pASE1_rm = ASE1/ASEtot_rm 
+pASE1_bi0.1_rm = apply(pASE1_rm, 2, function(x) 
+  sum(x < 0.1 | x>0.9 , na.rm = T) ) / n_gene_ASE_per_sam_rm
+
+pASE1_bi0.2_rm = apply(pASE1_rm, 2, function(x) 
+  sum((x < 0.2 & x>0.1) | (x>0.8 & x<0.9), na.rm = T) ) / n_gene_ASE_per_sam_rm
+
+NgeneAlter = (n_gene_ASE_per_sam - n_gene_ASE_per_sam_rm)/ n_gene_ASE_per_sam
+
+hist(NgeneAlter, main = 'prop of genes affected by CNA', xlab = '')
+col = rep(1, length(n_gene_ASE_per_sam_rm))
+col[which(n_gene_ASE_per_sam_rm < 50)] = 2
+hist(n_gene_ASE_per_sam_rm)
+plot(pASE1_bi0.1_rm, pASE1_bi0.2_rm, xlab = 'pASE1 < 0.1 or > 0.9'
+     , ylab = 'pASE1 in (0.1, 0.2) or in (0.8, 0.9)', pch = 20, col = col)
+abline(v = 0.1, col = 2, lty = 2)
+abline(h = 0.1, col = 2, lty = 2)
+
+```
+
+The red points indicates a sample having number of genes less than 50 after removed the copy number altered genes. 
+
+* Sample with more than 50 genes is removed in the following analysis if it meet one of the following conditions: 
+    +  proportion of pASE, between 0.1 to 0.2 or 0.8 to 0.9, is larger than 0.1, or 
+    +  proportion of pASE, less than 0.1 or larger than 0.9, is larger than 0.1.
+    
+    
+* Sample with less than 50 genes will be further examined in scatter-plot of pASCN (minor copy number/total copy number) versus pASE (low AS read counts/total AS read counts). 
+
+```{r}
+sams2rm =  names(which((pASE1_bi0.2_rm > 0.1 | pASE1_bi0.1_rm > 0.1 ) & n_gene_ASE_per_sam_rm > 50))
+sams2rm
+
+samASE =substr(setdiff(colnames(TReC), sams2rm), 1, 12)
+sam2check = samASE[which(duplicated(samASE))]
+for(s in sam2check){
+  tr = TReCt[grep(s, colnames(TReC))]
+  sams2rm = c(sams2rm, names(which.min(tr)))
+}
+sams2rm
+
+write.table(setdiff(colnames(TReC), sams2rm), 
+            file = '/fh/fast/sun_w/licai/_tumor_eQTL/R_batch2/samples_to_include.txt',
+            quote = F, row.names = F, col.names = F)
+```
+
+## 3. Compare TCGA COAD to GTEx
+```{r}
+
+inputdir = "/fh/fast/sun_w/licai/_GTEx/R_batch2_colon_transvers/stepC/output/"
+step4a   = "step4a_ASReC_per_gene_hap1_filterIt"
+step4b   = "step4b_ASReC_per_gene_hap2_filterIt"
+step5    =  "step5_TReC_per_gene_filterIt"
+geno_dir = "/fh/fast/sun_w/licai/_GTEx/data_genotype/genotype"
+step5_file = "gene_level_counts_filter_out_low_expressed.txt"
+step4a_file = "gene_level_counts_filter_out_low_expressed_hap1.txt"
+step4b_file = "gene_level_counts_filter_out_low_expressed_hap2.txt"
+
+setwd(inputdir)
+
+TReC_gtex = read.table(sprintf("./%s/%s",step5, step5_file), as.is = T, sep="\t",
+                  check.names = F)
+TReC_gtex = data.matrix(TReC_gtex)
+dim(TReC_gtex)
+TReC_gtex[1:5,1:5]
+
+ASE1_gtex = read.table(sprintf("./%s/%s", step4a, step4a_file), as.is = T,
+                  sep = "\t", check.names = F)
+ASE1_gtex = data.matrix(ASE1_gtex)
+dim(ASE1_gtex)
+ASE1_gtex[1:5,1:5]
+
+ASE2_gtex = read.table(sprintf("./%s/%s", step4b, step4b_file), as.is = T,
+                  sep = "\t", check.names = F)
+ASE2_gtex = data.matrix(ASE2_gtex)
+dim(ASE2_gtex)
+ASE2_gtex[1:5,1:5]
+
+ASEtot_gtex = (ASE1_gtex + ASE2_gtex)
+ASEtot_gtex[ASEtot_gtex <20] = NA
+# TReC_gtex[is.na(ASEtot_gtex)] = NA
+
+ASEt =  apply(ASEtot_gtex, 2, sum, na.rm = T)
+TReCt = apply(TReC_gtex, 2, sum, na.rm = T)
+
+n_gene_ASE_per_sam_gtex = apply(ASEtot_gtex, 2, function(x) sum(!is.na(x)))
+pASE1_gtex = ASE1_gtex/ASEtot_gtex 
+pASE1_bi0.1_gtex = apply(pASE1_gtex, 2, function(x) sum(x < 0.1 | x>0.9 , na.rm = T) ) / n_gene_ASE_per_sam_gtex
+
+plot_data2 = data.frame(log10TReCt = log10(TReCt), log10ASEt = log10(ASEt),
+                       n_gene_ASE_per_sam = n_gene_ASE_per_sam_gtex, 
+                       pASE1_bi0.1 = pASE1_bi0.1_gtex)
+
+hist(plot_data$log10TReCt, xlab = "log10 total read counts per sample", main = "TCGA")
+hist(plot_data$log10ASEt, xlab = "log10 total allele specific per sample", main = "TCGA")
+
+hist(plot_data2$log10TReCt,
+     xlab = 'log10(total read count) per sample', main = "GTEx")
+
+hist(plot_data2$log10ASEt,
+     xlab = 'log10(totalASE) per sample', main = "GTEx")
+
+hist(n_gene_ASE_per_sam_gtex, xlab = '# of genes having total ASE>20 per sample',
+     main = 'histograms of # of genes per sample GTEx')
+
+ggplot(plot_data2, aes(log10TReCt, log10ASEt, 
+       shape = cut(n_gene_ASE_per_sam_gtex, breaks = c(0,7000 ,max(n_gene_ASE_per_sam_gtex + 1)), right = F), 
+       color = cut(pASE1_bi0.1_gtex, breaks = c(0, 0.1, 0.2, 0.3, 1)))) + 
+  geom_point() + labs(color = 'extreme pASE1', x = 'log10 TReC', y = 'log10 ASE') + 
+  scale_shape_manual(values=c(3, 20), name = '# of genes', labels=c('<7000','>=7000')) + 
+  scale_color_manual(values=c('#999999','#E69F00', '#56B4E9','red')) 
+
+
+plot_data_all = rbind(cbind(plot_data, study ="TCGA"), cbind(plot_data2, study ="GTEx"))
+plot_data_all[1:5,]
+ggplot(plot_data_all, aes(log10TReCt, log10ASEt, 
+       shape = study,
+       color = cut(pASE1_bi0.1, breaks = c(0, 0.1, 1)))) + 
+  geom_point() + labs(color = 'extreme pASE1', x = 'log10 TReC', y = 'log10 ASE') + 
+  scale_shape_manual(values=c(20, 3), name = 'study') + 
+  scale_color_manual(values=c('#999999','red')) 
+
+het_getx = "/fh/fast/sun_w/licai/_GTEx/data_genotype/data_snp/cgc_snpfile/"
+het_tcga = "/fh/fast/sun_w/licai/_tumor_eQTL/data_snp/"
+
+files = list.files(het_tcga, "combined.txt", recursive = T)
+tmp1 = matrix(NA, nrow = length(files), ncol =1)
+rownames(tmp1) = list.files(het_tcga, "TCGA")
+
+for(filei in rownames(tmp1)){
+  tmp1[filei, ] = system(paste0("wc -l ",het_tcga,filei, 
+                             "/combined.txt"), intern = T)
+}
+
+tmp1[,1] = as.numeric(sapply(strsplit(tmp1, " "), "[",1))
+tcga_nhet = as.numeric(tmp1)
+names(tcga_nhet) = rownames(tmp1)
+tcga_nhet[1:5]
+hist(tcga_nhet)
+
+tmp1 = system(paste0("wc -l ",het_getx, "*"), intern = T)
+tmp1 = strsplit(tmp1, " ")
+tmp1[1:3]        
+tmp1[length(tmp1)]
+tmp1 = tmp1[-length(tmp1)]
+tmp2 = sapply(tmp1, "[", 5)
+tmp2 = gsub("/fh/fast/sun_w/licai/_GTEx/data_genotype/data_snp/cgc_snpfile/",
+            "", tmp2)
+tmp2 = gsub(".txt", "", tmp2)
+tmp2[1:5]
+
+gtex_nhet = as.numeric(sapply(tmp1, "[", 4))
+names(gtex_nhet) = tmp2
+gtex_nhet[1:5]
+gtex_nhet = gtex_nhet[rownames(plot_data2)]
+
+gtex_high = rownames(plot_data_all[which(plot_data_all$n_gene_ASE_per_sam >= 7000),])
+gtex_low = rownames(plot_data_all[which(plot_data_all$n_gene_ASE_per_sam < 7000 & 
+                                           plot_data_all$study == "GTEx"),])
+
+par(mfrow=c(2,2))
+hist(tcga_nhet)
+hist(gtex_nhet)
+hist(gtex_nhet[gtex_high], main = "getx high group")
+hist(gtex_nhet[gtex_low], main = "getx low group")
+par(mfrow=c(1,1))
+
+```
+
