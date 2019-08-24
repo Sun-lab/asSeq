@@ -5,19 +5,23 @@ provide data snippets for two genes that can go throught the analysis
 
 0. Add up the total amount of time for asSeq1/asSeq2, RASQUAL, and TReCASE score test for 5000 permutations, and our new appraoch with 1000 permuatations for 20 replicates, and add them in Supplementary Materials. 
 
-0.1 add the bamtools to asSeq2
++ 0.1 add the bamtools to asSeq2.
+
++ 0.2 check why TReC return NAs.
 
 1. Setup the whole workflow
 
-+ 1.1 Run DEseq2 to replace outliers (what is the threshold for cook's distance, 99 percentile (their default), 1, or 4/n?). Need to include all the covariates other than SNP genotype in this model. 
++ 1.1 Run DEseq2 to replace outliers using 4/n as cutoff. Need to include all the covariates (including sex) other than SNP genotype in this model. Make sure SNPs has been filtered by MAF 0.05. 
 
-+ 1.2 Run Matrix eQTL (eigen MT) for all gene, SNP pairs, and choose to run TReCASE only for those pairs with p-value < 0.05
++ 1.2 Run Matrix eQTL (eigen MT) for all gene, SNP pairs, and choose to run TReCASE only for those pairs with Matrix eQTL p-value < 0.05
 
 + 1.3 Estimate the number of indepdent tests per gene 
 
 + 1.4 Obtain permutaion p-value of the minimum TReCASE p-value per gene
 
 + 1.5 Choose a permutation p-value cutoff across genes by controlling FDR. 
+
++ 1.6 Run the above steps 1.2-1.4 using permuted genotype data and check the distribution of permutation p-value. Compared the resutls when runing steps 1.3-1.4. 
 
 
 2. Estimate the number of independent tests per gene
