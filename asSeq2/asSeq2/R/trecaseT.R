@@ -197,7 +197,7 @@ trecaseT <-
                         file_trec = file_trec, file_trecase = file_trecase, 
                         useLRT = useLRT, transTestP = transTestP, 
                         cis_window = cis_window, useASE = useASE, 
-                        min_ASE_total = min_ASE_total, min_nASE = min_nASEL, 
+                        min_ASE_total = min_ASE_total, min_nASE = min_nASE, 
                         min_nASE_het = min_nASE_het, eps = eps, 
                         max_iter = max_iter, show = show) 
     

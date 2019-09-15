@@ -432,9 +432,33 @@ RcppT_CisTrans_Score(para, y, z, zz_AS, RHO, RHO_AS, X, BETA, phi, tau1,
 RcppT_trecase_mtest(data.matrix(dat$total), data.matrix(dat$hapA),
                     data.matrix(dat$hapB), data.matrix(ZZ), data.matrix(XX), 
                     RHO, data.matrix(dat$tau1), data.matrix(dat$tau2),
-                    SNP_pos=as.vector(1:100), sChr=as.vector(rep(1,100)), gene_start=as.vector(1), 
-                    gene_end=as.vector(1), gChr=as.vector(1), GeneSnpList=list(1:100),
+                    SNP_pos=as.vector(1:100), sChr=as.vector(rep(1,100)),
+                    gene_start=as.vector(1), 
+                    gene_end=as.vector(1),
+                    gChr=as.vector(1), GeneSnpList=list(1:100),
                     useLRT = 0, useASE = 1)
 
+Y  = data.matrix(cbind(dat$total, dat$total))
+Y1 = data.matrix(cbind(dat$hapA, dat$hapA))
+Y2 = data.matrix(cbind(dat$hapB, dat$hapB))
+Z  = data.matrix(ZZ)
+XX = data.matrix(XX)
+CNV1 = data.matrix(cbind(dat$tau1, dat$tau1))
+CNV2 = data.matrix(cbind(dat$tau2, dat$tau1))
 
+geneloc = data.frame(gene = paste0('gene', 1:2), chr = 1:2, start = c(1, 1e8),
+                     end = c(1, 1e8)+1000, stringsAsFactors = F)
+geneloc
+
+SNPloc = data.frame(snp = paste0("SNP", 1:100), chr = c(rep(1, 40), rep(2, 60)),
+                    pos = c(1:30*100, 31:100*100 + 1e8), stringsAsFactors = F)
+head(SNPloc)
+
+
+trecaseT(Y, Y1, Y2, Z, XX, RHO, CNV1, CNV2,
+           SNPloc, geneloc, GeneSnpList = list(),
+           file_trec = "trecT.txt", file_trecase = "trecaseT.txt", 
+           useLRT = FALSE, transTestP = 0.01, cis_window = 100000, useASE = 1L, 
+           min_ASE_total = 8L, min_nASE = 5L, min_nASE_het = 5L, eps = 0.00001, 
+           max_iter = 4000L, show = FALSE)
 
