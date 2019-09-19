@@ -46,6 +46,7 @@ provide data snippets for two genes that can go throught the analysis
 
 Compare the reuslts of matrixEQTL vs. asSeq2, how frequent the resutls of one method overlap with some annotated regions, such as promoter, enhancer
 
++ 4.0 prepare a histogram of permutation p-values for MatrixEQTL and TReCASE, and a scatter plot of permutation p-values of the two methods. Check the p-value cutoffs for differnt FDR levels, such as 5% or 10%. 
 
 + 4.1 https://egg2.wustl.edu/roadmap/web_portal/chr_state_learning.html#core_15state
 STATES FOR EACH 200bp BIN: 
