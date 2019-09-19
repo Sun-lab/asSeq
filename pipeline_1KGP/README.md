@@ -50,10 +50,7 @@ Compare the reuslts of matrixEQTL vs. asSeq2, how frequent the resutls of one me
 
 + 4.1 https://egg2.wustl.edu/roadmap/web_portal/chr_state_learning.html#core_15state
 STATES FOR EACH 200bp BIN: 
-https://egg2.wustl.edu/roadmap/data/byFileType/chromhmmSegmentations/ChmmModels/coreMarks/jointModel/final/STATEBYLINE/
-
-This should give you the state of each genomic location across many tissues and cell lines. find the cell line that match with our data, lymphoblast, if there is no such cell line, we should discuss which one is most similar. 
-
+https://egg2.wustl.edu/roadmap/data/byFileType/chromhmmSegmentations/ChmmModels/coreMarks/jointModel/final/STATEBYLINE/. This should give you the state of each genomic location across many tissues and cell lines. find the cell line that match with our data, lymphoblast, if there is no such cell line, we should discuss which one is most similar. 
 
 +4.2. https://egg2.wustl.edu/roadmap/web_portal/DNase_reg.html#delieation
 
