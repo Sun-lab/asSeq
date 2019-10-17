@@ -17,8 +17,15 @@ provide data snippets for two genes that can go throught the analysis
 
 2. Summarize the location of eQTLs. Find the strongest eQTL per gene, apply a threshold, and plot their locations by a density plot. 
 
-+2.1 Make this plot for the eQTLs identified only by Matrix EQTL, only by asSeq2 and by both. two eQTLs are the same if their R2 is > 0.8. 
++ 2.1 Make this plot for the eQTLs identified only by Matrix EQTL, only by asSeq2 and by both. two eQTLs are the same if their R2 is > 0.8. 
 
+3. Summarize the resutls from GTEx whole blood. 
+
++ 3.1 make sure the gene location file is ok. 
+
++ 3.2 filter SNPs using MAF 0.05 for the permutations. 
+
++ 3.3 summarize the results using permutation p-value based FDR cutoff, probably using FDR 0.01 as cutoff. For example, compare the # of findings with respect to the number of fSNPs. 
 
 4. Summarize the resutls by comparing annotations. 
 
