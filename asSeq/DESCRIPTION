@@ -9,5 +9,5 @@ Imports: zlibbioc
 Description: allele specific study of RNA-seq data.  
 License: GPL (>= 2)
 LazyLoad: yes
-Packaged: 2016-06-30 03:47:10 UTC; chong
+Packaged: 2020-01-11 00:25:59 UTC; wsun
 NeedsCompilation: yes
