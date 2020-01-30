@@ -6,7 +6,8 @@ output:
 ---
 
 ```{r setup, include=TRUE}
-rasq = read.csv("linear_model_cov.csv")
+#rasq = read.csv("linear_model_cov.csv")
+rasq = read.csv("linear_model_cov_upd.csv")
 rasq = rasq[!is.na(rasq$pvalT),]
 dim(rasq)
 rasq[1:2,]
@@ -16,12 +17,23 @@ rasq$qvalT[rasq$qvalT<1e-100] = 1e-100
 rasq$qvalR[rasq$qvalR<1e-100] = 1e-100
 rasq$pvalT[rasq$pvalT<1e-100] = 1e-100
 rasq$pvalR[rasq$pvalR<1e-100] = 1e-100
+rasq$pvalTupd[rasq$pvalTupd<1e-100] = 1e-100
+rasq$pvalRupd[rasq$pvalRupd<1e-100] = 1e-100
 dim(rasq)
 
 #rasq$rnlt = -log10(rasq$qvalR)
 #rasq$tnlt = -log10(rasq$qvalT)
-rasq$rnlt = -log10(rasq$pvalR)
-rasq$tnlt = -log10(rasq$pvalT)
+
+#rasq$rnlt = -log10(rasq$pvalR)
+#rasq$tnlt = -log10(rasq$pvalT)
+
+rasq$rnlt = -log10(rasq$pvalRupd)
+rasq$tnlt = -log10(rasq$pvalTupd)
+rasq = rasq[!is.na(rasq$pvalTupd),]
+
+rasq$OD = rasq$ODupd
+rasq$odNB = rasq$odNBupd
+rasq$odBB = rasq$odBBupd
 
 cent = function(x){
   med = median(x)
@@ -483,7 +495,7 @@ anova(lm.r)
 anova(lm.3)
 
 ```
-```{r fig_last, echo=TRUE}
+```{r prefig_last, echo=TRUE}
 cexes = 1.2
 png("new_od_plot.png", height=4, width=4, res=300, units="in")
 par(mar=c(5,5,3,1))

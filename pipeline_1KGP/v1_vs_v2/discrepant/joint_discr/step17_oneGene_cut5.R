@@ -32,7 +32,7 @@
   posi = vcfs[,2]
   
   trecase(Y=t(tot), Y1=t(a1), Y2=t(a2), X=sam, Z=t(gens[,-1]), output.tag=res.fil, p.cut=1,
-  eChr=eChr, ePos=pos, mChr=mChr, mPos=gens[,1], local.distance=2e5)
+  eChr=eChr, ePos=pos, mChr=mChr, mPos=gens[,1], local.distance=2e5, trace=2)
   
   eqtl = read.table(res.lon, header=T, as.is=T)
   eqtl[,1] = posi[eqtl[,2]]; colnames(eqtl)[1] = "Pos"
