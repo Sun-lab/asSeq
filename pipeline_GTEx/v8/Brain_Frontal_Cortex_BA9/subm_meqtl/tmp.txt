@@ -1,0 +1,33 @@
+cd /pine/scr/z/h/zhabotyn/R01/GTEx/v8/2020_01_20
+
+cd ..
+cd Whole_Blood
+ls -lh run_Whole_Blood_670_5e+05_long/*time* | wc -l
+ls -lh run_Whole_Blood_670_5e+05_short/*time* | wc -l
+ls -lh boot_Whole_Blood_670_5e+05_long_100/*time* | wc -l
+ls -lh boot_Whole_Blood_670_5e+05_short_100/*time* | wc -l
+
+
+cd ..
+cd Brain_Nucleus_accumbens_basal_ganglia
+ls -lh run_Brain_Nucleus_accumbens_basal_ganglia_202_5e+05_long/*time* | wc -l
+ls -lh run_Brain_Nucleus_accumbens_basal_ganglia_202_5e+05_short/*time* | wc -l
+ls -lh boot_Brain_Nucleus_accumbens_basal_ganglia_202_5e+05_long_100/*time* | wc -l
+ls -lh boot_Brain_Nucleus_accumbens_basal_ganglia_202_5e+05_short_100/*time* | wc -l
+#all done
+
+cd ..
+cd Brain_Frontal_Cortex_BA9
+ls -lh run_Brain_Frontal_Cortex_BA9_175_5e+05_long/*time* | wc -l
+ls -lh run_Brain_Frontal_Cortex_BA9_175_5e+05_short/*time* | wc -l
+ls -lh boot_Brain_Frontal_Cortex_BA9_175_5e+05_long_100/*time* | wc -l
+ls -lh boot_Brain_Frontal_Cortex_BA9_175_5e+05_short_100/*time* | wc -l
+
+
+
+cd ..
+cd Brain_Cortex
+ls -lh run_Brain_Cortex_205_5e+05_long/*time* | wc -l
+ls -lh run_Brain_Cortex_205_5e+05_short/*time* | wc -l
+ls -lh boot_Brain_Cortex_205_5e+05_long_100/*time* | wc -l
+ls -lh boot_Brain_Cortex_205_5e+05_short_100/*time* | wc -l
