@@ -1,5 +1,5 @@
 #--begin=21:00:00 -t 03-00:00:00 
-#sbatch -p general -o step4_collectU.out -t 07-00:00:00 --mem=8g --wrap="R CMD BATCH step4_collectU.R step4_collectU.Rout"
+#sbatch -p general -o step4_collect_short.out -t 07-00:00:00 --mem=8g --wrap="R CMD BATCH step4_collect_short.R step4_collect_short.Rout"
 
 nsub = 670
 cis_window = 5e5
@@ -74,9 +74,9 @@ for(i in 1:length(bfls)){
   
   outdir0 = sprintf("run_%s_%s_%s_%s", pref, nsub, cis_window, model[[j]])
   suffi = gsub(".csv", "", gsub("upd_eigenMT_","", bfls[i]))
-  genfi = read.table(sprintf("%s/genotypes_%s.dat", int.dir, suffi), as.is=T, header=T)
-  infi = read.table(sprintf("%s/genotypei_%s.dat", int.dir, suffi), as.is=T, header=T)
-  cntT = cntM = read.csv(sprintf("%s/counti_%s_%s.csv", int.dir, model[[j]], suffi), as.is=T, header=F)
+  #genfi = read.table(sprintf("%s/genotypes_%s.dat", int.dir, suffi), as.is=T, header=T)
+  #infi = read.table(sprintf("%s/genotypei_%s.dat", int.dir, suffi), as.is=T, header=T)
+  #cntT = cntM = read.csv(sprintf("%s/counti_%s_%s.csv", int.dir, model[[j]], suffi), as.is=T, header=F)
 
   assi = read.table(sprintf("%s/%s_eqtl.txt", outdir0, resi$gene), sep="\t", header=T, as.is=T)
   if(i == 1)colnames(assJm[[j]])=colnames(assTm[[j]])=colnames(assAm[[j]]) = colnames(assi)
@@ -88,21 +88,20 @@ for(i in 1:length(bfls)){
   assAm[[j]][i,] = assi[oA[1],] 
   #assi$ASE_Pvalue[oA[1]]
   
-  m = match(resi$SNP, infi$snpid)
-  cntM$snpM = unlist(genfi[m,])
+  #m = match(resi$SNP, infi$snpid)
+  #cntM$snpM = unlist(genfi[m,])
 
-  m = match(resi$SNP, infi$snpid)
-  cntM$snpM = unlist(genfi[m,])
-  m = match((assJm[[j]])$MarkerRowID[i], infi$snpid);m
-  cntM$snpJ = unlist(genfi[m,])
-  m = match((assTm[[j]])$MarkerRowID[i], infi$snpid);m
-  cntM$snpT = unlist(genfi[m,])
-  m = match((assAm[[j]])$MarkerRowID[i], infi$snpid);m
-  cntM$snpA = unlist(genfi[m,])
+  #m = match(resi$SNP, infi$snpid)
+  #cntM$snpM = unlist(genfi[m,])
+  #m = match((assJm[[j]])$MarkerRowID[i], infi$snpid);m
+  #cntM$snpJ = unlist(genfi[m,])
+  #m = match((assTm[[j]])$MarkerRowID[i], infi$snpid);m
+  #cntM$snpT = unlist(genfi[m,])
+  #m = match((assAm[[j]])$MarkerRowID[i], infi$snpid);m
+  #cntM$snpA = unlist(genfi[m,])
   #cntM
-  c(assJm[[j]]$final_Pvalue[i], assTm[[j]]$TReC_Pvalue[i], assAm[[j]]$ASE_Pvalue[i])
-  cntsM[[j]][i,] = apply(cntM, 1, paste, collapse=":")
-  rownames(cntsM[[j]])[i] = resi$gene
+  #cntsM[[j]][i,] = apply(cntM, 1, paste, collapse=":")
+  #rownames(cntsM[[j]])[i] = resi$gene
   
   fli = sprintf("%s/%s", boot.dir, gsub("upd_eigenMT", "short_boot_pval", bfls[i]))
   if(kp)kp = file.exists(fli)
@@ -151,11 +150,11 @@ for(j in 1:2){
   assAm[[j]]$permp = assAm[[j]]$ASE_Pvalue*bootres[[j]]$numtest
   
   modelj = model[[j]]
-  write.csv(assJm[[j]],  sprintf("TReCASE_%s_%s_%s_%s.csv", pref, nsub, cis_window, modelj))
-  write.csv(assTm[[j]],  sprintf("TReCASE_TReC_%s_%s_%s_%s.csv", pref, nsub, cis_window, modelj))
-  write.csv(assAm[[j]],  sprintf("TReCASE_ASE_%s_%s_%s_%s.csv", pref, nsub, cis_window, modelj))
-  write.csv(bootres[[j]],  sprintf("permp_est_%s_%s_%s_%s.csv", pref, nsub, cis_window, modelj))
-  write.csv(emtres[[j]],  sprintf("eigenMT_est_%s_%s_%s_%s.csv", pref, nsub, cis_window, modelj))
+  write.csv(assJm[[j]],  sprintf("short_TReCASE_%s_%s_%s_%s.csv", pref, nsub, cis_window, modelj))
+  write.csv(assTm[[j]],  sprintf("short_TReCASE_TReC_%s_%s_%s_%s.csv", pref, nsub, cis_window, modelj))
+  write.csv(assAm[[j]],  sprintf("short_TReCASE_ASE_%s_%s_%s_%s.csv", pref, nsub, cis_window, modelj))
+  write.csv(bootres[[j]],  sprintf("short_permp_est_%s_%s_%s_%s.csv", pref, nsub, cis_window, modelj))
+  write.csv(emtres[[j]],  sprintf("short_eigenMT_est_%s_%s_%s_%s.csv", pref, nsub, cis_window, modelj))
   
   alpha = 0.05
   message(mean(emtres[[j]]$BF<alpha, na.rm=T), " ",
