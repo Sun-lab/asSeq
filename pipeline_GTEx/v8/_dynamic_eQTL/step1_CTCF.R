@@ -19,6 +19,9 @@ qval = nrow(ctcf)*pi0*ctcf$p_cond/rank(ctcf$p_cond)
 table(ctcf$p_cond < 0.01)
 table(qval < 0.01)
 table(qval < 0.05)
+table(qval < 0.10)
+table(qval < 0.15)
+table(qval < 0.20)
 
 ctcf$qval = qval
 
@@ -46,9 +49,9 @@ wn = which(ctcf$strand == "-")
 wp = which(ctcf$strand == "+")
 
 ctcf$promoter_start[wn] = ctcf$end[wn]
-ctcf$promoter_end[wn]   = ctcf$end[wn] + 499
+ctcf$promoter_end[wn]   = ctcf$end[wn] + 199
 
-ctcf$promoter_start[wp] = ctcf$start[wp] - 499
+ctcf$promoter_start[wp] = ctcf$start[wp] - 199
 ctcf$promoter_end[wp]   = ctcf$start[wp]
 
 dim(ctcf)
@@ -63,8 +66,9 @@ gr1 = makeGRangesFromDataFrame(ctcf, ignore.strand=TRUE,
 # read in CTCF binding site information
 # --------------------------------------------------------------------
 
-ff1  = "CTCFBSDB_all_exp_sites_Sept12_2012_hg38_loci.bed"
-ff1  = file.path("~/research/data/CTCF/", ff1)
+ff1  = "CTCFBSDB_all_exp_sites_Sept12_2012_hg38_loci.bed.gz"
+ff1  = file.path("../Reference/CTCF/", ff1)
+
 ctcf.bs = fread(ff1)
 dim(ctcf.bs)
 ctcf.bs[1:5,]
@@ -75,7 +79,7 @@ table(ctcf.bs$chr)
 lens = ctcf.bs$end - ctcf.bs$start + 1
 summary(lens)
 
-pdf("CTCFBS_len_hist.pdf", width=6, height=4)
+pdf("../Reference/CTCF/CTCFBS_len_hist.pdf", width=6, height=4)
 par(mar=c(5,4,1,1), bty="n")
 hist(log10(lens), xlab="log10(CTCF BS length)", main="", breaks=100)
 abline(v=log10(200))
