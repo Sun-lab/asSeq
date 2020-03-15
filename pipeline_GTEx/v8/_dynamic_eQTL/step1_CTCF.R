@@ -6,11 +6,12 @@ library(GenomicRanges)
 # read in resutls
 # --------------------------------------------------------------------
 
-ctcf = fread("GTEx8_Whole_Blood_summary/long_quasi_Whole_Blood_ctcf.csv")
+ctcf_file = "long_quasi_Whole_Blood_ctcf.csv"
+ctcf = fread(file.path("../results/GTEx8_Whole_Blood_summary/", ctcf_file))
 dim(ctcf)
 ctcf[1:2,]
 
-hist(ctcf$p_cond)
+summary(ctcf$p_cond)
 pi0 = 2*mean(ctcf$p_cond > 0.5)
 pi0
 
@@ -26,7 +27,7 @@ ctcf$qval = qval
 # --------------------------------------------------------------------
 
 gene_file = "gencode.v26.GRCh38.genes_gene_level_anno.txt"
-gene_file = file.path("~/research/data/_GTEx/v8/Reference", gene_file)
+gene_file = file.path("../Reference", gene_file)
 genes = fread(gene_file)
 dim(genes)
 genes[1:2,]

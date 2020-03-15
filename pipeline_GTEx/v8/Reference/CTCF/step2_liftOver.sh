@@ -1,0 +1,1 @@
+~/bin/liftOver/liftOver CTCFBSDB_all_exp_sites_Sept12_2012_hg19_loci.bed  ~/bin/liftOver/hg19ToHg38.over.chain CTCFBSDB_all_exp_sites_Sept12_2012_hg38_loci.bed CTCFBSDB_all_exp_sites_Sept12_2012_hg38_loci_unMapped.bed 
