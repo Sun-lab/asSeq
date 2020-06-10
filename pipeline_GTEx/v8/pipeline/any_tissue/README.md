@@ -1,10 +1,11 @@
 Prerequisite files in the base folder:
 (say, /pine/scr/z/h/zhabotyn/R01/GTEx/v8)
-there should be following folders:
-Reference - contains gencode.v26.GRCh38.genes.gtf, as well as information for CTCF and TP53 sites
-TReC_ASReC - total and allele-specific expression (in folders named accordingly to the tissue)
-Annotations/GTEx_Analysis_v8_eQTL_covariates - covariates for each tissue
-WGS_VCF - directory with phased vcf file
+
+There should be following folders:
+1. Reference - contains gencode.v26.GRCh38.genes.gtf, as well as information for CTCF and TP53 sites
+2. TReC_ASReC - total and allele-specific expression (in folders named accordingly to the tissue)
+3. Annotations/GTEx_Analysis_v8_eQTL_covariates - covariates for each tissue
+4. WGS_VCF - directory with phased vcf file
 
 Also, note, that pipeline relies on 2 external packages that need to be preinstalled and their path should be added to the specifications file:
 eigenMT and parser4grNAunf - first one to do a fast initial eigenMT estimate of number of effective tests and second to deal with memory intensive processing of vcf files
