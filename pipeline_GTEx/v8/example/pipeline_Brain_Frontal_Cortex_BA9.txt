@@ -1,0 +1,85 @@
+need to install                                                           
+library(Rsamtools)
+library(GenomicFeatures)
+library(GenomicAlignments)
+library(AnnotationDbi)
+library(Matrix)
+library(DESeq2)
+library(qvalue)
+library(MatrixEQTL)
+library(VGAM)
+library(data.table)
+library(GenomicRanges)
+library(readxl)
+library(stringr)
+library("org.Hs.eg.db")
+library(GenomeInfoDb)
+library(goseq)
+
+
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("Rsamtools")
+
+#0a. run (1 process):
+#at this step we fix suspicious allele-specific expression and fix influential total expression entries for the long model
+R CMD BATCH  '--args specifications_Brain_Frontal_Cortex_BA9.txt long' step0_submit_trim.R AS_step0_submit_trim_long.Rout
+
+#0b. When previous step is finished, run (1 process):
+#at this step we fix influential total expression entries for the short model
+R CMD BATCH  '--args specifications_Brain_Frontal_Cortex_BA9.txt short' step0_submit_trim.R AS_step0_submit_trim_short.Rout
+
+#1. When previous step is finished, run (22 processes)
+#at this step we produce preformatted data to be run at a gene level
+R360 CMD BATCH  '--args specifications_Brain_Frontal_Cortex_BA9.txt' step1_submit_preprocSNP.R AS_step1_submit_preprocSNP.Rout
+
+#2a. When previous step is finished, run (#genes processes)
+#fitting TReCASE model for each gene, long model
+R360 CMD BATCH  '--args specifications_Brain_Frontal_Cortex_BA9.txt long 5e5' step2_submit_trecaseA.R AS_step2_submit_trecaseA_long.Rout
+setenv LD_LIBRARY_PATH /usr/local/gcc-7.2/lib64
+R360 CMD BATCH  '--args specifications_Brain_Frontal_Cortex_BA9.txt long 5e5' step2_submit_trecaseA_1_10.R AS_step2_submit_trecaseA_long_1_10.Rout&
+R360 CMD BATCH  '--args specifications_Brain_Frontal_Cortex_BA9.txt long 5e5' step2_submit_trecaseA_11_22.R AS_step2_submit_trecaseA_long_11_22.Rout&
+
+#2b. As long as there is place in the scheduler run (%genes processes) 
+#since schedulers often have something like 30-50k hard limit may need to wait until 2a is done
+#fitting TReCASE model for each gene, short model
+R360 CMD BATCH  '--args specifications_Brain_Frontal_Cortex_BA9.txt short 5e5' step2_submit_trecaseA.R AS_step2_submit_trecaseA_short.Rout
+setenv LD_LIBRARY_PATH /usr/local/gcc-7.2/lib64
+R360 CMD BATCH  '--args specifications_Brain_Frontal_Cortex_BA9.txt short 5e5' step2_submit_trecaseA_1_10.R AS_step2_submit_trecaseA_short_1_10.Rout
+R360 CMD BATCH  '--args specifications_Brain_Frontal_Cortex_BA9.txt short 5e5' step2_submit_trecaseA_11_22.R AS_step2_submit_trecaseA_short_11_22.Rout
+
+#3. 1 process
+#basic comparison of long and short models
+R360 CMD BATCH  '--args specifications_Brain_Frontal_Cortex_BA9.txt 5e5' step3_submit_brief_summ.R AS_step3_submit_brief_summ.Rout
+
+#4a. starts 22 processes, that parallelize into #gene processes to
+#produce the data to estimate permutation p-value for the long model
+R CMD BATCH  '--args specifications_Brain_Frontal_Cortex_BA9.txt long 5e5' step4_submit_MatrixEQTL.R AS_step4_submit_MatrixEQTL_long.Rout
+R360 CMD BATCH  '--args specifications_Brain_Frontal_Cortex_BA9.txt long 5e5' step4_submit_MatrixEQTL_1_10.R AS_step4_submit_MatrixEQTL_long_1_10.Rout
+R360 CMD BATCH  '--args specifications_Brain_Frontal_Cortex_BA9.txt long 5e5' step4_submit_MatrixEQTL_11_22.R AS_step4_submit_MatrixEQTL_long_11_22.Rout
+
+#4b. starts 22 processes, that parallelize into #gene processes to
+#same for the short model
+R CMD BATCH  '--args specifications_Brain_Frontal_Cortex_BA9.txt short 5e5' step4_submit_MatrixEQTL.R AS_step4_submit_MatrixEQTL_short.Rout
+R360 CMD BATCH  '--args specifications_Brain_Frontal_Cortex_BA9.txt short 5e5' step4_submit_MatrixEQTL_1_10.R AS_step4_submit_MatrixEQTL_short_1_10.Rout
+R360 CMD BATCH  '--args specifications_Brain_Frontal_Cortex_BA9.txt short 5e5' step4_submit_MatrixEQTL_11_22.R AS_step4_submit_MatrixEQTL_short_11_22.Rout
+
+#5. collect the results from long and short models (1 process)
+#note, here we also reformat allele-specific counts for future analysis of dynamic ASE analysis
+R CMD BATCH  '--args specifications_Brain_Frontal_Cortex_BA9.txt 5e5' step5_submit_collect.R AS_step5_submit_collect.Rout
+
+#6. #12 marginal glm fitted - gPC1,gPC2, and first ten PEER factors
+#for 3 conditions: AGE, CTCF and TP53: a model fit along with gPC1,gPC2 and
+#along with gPC1,gPC2, PEER1,...PEER5
+R CMD BATCH  '--args specifications_Brain_Frontal_Cortex_BA9.txt' step6_submit_glm.R AS_step6_submit_glm.Rout
+R CMD BATCH  '--args specifications_Brain_Frontal_Cortex_BA9.txt 5e5' step6_submit_PC.R AS_step6_submit_PC.Rout
+
+#7. summarizing the results in a few plots and clean up dynamic ASE results
+#note, at this point this step is done for all tissues at once
+R CMD BATCH step7_summarize_ASEcor.R
+
+#8.
+#checking for enrichment for the results step 6
+R CMD BATCH  '--args specifications_Brain_Frontal_Cortex_BA9.txt' step6_submit_glm.R AS_step6_submit_glm.Rout
+
