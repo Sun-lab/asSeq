@@ -1,8 +1,9 @@
 ---
 title: "Estimating permutation p-values using MatrixEQTL"
 output:
-  html_document: default
+  word_document: default
   pdf_document: default
+  html_document: default
 ---
 In our pipeline we first reformat the data per gene and then for each preprocessed gene run step4_MatrixEQTL script which runs multiple bootstraps.
 
