@@ -409,7 +409,6 @@ Note, here we disabled submission to the cluster, so example gene will be run di
                    rprog, chri, blocki, nsub, numpoints, cis_window, model, seedval, rinp, rout)
     com2 = sprintf("sbatch -p %s -t 0%s-00:00:00 -o %s --mem=%s --wrap='%s\'", 
                               queue, days, qout, mem, com)        
-    message(getwd())
     if(blocki%%paral==0){
       message(com)
       system(com)
@@ -417,4 +416,44 @@ Note, here we disabled submission to the cluster, so example gene will be run di
       message(com2)
       system(com2)
     }
+```
+
+Lets illustrate calculation of permutation p-value estimate. 
+We take the values generated in step4_runboot.R and fit glm predicting probability of observing more extreme result (then observed in bootstrap) by log10(minimum p-value).
+After fitting glm, predict permutation p-value based on log10(minimum p-value)
+Effective number of tests will be ratio of predicted permutation p-value and minimum p-value (trimmed between 1 and number of SNPs)
+```{r illustrate estimate, include=TRUE}
+boots = read.csv(sprintf("%s/short_boot_pval_9_1.csv", perm.dir), as.is=T)
+eigenMT = read.csv(sprintf("%s/upd_eigenMT_9_1.csv", out.dir), as.is=T)
+nperm = 1000
+y = boots$permp*nperm
+pvalb = boots$pvalb
+kp3 = (y/nperm)>=0     & (y/nperm)<=0.3
+kp3a = (y/nperm)>0     & (y/nperm)<=0.3
+    
+y1 = log10(y/nperm)
+x1 = log10(pvalb)
+glmi3 = glm(cbind(y[kp3],nperm-y[kp3])~x1[kp3], family="binomial")
+summary(glmi3)
+
+xval = log10(eigenMT$p.value)
+pred.perm = logiti(glmi3$coef[1]+glmi3$coef[2]*xval)
+c(xval, pred.perm)
+
+xlim = range(-c(x1, xval))
+ylim = range(-log10(y/nperm))
+ylim[2] = -log10(pred.perm)
+
+plot(-x1, -log10(y/nperm), xlab="-log10(boot p-val)", ylab="permutation p-val", bty="n", main="perm.p vs min.p")
+o = order(x1[kp3])
+xf = x1[kp3][o]
+yf = glmi3$fitted.values[o]
+lines(-xf, -log10(yf), col="red")
+
+fit = seq(0, xval, length.out=50)
+pred.perm0 = logiti(glmi3$coef[1]+glmi3$coef[2]*fit)
+plot(-x1, -log10(y/nperm), xlab="-log10(boot p-val)", ylab="permutation p-val", bty="n", main="perm.p vs min.p", xlim=xlim,ylim=ylim)
+lines(-fit, -log10(pred.perm0), col="red")
+points(-xval, -log10(pred.perm), col="blue", cex=1, pch=19)
+legend("topleft", "estimated permu.p", text.col="blue", pch=19, col="blue", bty="n")                 
 ```
