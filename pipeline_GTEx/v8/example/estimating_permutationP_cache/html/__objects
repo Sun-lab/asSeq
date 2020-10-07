@@ -1,8 +1,0 @@
-initial_config	args	bas.dir	bmem	boutdir	chri	cis_window	cnt.dir	days	eigenMTdir	int.dir	lib.dir	maf	mem	model	nsam	nsub	numpoints	out.dir	paral	perm.dir	pref	pyth	queue	routdir	rprog	seedval	specf	specs	useModel	wrk.dir	.Random.seed	classify	get_blockn	get_blocks	get_reduced_boot	logiti	minord	nOrMoreInCell	normscore	replaceOutliers	splitting	updminx
-reading relevant data	coli	converge	covar	covariates_file_name	geneInfo	genepos	genepos_file_name	i	updvar	vari
-initial run	blocki	coli	converge	countjobs	cvrt	errorCovariance	expression_file_name	exprj	g.ini	gene	genepos	genepos_file_name	genotype_file_name	kp	output_file_name	output_file_name_min	output_file_name2	pvOutputThreshold	snps	snpspos	snpspos_file_name	suff0	timout	varZ	wVar
-initial_run	blocki	coli	converge	countjobs	cvrt	errorCovariance	expression_file_name	exprj	g.ini	gene	genepos	genepos_file_name	genotype_file_name	kp	output_file_name	output_file_name_min	output_file_name2	pvOutputThreshold	snps	snpspos	snpspos_file_name	suff0	timout	varZ	wVar
-reading_relevant_data	coli	converge	covar	covariates_file_name	geneInfo	genepos	genepos_file_name	i	updvar	vari
-individual_gene+data	blocki	coli	converge	countjobs	cvrt	errorCovariance	expression_file_name	exprj	g.ini	gene	genepos	genepos_file_name	genotype_file_name	kp	output_file_name	output_file_name_min	output_file_name2	pvOutputThreshold	SNP_file_name	snps	snpspos	snpspos_file_name	suff0	timout	varZ	wVar
-run_initial_MatrixEQTL	me
-run_initial_eigenMT	cmdi

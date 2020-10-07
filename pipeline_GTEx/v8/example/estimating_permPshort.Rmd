@@ -49,7 +49,8 @@ Assuming, that previous step reformatting the data is finished, step4_MatrixEQTL
 
 ```{r setup, include=FALSE, echo=FALSE}
 require("knitr")
-opts_knit$set(root.dir = "C:/Users/Vasyl/Documents/GitHub/asSeq/pipeline_GTEx/v8/example")
+rt.dir = "C:/Users/Vasyl/Documents/GitHub/asSeq/pipeline_GTEx/v8/example"
+opts_knit$set(root.dir = rt.dir)
 getwd()
 library(MatrixEQTL)
 ```
@@ -72,7 +73,8 @@ We take the values generated in step4_runboot.R and fit glm predicting probabili
 After fitting glm, predict permutation p-value based on log10(minimum p-value)
 Effective number of tests will be ratio of predicted permutation p-value and minimum p-value (trimmed between 1 and number of SNPs)
 ```{r illustrate estimate, include=TRUE}
-setwd("C:/Users/Vasyl/Documents/GitHub/asSeq/pipeline_GTEx/v8/example/Muscle_Skeletal")
+ts.dir = sprintf("%s/Muscle_Skeletal", rt.dir)
+setwd(ts.dir)
 perm.dir = "boot_Muscle_Skeletal_704_5e+05_short_100"
 out.dir = sprintf("oneperm_Muscle_Skeletal_704_5e+05_short")
 logiti = function(x)1/(1+exp(-x))
