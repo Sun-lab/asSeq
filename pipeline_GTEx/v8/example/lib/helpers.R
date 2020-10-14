@@ -159,7 +159,7 @@ nOrMoreInCell <- function(modelMatrix, n) {
 #effNumGuess=nrow(snpM), 
 #verbose=FALSE, pvalue.hist=FALSE, min.pv.by.genesnp = FALSE, noFDRsaveMemory=FALSE,
 #updNtests=NA)
-getPermP = function(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=100, nsub=NA){ 
+getPermP = function(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=100, nsub=NA, write.res=F){ 
   #num.grid = 100; slice=2000; n.perm=1000; ini.perm=100; nsub = NA
 
   require(MatrixEQTL)
@@ -466,7 +466,8 @@ getPermP = function(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=1
     filout2 = sprintf("%s_short_boot_pval.csv", rownames(permEst$geneM)[1])
     filout3 = sprintf("%s_time.csv", perm.dir, rownames(permEst$geneM)[1])
   }
-  write.csv(eigenMT, updNtests, quote=F, row.names=F)
+  if(write.res)
+   write.csv(eigenMT, updNtests, quote=F, row.names=F)
   #perm.dir
   permm2 = rbind(permm, pvalb[,2])
   #ords$pvals,
@@ -480,12 +481,13 @@ getPermP = function(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=1
   }
   
   #write.csv(permm, filout, row.names=F, quote=F)
-  write.csv(permm2, filout1, row.names=F, quote=F)
-  write.csv(cbind(pvalb, permp), filout2, row.names=F, quote=F)
-  write.csv(tim0+tim1, filout3, row.names=F, quote=F)
-  
-  file.remove(bootfil)
-  file.remove(tmpbootfil)
+  if(write.res){
+    write.csv(permm2, filout1, row.names=F, quote=F) 
+    write.csv(cbind(pvalb, permp), filout2, row.names=F, quote=F)
+    write.csv(tim0+tim1, filout3, row.names=F, quote=F)
+  }
+#  file.remove(bootfil)
+#  file.remove(tmpbootfil)
   
   res = list(summ=eigenMT, tim=tim0+tim1, vals=cbind(pvalb, permp), mEQTL=me, min.snp = permEst$snpM[m,,drop=F])
   res
