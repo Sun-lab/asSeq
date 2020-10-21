@@ -192,7 +192,7 @@ If you ran eigenMT prior to running this pipeline, you can use that result to ge
 In such case 1/4 of simple number of SNPs can be used as a proxy for initial guess of effective number of snps procedure will try to adjust it if initial guess too inconsitent based on first 100 iterations
 
 
-```{r run_initial_Illustration, include=FALSE, echo=T, results='hide'}
+```{r run_initial_Illustration, include=TRUE, results=FALSE, message=FALSE, warning=FALSE}
 #will now create an object which would contained required information
 permEst = list(snpM=as.matrix(g.ini[,subs]), 
                geneM=as.matrix(exprj[,subs]), 
@@ -215,7 +215,7 @@ me = getPermP(permEst, n.perm=100, ini.perm=25)
 
 ```
 
-```{r run_reduced_Illustration, include=FALSE, echo=T, results='hide'}
+```{r run_reduced_Illustration, include=TRUE, results=FALSE, message=FALSE, warning=FALSE}
 #now, same but imagine reduced effect size
 permEst$outpf=sprintf("%s_mEQTL_red.txt", rownames(exprj)[1])
                

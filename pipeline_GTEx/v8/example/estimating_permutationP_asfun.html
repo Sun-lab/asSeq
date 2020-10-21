@@ -254,6 +254,46 @@ write.table(genepos[blocki,], file=genepos_file_name,
 rownames(exprj) = genepos$geneid[blocki]</code></pre>
 <p>Permutation estimate rewritten as a function.</p>
 <p>If you ran eigenMT prior to running this pipeline, you can use that result to get a better guess of effective number of tests but it can be skipped. In such case 1/4 of simple number of SNPs can be used as a proxy for initial guess of effective number of snps procedure will try to adjust it if initial guess too inconsitent based on first 100 iterations</p>
+<pre class="r"><code>#will now create an object which would contained required information
+permEst = list(snpM=as.matrix(g.ini[,subs]), 
+               geneM=as.matrix(exprj[,subs]), 
+               cvrtM=as.matrix(covar[subs,]), 
+               snpspos=snpspos, 
+               genepos=genepos, 
+               outpf=sprintf(&quot;%s_mEQTL_unr.txt&quot;, rownames(exprj)[1]), 
+               pvOutputThreshold=1e-300, 
+               pvOutputThreshold.csv=1, 
+               cisDist=1e9,#we have already preprocessed SNPs
+               effNumGuess=nrow(g.ini)/4, 
+               verbose=FALSE, pvalue.hist=FALSE, 
+               min.pv.by.genesnp = FALSE, 
+               noFDRsaveMemory=FALSE,
+               outdir=&quot;unreduced&quot;)
+#updNtests=sprintf(&quot;%s_updtests.csv&quot;, rownames(exprj)[1])
+me = getPermP(permEst, n.perm=100, ini.perm=25)
+#names(me)
+#me$summ</code></pre>
+<pre class="r"><code>#now, same but imagine reduced effect size
+permEst$outpf=sprintf(&quot;%s_mEQTL_red.txt&quot;, rownames(exprj)[1])
+               
+eigenMT = me$summ
+eigenMT$TESTS = eigenMT$TESTSupd
+gen.sub = me$min.snp
+redboot = get_reduced_boot(1, target.perm.ps=1e-2, i=1, 
+                           mQTL.fit=eigenMT, 
+                           expr.mat = permEst$geneM, 
+                           min.SNP=gen.sub, 
+                           covars=permEst$cvrtM, 
+                           nsam=ncol(gen.sub))
+permEstR = permEst
+permEstR$geneM = redboot
+rownames(permEstR$geneM) = rownames(permEst$geneM)
+
+permEstR$effNumGuess=eigenMT$TESTSupd               
+permEstR$outdir=&quot;reduced&quot;
+
+meR = getPermP(permEstR, n.perm=100, ini.perm=25)
+meR$summ</code></pre>
 <p>Lets illustrate calculation of permutation p-value estimate. We take the values generated in step4_runboot.R and fit glm predicting probability of observing more extreme result (then observed in bootstrap) by log10(minimum p-value). After fitting glm, predict permutation p-value based on log10(minimum p-value) Effective number of tests will be ratio of predicted permutation p-value and minimum p-value (trimmed between 1 and number of SNPs)</p>
 <pre class="r"><code>#boots = read.csv(sprintf(&quot;%s/short_boot_pval_9_1.csv&quot;, perm.dir), as.is=T)
 #eigenMT = read.csv(sprintf(&quot;%s/upd_eigenMT_9_1.csv&quot;, out.dir), as.is=T)
