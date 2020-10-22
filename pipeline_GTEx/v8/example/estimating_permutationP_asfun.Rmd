@@ -9,7 +9,7 @@ In our pipeline we first reformat the data per gene and then for each preprocess
 
 ```{r setup, include=FALSE, echo=FALSE, message=F, results='hide'}
 require("knitr")
-opts_knit$set(root.dir = "C:/Users/Vasyl/Documents/GitHub/asSeq/pipeline_GTEx/v8/example/Muscle_Skeletal")
+opts_knit$set(root.dir = "Muscle_Skeletal")
 library(MatrixEQTL)
 ```
 First, load the data for MatrixEQTL. Arguments here are in the same style as original script. They give information about the chromosome on which gene is located, number of subsamples to be used for estimation (no more then total number of samples recorded in specification file), random seed, window size and which model to be used.
@@ -24,7 +24,7 @@ seedval = as.numeric(args[3])
 cis_window = as.numeric(args[4])
 model = args[5]
 
-specf = "specifications.txt"
+specf = "Muscle_Skeletal/specifications.txt"
 
 specs = unlist(read.table(specf, as.is=T))
 pref = specs[1]
