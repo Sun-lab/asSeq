@@ -1,0 +1,11 @@
+{
+    "args" : [
+        "-IC:/Program Files/RStudio/resources/libclang/builtin-headers/3.4",
+        "-IC:/Program Files/R/R-3.4.4/library/zlibbioc/include",
+        "-IC:/PROGRA~1/R/R-34~1.4/include",
+        "-DNDEBUG"
+    ],
+    "hash" : "160390117115787059591578705959",
+    "is_cpp" : true,
+    "pch" : ""
+}

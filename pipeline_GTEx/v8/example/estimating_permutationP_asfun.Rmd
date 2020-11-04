@@ -9,7 +9,10 @@ In our pipeline we first reformat the data per gene and then for each preprocess
 
 ```{r setup, include=FALSE, echo=FALSE, message=F, results='hide'}
 require("knitr")
+<<<<<<< Updated upstream
 opts_knit$set(root.dir = "Muscle_Skeletal")
+=======
+>>>>>>> Stashed changes
 library(MatrixEQTL)
 ```
 First, load the data for MatrixEQTL. Arguments here are in the same style as original script. They give information about the chromosome on which gene is located, number of subsamples to be used for estimation (no more then total number of samples recorded in specification file), random seed, window size and which model to be used.
@@ -24,14 +27,18 @@ seedval = as.numeric(args[3])
 cis_window = as.numeric(args[4])
 model = args[5]
 
+<<<<<<< Updated upstream
 specf = "Muscle_Skeletal/specifications.txt"
+=======
+specf = "specifications_Muscle_Skeletal.txt"
+>>>>>>> Stashed changes
 
 specs = unlist(read.table(specf, as.is=T))
 pref = specs[1]
 nsam = specs[2]
-wrk.dir = specs[14]
-lib.dir = specs[15]
-bas.dir = specs[16]
+wrk.dir = getwd()
+lib.dir = sprintf("%s/%s", wrk.dir, specs[15])
+bas.dir = sprintf("%s/%s", wrk.dir, pref)
 setwd(wrk.dir)
 
 library(MatrixEQTL)
@@ -46,19 +53,20 @@ maf = 0.05
 set.seed(seedval)
 
 
-int.dir = sprintf("%s_%s_%s", pref, nsam, cis_window)
+int.dir = sprintf("%s/%s_%s_%s", bas.dir, pref, nsam, cis_window)
 subs = 1:nsam
 if(nsam!=nsub){subs = sample(subs[1:nsub])}
 
-cnt.dir = sprintf("%s_prepr", pref);#cnt.dir;file.exists(cnt.dir)
+cnt.dir = sprintf("%s_prepr", pref)
 
 ```
 
 Once initial setup is done we read relevant (multigene) data
 
 ```{r reading relevant data, include=FALSE, message=F, results='hide'}
-genepos_file_name = sprintf("%s/geneInfo_prepr_%s.txt", 
-                    cnt.dir, model, echo=FALSE, message=F, results='hide')
+genepos_file_name = sprintf("%s/%s/geneInfo_prepr_%s.txt", 
+                    bas.dir, cnt.dir, model, echo=FALSE, message=F, results='hide')
+genepos_file_name
 geneInfo = read.table(genepos_file_name, 
                       header = T, as.is = T)
 geneInfo
@@ -129,7 +137,7 @@ Load geneinfo and design matrix. Ensure that covariates don't have too small var
 Load gene expression (already quantile normalized format provided in the example).
  
 ```{r reading_relevant_data, include=TRUE}
-genepos_infile_name = sprintf("%s/geneInfo_prepr_%s.txt", cnt.dir, model)
+genepos_infile_name = sprintf("%s/%s/geneInfo_prepr_%s.txt", bas.dir, cnt.dir, model)
 geneInfo = read.table(genepos_infile_name, 
                       header = T, as.is = T)
 
@@ -209,7 +217,7 @@ permEst = list(snpM=as.matrix(g.ini[,subs]),
                noFDRsaveMemory=FALSE,
                outdir="unreduced")
 #updNtests=sprintf("%s_updtests.csv", rownames(exprj)[1])
-me = getPermP(permEst, n.perm=100, ini.perm=25)
+me = getPermP(permEst, n.perm=25, ini.perm=25)
 #names(me)
 #me$summ
 
@@ -222,12 +230,13 @@ permEst$outpf=sprintf("%s_mEQTL_red.txt", rownames(exprj)[1])
 eigenMT = me$summ
 eigenMT$TESTS = eigenMT$TESTSupd
 gen.sub = me$min.snp
-redboot = get_reduced_boot(1, target.perm.ps=1e-2, i=1, 
+redboot = get_reduced_boot(1, target.perm.ps=1e-2,
                            mQTL.fit=eigenMT, 
                            expr.mat = permEst$geneM, 
                            min.SNP=gen.sub, 
                            covars=permEst$cvrtM, 
                            nsam=ncol(gen.sub))
+
 permEstR = permEst
 permEstR$geneM = redboot
 rownames(permEstR$geneM) = rownames(permEst$geneM)
@@ -243,55 +252,7 @@ meR$summ
 Lets illustrate calculation of permutation p-value estimate. 
 We take the values generated in step4_runboot.R and fit glm predicting probability of observing more extreme result (then observed in bootstrap) by log10(minimum p-value).
 After fitting glm, predict permutation p-value based on log10(minimum p-value)
-Effective number of tests will be ratio of predicted permutation p-value and minimum p-value (trimmed between 1 and number of SNPs)
-```{r reduced illustrate estimate, include=TRUE}
-#boots = read.csv(sprintf("%s/short_boot_pval_9_1.csv", perm.dir), as.is=T)
-#eigenMT = read.csv(sprintf("%s/upd_eigenMT_9_1.csv", out.dir), as.is=T)
-nperm = 100
-y = me$vals$permp*nperm
-pvalb = me$vals$pvalb
-kp3 = (y/nperm)>=0     & (y/nperm)<=0.3
-kp3a = (y/nperm)>0     & (y/nperm)<=0.3
-    
-y1 = log10(y/nperm)
-x1 = log10(pvalb)
-glmi3 = glm(cbind(y[kp3],nperm-y[kp3])~x1[kp3], family="binomial")
-summary(glmi3)
-
-xval = log10(eigenMT$p.value)
-pred.perm = logiti(glmi3$coef[1]+glmi3$coef[2]*xval)
-c(xval, pred.perm)
-
-xlim = range(-c(x1, xval))
-ylim = range(-log10(y/nperm))
-ylim[2] = -log10(pred.perm)
-
-plot(-x1, -log10(y/nperm), xlab="-log10(boot p-val)", 
-     ylab="permutation p-val", bty="n", main="perm.p vs min.p")
-#o = order(x1[kp3])
-#xf = x1[kp3][o]
-#yf = glmi3$fitted.values[o]
-#lines(-xf, -log10(yf), col="red")
-fit = seq(0, min(c(xval,x1)), length.out=50)
-pred.perm0 = logiti(glmi3$coef[1]+glmi3$coef[2]*fit)
-lines(-fit, -log10(pred.perm0), col="red")
-
-fit = seq(0, xval, length.out=50)
-pred.perm0 = logiti(glmi3$coef[1]+glmi3$coef[2]*fit)
-plot(-x1, -log10(y/nperm), xlab="-log10(boot p-val)", 
-     ylab="permutation p-val", bty="n", main="perm.p vs min.p", 
-     xlim=xlim,ylim=ylim)
-lines(-fit, -log10(pred.perm0), col="red")
-points(-xval, -log10(pred.perm), col="blue", cex=1, pch=19)
-legend("topleft", "estimated permu.p", text.col="blue", pch=19, 
-       col="blue", bty="n")                 
-```
-
-Or using less extreme efect size:
-Lets illustrate calculation of permutation p-value estimate. 
-We take the values generated in step4_runboot.R and fit glm predicting probability of observing more extreme result (then observed in bootstrap) by log10(minimum p-value).
-After fitting glm, predict permutation p-value based on log10(minimum p-value)
-Effective number of tests will be ratio of predicted permutation p-value and minimum p-value (trimmed between 1 and number of SNPs)
+Effective number of tests will be ratio of predicted permutation p-value and minimum p-value (trimmed between 1 and number of SNPs) using less extreme efect size:
 ```{r illustrate estimate (reduced), include=TRUE}
 nperm = 100
 eigenMT = meR$summ

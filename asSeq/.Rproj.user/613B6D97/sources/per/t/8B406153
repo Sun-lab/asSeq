@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1604512897691.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3565374356",
+    "id" : "8B406153",
+    "lastKnownWriteTime" : 1578705959,
+    "last_content_update" : 1578705959,
+    "path" : "C:/research/GTEx/asSeq_dev/asSeq_0.99.501/asSeq/src/bamtools_options.cpp",
+    "project_path" : "src/bamtools_options.cpp",
+    "properties" : {
+        "cursorPosition" : "29,7",
+        "scrollLine" : "22"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "cpp"
+}

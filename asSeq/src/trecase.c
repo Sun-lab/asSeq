@@ -552,7 +552,13 @@ void trecase (int* dims, double* Y, double* X, double* Z, double* z1,
   /**
    * write out the header in the output file
    */
-  fprintf(fo, "GeneRowID\tMarkerRowID\tTReC_b\tTReC_Chisq\tTReC_df\tTReC_Pvalue\t");
+//  fprintf(fo, "GeneRowID\tMarkerRowID\tTReC_b\tTReC_Chisq\tTReC_df\tTReC_Pvalue\t");
+//  fprintf(fo, "ASE_b\tASE_Chisq\tASE_df\tASE_Pvalue\t");
+//  fprintf(fo, "Joint_b\tJoint_Chisq\tJoint_df\tJoint_Pvalue\t");
+//  fprintf(fo, "n_TReC\tn_ASE\tn_ASE_Het\ttrans_Chisq\ttrans_Pvalue\tfinal_Pvalue\n");
+  fprintf(fo, "GeneRowID\tMarkerRowID\t");
+  fprintf(fo, "NBod\tBBod\t");
+  fprintf(fo, "TReC_b\tTReC_Chisq\tTReC_df\tTReC_Pvalue\t");
   fprintf(fo, "ASE_b\tASE_Chisq\tASE_df\tASE_Pvalue\t");
   fprintf(fo, "Joint_b\tJoint_Chisq\tJoint_df\tJoint_Pvalue\t");
   fprintf(fo, "n_TReC\tn_ASE\tn_ASE_Het\ttrans_Chisq\ttrans_Pvalue\tfinal_Pvalue\n");
@@ -1278,7 +1284,13 @@ void trecase (int* dims, double* Y, double* X, double* Z, double* z1,
         if (pvalJoint < P_cut) freqJoint[100] += 1;
 
         /* gene ID and SNP ID */
+//        fprintf(fo, "%d\t%d\t", i+1, j+1);
+//        fprintRow(fo, bxj_trec, chisqTReC,  dfr_TReC,  pvalTReC);
+//        fprintRow(fo, bxj_ase,  chisqASE,   dfr_ASE,   pvalASE);
+//        fprintRow(fo, bxj_old,  chisqJoint, dfr_Joint, pvalJoint);
+//        fprintf(fo, "%d\t%d\t%d\t", df0+nX+1, h0, h1);
         fprintf(fo, "%d\t%d\t", i+1, j+1);
+        fprintf(fo, "%.2e\t%.2e\t", phi_new, theta_new);
         fprintRow(fo, bxj_trec, chisqTReC,  dfr_TReC,  pvalTReC);
         fprintRow(fo, bxj_ase,  chisqASE,   dfr_ASE,   pvalASE);
         fprintRow(fo, bxj_old,  chisqJoint, dfr_Joint, pvalJoint);

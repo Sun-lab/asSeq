@@ -5,9 +5,9 @@ Version: 0.99.501
 Date: 2018-11-20
 Author: Wei Sun, Vasyl Zhabotynsky and Chong Jin
 Maintainer: Wei Sun <weisun@email.unc.edu>
-Imports: zlibbioc
+Imports: zlibbioc, MatrixEQTL
 Description: allele specific study of RNA-seq data.  
 License: GPL (>= 2)
 LazyLoad: yes
-Packaged: 2020-01-11 00:25:59 UTC; wsun
+Packaged: 2020-06-18 16:06:11 UTC; zhabotyn
 NeedsCompilation: yes

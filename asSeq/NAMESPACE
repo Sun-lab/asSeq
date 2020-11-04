@@ -17,6 +17,11 @@ export(trec)
 export(trecase)
 export(trecaseP)
 export(pileupBAM)
+export(getPermP)
+export(get_reduced_boot)
+export(logit)
+export(logiti)
+
 
 # ------------------------------------------
 # S3method declarations.  

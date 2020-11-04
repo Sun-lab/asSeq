@@ -1,3 +1,5 @@
+require(MatrixEQTL)
+
 get_blocks = function(x, split="\\|", blocks=c(1)){
   paste(unlist(strsplit(x, split=split))[blocks], collapse="-")
 }
@@ -22,59 +24,6 @@ classify = function(i, frac1, fracN, kp){
 }
 
 
-get_reduced_boot = function(ppi,target.min.ps=NULL,target.perm.ps, i=1, mQTL.fit, expr.mat, min.SNP, covars, nsam, use.norm=F){
-  #ppi = 50;i = 1; mQTL.fit=eigenMT; expr.mat = exprj; min.SNP=gen.sub; target.perm.p=target.perm.pi;use.norm=F; covars = covar
-  #i = i + 1
-  target.perm.p = target.perm.ps[ppi]
-  #nsam = ncol(gen.sub)-1
-  if(is.null(target.min.ps)){
-    target.min.p = target.perm.p/mQTL.fit$TESTS[i]#/mQTL.fit$ntest[i]#/mQTL.fit$TESTS[i]
-  }else{
-    target.min.p = target.min.ps[ppi]
-  }
-  tstat = qt(target.min.p/2, df=nsam-7, lower.tail=F)
-  xeqtl = as.numeric(min.SNP[i,])
-  #x1 = as.numeric(covars[1,])
-  #x2 = as.numeric(covars[2,])
-  #x3 = as.numeric(covars[3,])
-  #x4 = as.numeric(covars[4,])
-  #x5 = as.numeric(covars[5,])
-  y = as.numeric(expr.mat[i,])
-  d = data.frame(y=y, covars, xeqtl)
-  lm1 = lm(y~., data=d)
-  npar = length(lm1$coef)
-  se = summary(lm1)$coefficients[npar,2]
-  if(use.norm){
-    sdi = sd(lm1$residuals)
-    res = rnorm(nsam, 0, sdi)
-  }else{
-    res = sample(lm1$residuals)
-  }
-  fitspre = lm1$fitted
-  ypre0 = fitspre+lm1$residuals
-  d2 = data.frame(y=ypre0, covars, xeqtl)
-  lm2pre0 = lm(y~., data=d2)
-
-  ypre = fitspre+res
-  d3 = data.frame(y=ypre, covars, xeqtl)
-  lm2pre = lm(y~., data=d3)
-  respre = lm2pre$residuals
-
-  seout = summary(lm2pre)$coefficients[npar,2]
-  cfout = lm2pre$coef
-  cfout[npar] = seout*tstat#cf1["xeqtl"]*mult
-  fitsout = c(cbind(rep(1,nrow(covars)),covars,xeqtl)%*%cfout)
-  yout = matrix(fitsout + respre, nrow=1)
-
-  d4 = data.frame(y=yout[1,], covars, xeqtl)
-  lm2out = lm(y~., data=d4)
-  rownames(yout) = sprintf("%s_%s", rownames(expr.mat)[i], ppi)
-  #summary(lm2out)
-  #target.min.p
-#  colnames(yout) = sprintf("%s_%s", rownames(expr.mat)[i], ppi)
-  yout
-}
-
 
 normscore = function(vec) {
     len  = length(na.omit(vec))+1
@@ -87,6 +36,7 @@ normscore = function(vec) {
     vec
 }
 
+logit = function(x){log(x)-log(1-x)}
 logiti = function(x)1/(1+exp(-x))
 updminx = function(y, a, b){(-log(-1+1/y)-a)/b}
 
@@ -149,6 +99,64 @@ nOrMoreInCell <- function(modelMatrix, n) {
 
 #setClass("permEst", slots=list(snpM="numeric", genem="numeric", cvrtm="numeric", 
 #pvOutputThreshold="numeric",  pvOutputThreshold.csv="numeric", )
+get_reduced_boot = function(ppi,target.min.ps=NULL,target.perm.ps, genenm=NULL, mQTL.fit, expr.mat, min.SNP, covars, nsam, use.norm=F){
+  if(is.null(genenm))genenm=rownames(expr.mat)[1]
+  if(is.null(genenm))genenm=1:length(genenm)
+  #ppi = 50;i = 1; mQTL.fit=eigenMT; expr.mat = exprj; min.SNP=gen.sub; target.perm.p=target.perm.pi;use.norm=F; covars = covar
+  #i = i + 1
+  i = 1
+  target.perm.p = target.perm.ps[ppi]
+  #nsam = ncol(gen.sub)-1
+  if(is.null(target.min.ps)){
+    target.min.p = target.perm.p/mQTL.fit$TESTS[i]#/mQTL.fit$ntest[i]#/mQTL.fit$TESTS[i]
+  }else{
+    target.min.p = target.min.ps[ppi]
+  }
+  tstat = qt(target.min.p/2, df=nsam-ncol(covars)-1, lower.tail=F)
+  xeqtl = as.numeric(min.SNP[i,])
+  #x1 = as.numeric(covars[1,])
+  #x2 = as.numeric(covars[2,])
+  #x3 = as.numeric(covars[3,])
+  #x4 = as.numeric(covars[4,])
+  #x5 = as.numeric(covars[5,])
+  y = as.numeric(expr.mat[i,])
+
+  
+  d = data.frame(y=y, covars, xeqtl)
+  lm1 = lm(y~., data=d)
+  npar = length(lm1$coef)
+  se = summary(lm1)$coefficients[npar,2]
+  if(use.norm){
+    sdi = sd(lm1$residuals)
+    res = rnorm(nsam, 0, sdi)
+  }else{
+    res = sample(lm1$residuals)
+  }
+  fitspre = lm1$fitted
+  ypre0 = fitspre+lm1$residuals
+  d2 = data.frame(y=ypre0, covars, xeqtl)
+  lm2pre0 = lm(y~., data=d2)
+
+  ypre = fitspre+res
+  d3 = data.frame(y=ypre, covars, xeqtl)
+  lm2pre = lm(y~., data=d3)
+  respre = lm2pre$residuals
+
+  seout = summary(lm2pre)$coefficients[npar,2]
+  cfout = lm2pre$coef
+  cfout[npar] = seout*tstat#cf1["xeqtl"]*mult
+  fitsout = c(cbind(rep(1,nrow(covars)),covars,xeqtl)%*%cfout)
+  yout = matrix(fitsout + respre, nrow=1)
+
+  d4 = data.frame(y=yout[1,], covars, xeqtl)
+  lm2out = lm(y~., data=d4)
+  rownames(yout) = sprintf("%s_%s", genenm, ppi)
+  #summary(lm2out)
+  #target.min.p
+#  colnames(yout) = sprintf("%s_%s", rownames(expr.mat)[i], ppi)
+  yout
+}
+
 
 
 
@@ -159,7 +167,7 @@ nOrMoreInCell <- function(modelMatrix, n) {
 #effNumGuess=nrow(snpM), 
 #verbose=FALSE, pvalue.hist=FALSE, min.pv.by.genesnp = FALSE, noFDRsaveMemory=FALSE,
 #updNtests=NA)
-getPermP = function(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=100, nsub=NA, write.res=F){ 
+getPermP = function(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=100, nsub=NA, write.res=F, max.adj=10){ 
   #num.grid = 100; slice=2000; n.perm=1000; ini.perm=100; nsub = NA
 
   require(MatrixEQTL)
@@ -238,12 +246,12 @@ getPermP = function(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=1
   target.perm.pi = target.perm.ps[1]
   eigenMTp = eigenMT
   j = 0
-  tmpres = matrix(NA, nrow=10, ncol=4)
+  tmpres = matrix(NA, nrow=100, ncol=4)
 
   #another update: don't discard iterations that were within range, use them
   repeat{
-    j = j + 1
-    redboot = t(sapply(1:length(target.perm.ps), get_reduced_boot, target.perm.ps=target.perm.ps, i=1, 
+    j = j + 1                                                                                        
+    redboot = t(sapply(1:length(target.perm.ps), get_reduced_boot, target.perm.ps=target.perm.ps, 
     mQTL.fit=eigenMTp, expr.mat = permEst$geneM, min.SNP=gen.sub, covars=permEst$cvrtM, nsam=nsub, use.norm=F))
     if(j>1){
       redboot = rbind(redboot, kpboot)
@@ -252,11 +260,9 @@ getPermP = function(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=1
   
     geneb = SlicedData$new();
     geneb = geneb$CreateFromMatrix(redboot)
-  #  output_file_name = sprintf("%s/output_boot_%s.txt", perm.dir, suff0)
     bootpos = genepos[rep(1, nrow(redboot)),]
     bootpos[,1] = rownames(redboot)
     tstarts = proc.time()
-    #for(i in 1:1e1){
     meb = Matrix_eQTL_main(
           snps = snps,
           gene = geneb,
@@ -316,7 +322,6 @@ getPermP = function(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=1
               pvalue.hist = permEst$pvalue.hist,
               min.pv.by.genesnp = TRUE,
               noFDRsaveMemory = TRUE);
-      #pvalp = aggregate(mep$cis$eqtls$pvalue, by=list(mep$cis$eqtls$gene), FUN=min)
       pvalp = mep$cis$min.pv.gene
       pvalp = data.frame(names(pvalp), pvalp, stringsAsFactors=FALSE)  
       permm[i,] = pvalp[,2]
@@ -341,7 +346,7 @@ getPermP = function(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=1
     kpboot = redboot[kp,]
     kpbootpos = bootpos[kp,]
     tmpres[j, 4] = sum(kp)
-    if(sum(kp)>num.grid | j>10){
+    if(sum(kp)>num.grid | j>=max.adj){
       break
     }
     if(mean(y<(nperm*0.001))>.40 & j<5){
@@ -370,50 +375,51 @@ getPermP = function(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=1
   #
   nperm0 = ini.perm+1
   nperm = n.perm
-  permind = nperm0:nperm
-  
-  permm0 = permm
-  permm = matrix(NA, nrow=nperm, ncol=nrow(pvalb))
-  permm[1:ini.perm,] = permm0
-
-
-  starts = proc.time()
-  for(i in permind){
-    permi = sample(1:nsub)
-    exprp = redboot[,permi]
-    covap = permEst$cvrtM[permi,]
-
-    cvrtp = SlicedData$new()
-    cvrtp = cvrtp$CreateFromMatrix(t(covap))
-      
-    genep = SlicedData$new();
-    genep = geneb$CreateFromMatrix(exprp)
+  if(nperm0<=nperm){
+    permind = nperm0:nperm
     
-    mep = Matrix_eQTL_main(
-            snps = snps,
-            gene = genep,
-            cvrt = cvrtp,
-            pvOutputThreshold = permEst$pvOutputThreshold,
-            output_file_name = tmpbootfil,
-            output_file_name.cis = bootfil,
-            pvOutputThreshold.cis = permEst$pvOutputThreshold,
-            useModel = useModel, 
-            errorCovariance = errorCovariance,
-            snpspos = permEst$snpspos,
-            genepos = bootpos, 
-            cisDist = permEst$cisDist,
-            verbose = permEst$verbose,
-            pvalue.hist = permEst$pvalue.hist,
-            min.pv.by.genesnp = TRUE,
-            noFDRsaveMemory = TRUE);
-    #pvalp = aggregate(mep$cis$eqtls$pvalue, by=list(mep$cis$eqtls$gene), FUN=min)
-    pvalp = mep$cis$min.pv.gene
-    pvalp = data.frame(names(pvalp), pvalp, stringsAsFactors=FALSE)  
-    permm[i,] = pvalp[,2]
-    message(i, " out of ", nperm)
-  }
-  ends = proc.time()
-  tim1 = (ends[3]-starts[3])
+    permm0 = permm
+    permm = matrix(NA, nrow=nperm, ncol=nrow(pvalb))
+    permm[1:ini.perm,] = permm0
+  
+  
+    starts = proc.time()
+    for(i in permind){
+      permi = sample(1:nsub)
+      exprp = redboot[,permi]
+      covap = permEst$cvrtM[permi,]
+  
+      cvrtp = SlicedData$new()
+      cvrtp = cvrtp$CreateFromMatrix(t(covap))
+        
+      genep = SlicedData$new();
+      genep = geneb$CreateFromMatrix(exprp)
+      
+      mep = Matrix_eQTL_main(
+              snps = snps,
+              gene = genep,
+              cvrt = cvrtp,
+              pvOutputThreshold = permEst$pvOutputThreshold,
+              output_file_name = tmpbootfil,
+              output_file_name.cis = bootfil,
+              pvOutputThreshold.cis = permEst$pvOutputThreshold,
+              useModel = useModel, 
+              errorCovariance = errorCovariance,
+              snpspos = permEst$snpspos,
+              genepos = bootpos, 
+              cisDist = permEst$cisDist,
+              verbose = permEst$verbose,
+              pvalue.hist = permEst$pvalue.hist,
+              min.pv.by.genesnp = TRUE,
+              noFDRsaveMemory = TRUE);
+      pvalp = mep$cis$min.pv.gene
+      pvalp = data.frame(names(pvalp), pvalp, stringsAsFactors=FALSE)  
+      permm[i,] = pvalp[,2]
+      message(i, " out of ", nperm)
+    }
+    ends = proc.time()
+    tim1 = (ends[3]-starts[3])
+  }else{tim1=0}
   message("time per iter: ", (tim0+tim1)/nperm)#half minute per iteration per 1 gene
 
 
@@ -426,16 +432,13 @@ getPermP = function(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=1
   message("attempt ", j, ": ", mean(y<(nperm*0.001)), " and ", mean(y>nperm*.3))
   
   
-  #kp0 = (y/nperm)>0.002 & (y/nperm)<.25;table(kp0)
   kp3 = (y/n.perm)>=0     & (y/n.perm)<=0.3
   kp3a = (y/n.perm)>0     & (y/n.perm)<=0.3
       
   y1 = -log10(y/nperm)
   x1 = -log10(pvalb[,2])
   glmi3 = glm(cbind(y[kp3],nperm-y[kp3])~x1[kp3], family="binomial")
-  #summary(glmi3)
   lmi3 = lm(y1[kp3a]~x1[kp3a])
-  #summary(lmi3)
   
   
   eigenMT$TESTSupd = eigenMTp$TESTS
@@ -454,7 +457,6 @@ getPermP = function(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=1
   eigenMT$GLM.s = glmi3$coef[2]
   eigenMT$numpts = sum(kp3a)
   
-  #write.csv(eigenMT, sprintf("%s/upd_eigenMT_%s.csv", work.dir, suff0), quote=F, row.names=F)
   if(!is.na(permEst$outdir)){
     updNtests = sprintf("%s/%s_updtests.csv", permEst$outdir, rownames(permEst$geneM)[1])
     filout1 = sprintf("%s/%s_boot_pval.csv", permEst$outdir, rownames(permEst$geneM)[1])
@@ -480,14 +482,11 @@ getPermP = function(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=1
     permp[i] = mean(permm2[nperm+1,i]>=permm[1:nperm,i])
   }
   
-  #write.csv(permm, filout, row.names=F, quote=F)
   if(write.res){
     write.csv(permm2, filout1, row.names=F, quote=F) 
     write.csv(cbind(pvalb, permp), filout2, row.names=F, quote=F)
     write.csv(tim0+tim1, filout3, row.names=F, quote=F)
   }
-#  file.remove(bootfil)
-#  file.remove(tmpbootfil)
   
   res = list(summ=eigenMT, tim=tim0+tim1, vals=cbind(pvalb, permp), mEQTL=me, min.snp = permEst$snpM[m,,drop=F])
   res

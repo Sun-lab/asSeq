@@ -113,7 +113,9 @@ trecase(Y, Y1, Y2, X, Z, output.tag, p.cut, offset=NULL,
  The results are written into two output files: 
  one file (output.tag_eqtl.txt) stores the eQTL mapping result that
  pass the p-value threshold p.cut, including gene ID,
- marker ID, Chi-square statistic and p-value for
+ marker ID, Negative Binomial over-dispersion for TReC part of the model, 
+ Beta Binomial over-dispersion for ASE model, 
+ Chi-square statistic and p-value for
  TReC model, ASE model, and Joint (TReCASE) model. 
  The column of pvalFinal equals to the TReC pvalue if 
  the eQTL is trans-eQTL by hypothesis testing, and 
