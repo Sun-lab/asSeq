@@ -398,6 +398,9 @@ getPermP = function(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=1
   eigenMT$GLM.i = glmi3$coef[1]
   eigenMT$GLM.s = glmi3$coef[2]
   eigenMT$numpts = sum(kp3a)
+  eigenMT$TESTSupd = round(pred.perm/eigenMT$p.value)
+  if(eigenMT$TESTSupd<1)eigenMT$TESTSupd = 1
+  if(eigenMT$TESTSupd>nrow(permEst$snpM))eigenMT$TESTSupd=nrow(permEst$snpM)
   
   if(!is.na(permEst$outdir)){
     updNtests = sprintf("%s/%s_updtests.csv", permEst$outdir, rownames(permEst$geneM)[1])

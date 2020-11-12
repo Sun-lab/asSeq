@@ -9,15 +9,12 @@ In our pipeline we first reformat the data per gene and then for each preprocess
 
 ```{r setup, include=FALSE, echo=FALSE, message=F, results='hide'}
 require("knitr")
-<<<<<<< Updated upstream
-opts_knit$set(root.dir = "Muscle_Skeletal")
-=======
->>>>>>> Stashed changes
-library(MatrixEQTL)
 ```
-First, load the data for MatrixEQTL. Arguments here are in the same style as original script. They give information about the chromosome on which gene is located, number of subsamples to be used for estimation (no more then total number of samples recorded in specification file), random seed, window size and which model to be used.
+First, load the data for MatrixEQTL. Arguments here are in the same style as original pipeline script. They give information about the chromosome on which gene is located, number of subsamples to be used for estimation (no more then total number of samples recorded in specification file), random seed, window size and which model to be used.
 
 Specification file still will be used, since it is required at earlier steps linking in this pipeline. It is not necessary if you choose a different way to provide the path to the data.
+
+The data in this example is simulated based on the GTEx dataset which allows to avoid distribution of the real data, but provides a dataset that is well represented of the GTEx dataset.
 
 ```{r initial_config, include=TRUE, echo=FALSE, message=F, results='hide'}
 args = c("9", "150", "1565691", "5e+05", "short")
@@ -27,11 +24,8 @@ seedval = as.numeric(args[3])
 cis_window = as.numeric(args[4])
 model = args[5]
 
-<<<<<<< Updated upstream
-specf = "Muscle_Skeletal/specifications.txt"
-=======
 specf = "specifications_Muscle_Skeletal.txt"
->>>>>>> Stashed changes
+
 
 specs = unlist(read.table(specf, as.is=T))
 pref = specs[1]
@@ -43,8 +37,12 @@ setwd(wrk.dir)
 
 library(MatrixEQTL)
 library(Matrix)
+if(Sys.info()["sysname"]=="Windows"){
+  source(sprintf("%s/helpers.R", lib.dir))
+}else{
+  library(asSeq)
+}
 useModel = modelLINEAR; 
-source(sprintf("%s/helpers.R", lib.dir))
 
 
 numpoints = 100
@@ -197,7 +195,9 @@ rownames(exprj) = genepos$geneid[blocki]
 Permutation estimate rewritten as a function. 
 
 If you ran eigenMT prior to running this pipeline, you can use that result to get a better guess of effective number of tests but it can be skipped. 
-In such case 1/4 of simple number of SNPs can be used as a proxy for initial guess of effective number of snps procedure will try to adjust it if initial guess too inconsitent based on first 100 iterations
+In such case 1/4 of simple number of SNPs can be used as a proxy for initial guess of effective number of SNPs. The procedure will then continue the adjustment if initial guess is too inconsitent based on first X iterations.
+
+Among the outputs procedure will give estimated permutation p-value and implied effective number of tests in fields pred.permGLM and TESTSupd of the summ object.
 
 
 ```{r run_initial_Illustration, include=TRUE, results=FALSE, message=FALSE, warning=FALSE}
@@ -217,11 +217,18 @@ permEst = list(snpM=as.matrix(g.ini[,subs]),
                noFDRsaveMemory=FALSE,
                outdir="unreduced")
 #updNtests=sprintf("%s_updtests.csv", rownames(exprj)[1])
-me = getPermP(permEst, n.perm=25, ini.perm=25)
-#names(me)
-#me$summ
+me = getPermP(permEst, n.perm=100, ini.perm=25)
+```
+```{r res_initial_Illustration, include=TRUE, results=TRUE, message=FALSE, warning=FALSE}
+me$summ$pred.permGLM
+me$summ$TESTSupd
 
 ```
+Above mentioned run was done for the case with very significant minimum p-value, for which it is less critical to establish permutation p-value, since it will be significant using various methods of estimating permutation p-value (for example, a quick tool to do this is eigenMT)
+
+What happens if we have less significant p-value. Consider a modification of the defined above gene expression data with scaled down effect size. We can produce a bootstrap with reduced effect size using get_reduced_bood function and repeat the procedure based on this reduced expression.
+
+Note, that this step includes a target permutation p-value that is guessed based on a guess of effective number of tests, so the resulting p-value can be somewhat outside of the target range.
 
 ```{r run_reduced_Illustration, include=TRUE, results=FALSE, message=FALSE, warning=FALSE}
 #now, same but imagine reduced effect size
@@ -230,7 +237,7 @@ permEst$outpf=sprintf("%s_mEQTL_red.txt", rownames(exprj)[1])
 eigenMT = me$summ
 eigenMT$TESTS = eigenMT$TESTSupd
 gen.sub = me$min.snp
-redboot = get_reduced_boot(1, target.perm.ps=1e-2,
+redboot = get_reduced_boot(1, target.perm.ps=5e-2,
                            mQTL.fit=eigenMT, 
                            expr.mat = permEst$geneM, 
                            min.SNP=gen.sub, 
@@ -245,12 +252,15 @@ permEstR$effNumGuess=eigenMT$TESTSupd
 permEstR$outdir="reduced"
 
 meR = getPermP(permEstR, n.perm=100, ini.perm=25)
-meR$summ
+```
+```{r res_reduced_Illustration, include=TRUE, results=TRUE, message=FALSE, warning=FALSE}
+meR$summ$pred.permGLM
+meR$summ$TESTSupd
 
 ```
 
-Lets illustrate calculation of permutation p-value estimate. 
-We take the values generated in step4_runboot.R and fit glm predicting probability of observing more extreme result (then observed in bootstrap) by log10(minimum p-value).
+Lets illustrate calculation of permutation p-value estimate based on the reduced bootstrap. 
+We take the values generated in the prevous step and fit glm predicting probability of observing more extreme result (then observed in bootstrap) by log10(minimum p-value).
 After fitting glm, predict permutation p-value based on log10(minimum p-value)
 Effective number of tests will be ratio of predicted permutation p-value and minimum p-value (trimmed between 1 and number of SNPs) using less extreme efect size:
 ```{r illustrate estimate (reduced), include=TRUE}
