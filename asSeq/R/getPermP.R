@@ -202,7 +202,7 @@ getPermP = function(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=1
   
     geneb = SlicedData$new();
     geneb = geneb$CreateFromMatrix(redboot)
-    bootpos = genepos[rep(1, nrow(redboot)),]
+    bootpos = permEst$genepos[rep(1, nrow(redboot)),]
     bootpos[,1] = rownames(redboot)
     tstarts = proc.time()
     meb = Matrix_eQTL_main(
