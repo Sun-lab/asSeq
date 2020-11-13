@@ -39,8 +39,14 @@ get_reduced_boot = function(ppi,target.min.ps=NULL,target.perm.ps, genenm=NULL, 
   # ypre0 = fitspre+lm1$residuals
   # d2 = data.frame(y=ypre0, covars, xeqtl)
   # lm2pre0 = lm(y~., data=d2)
-
-  ypre = fitspre+res
+	
+	# If there are missing genotypes, these 
+	#		lines will throw an error
+	idx_nonNA = !is.na(xeqtl)
+	nn = nrow(covars)
+	ypre = rep(NA,nn)
+	ypre[idx_nonNA] = fitspre+res
+  # ypre = fitspre+res
   d3 = data.frame(y=ypre, covars, xeqtl)
   lm2pre = lm(y~., data=d3)
   respre = lm2pre$residuals
