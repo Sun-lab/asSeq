@@ -46,10 +46,14 @@ get_reduced_boot = function(ppi,target.min.ps=NULL,target.perm.ps, genenm=NULL, 
 	nn = nrow(covars)
 	ypre = rep(NA,nn)
 	ypre[idx_nonNA] = fitspre+res
-  # ypre = fitspre+res
+  
+	# ypre = fitspre+res
   d3 = data.frame(y=ypre, covars, xeqtl)
   lm2pre = lm(y~., data=d3)
-  respre = lm2pre$residuals
+	
+	respre = rep(NA,nn)
+	respre[idx_nonNA] = lm2pre$residuals
+  # respre = lm2pre$residuals
 
   seout = summary(lm2pre)$coefficients[npar,2]
   cfout = lm2pre$coef
