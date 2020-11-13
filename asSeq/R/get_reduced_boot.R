@@ -32,9 +32,13 @@ get_reduced_boot = function(ppi,target.min.ps=NULL,target.perm.ps, genenm=NULL, 
     res = sample(lm1$residuals)
   }
   fitspre = lm1$fitted
-  ypre0 = fitspre+lm1$residuals
-  d2 = data.frame(y=ypre0, covars, xeqtl)
-  lm2pre0 = lm(y~., data=d2)
+	
+	# These three lines aren't used elsewhere 
+	#		in this function and are throwing an 
+	#		error when the min.SNP contains NAs ...
+  # ypre0 = fitspre+lm1$residuals
+  # d2 = data.frame(y=ypre0, covars, xeqtl)
+  # lm2pre0 = lm(y~., data=d2)
 
   ypre = fitspre+res
   d3 = data.frame(y=ypre, covars, xeqtl)
