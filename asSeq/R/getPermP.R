@@ -399,6 +399,8 @@ getPermP = function(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=1
   eigenMT$GLM.s = glmi3$coef[2]
   eigenMT$numpts = sum(kp3a)
   eigenMT$TESTSupd = round(pred.perm/eigenMT$p.value)
+	cat(sprintf("pred.perm = %s\n",pred.perm))
+	cat(sprintf("eigenMT$p.value = %s\n",eigenMT$p.value))
   if(eigenMT$TESTSupd<1)eigenMT$TESTSupd = 1
   if(eigenMT$TESTSupd>nrow(permEst$snpM))eigenMT$TESTSupd=nrow(permEst$snpM)
   
