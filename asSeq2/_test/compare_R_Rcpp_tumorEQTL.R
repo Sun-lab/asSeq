@@ -1,7 +1,8 @@
 setwd("/fh/fast/sun_w/licai/_tumor_eQTL/GitHub/asSeq/asSeq2/_test/")
 source("./tumor_eQTL.R")
+library(Rcpp)
 sourceCpp("../asSeq2/src/tumor_eQTL.cpp")
-
+# Rcpp::compileAttributes("asSeq2")
 load("_test_func_tumorEQTL.Rdata")
 
 N
@@ -251,7 +252,7 @@ c(aseR$loglik.full, aseR$loglik.eta, aseR$loglik.gamma)
 #-------------------------------------------------------------
 # TReCASE
 #-------------------------------------------------------------
-
+z = zz
 H0 = 0
 para = log(c(KAPPA, ETA, GAMMA))
 RcppT_TReCASE_LL_KEG(para, H0, y, z, zz_AS, phi, RHO, RHO_AS, tau1, tau2, 
@@ -409,11 +410,11 @@ c(trec_aseR$loglik)
 # ----------------------------------------------------------------------
 para = log(c(KAPPA, ETA, GAMMA))
 source("./tumor_eQTL.R")
-CisTrans_ScoreObs(para, y,z,zz_AS, X, BETA, phi,
+CisTrans_ScoreObs(para, y,zz,zz_AS, X, BETA, phi,
                   RHO, RHO_AS, tau1, tau2, ni0, ni, tauB, tau, theta,
                   Power = F)
 
-RcppT_CisTrans_ScoreObs(para, y, z, zz_AS, RHO, RHO_AS, X, BETA, phi, tau1, 
+RcppT_CisTrans_ScoreObs(para, y, zz, zz_AS, RHO, RHO_AS, X, BETA, phi, tau1, 
                   tau2, lgy1, ni0, ni, log(theta), tauB, tau, lbc) 
 
 Expvec = c(0,0,0,0)
@@ -421,22 +422,32 @@ RcppT_ASE_ExpFunc(14, 0.5, 1/0.1, Expvec)
 Expvec
 ASE_ExpFunc(14, 0.5, 1/0.1)
 
-CisTrans_Score(para, y,z,zz_AS, X, BETA, phi,
+CisTrans_Score(para, y,zz,zz_AS, X, BETA, phi,
                   RHO, RHO_AS, tau1, tau2, ni0, ni, tauB, tau, theta,
                   Power = F)
 
-RcppT_CisTrans_Score(para, y, z, zz_AS, RHO, RHO_AS, X, BETA, phi, tau1, 
+RcppT_CisTrans_Score(para, y, zz, zz_AS, RHO, RHO_AS, X, BETA, phi, tau1, 
                     tau2, lgy1, ni0, ni, log(theta), tauB, tau, lbc) 
 
 
 RcppT_trecase_mtest(data.matrix(dat$total), data.matrix(dat$hapA),
-                    data.matrix(dat$hapB), data.matrix(ZZ), data.matrix(XX), 
+                    data.matrix(dat$hapB), data.matrix(ZZ), data.matrix(XX),
                     RHO, data.matrix(dat$tau1), data.matrix(dat$tau2),
                     SNP_pos=as.vector(1:100), sChr=as.vector(rep(1,100)),
-                    gene_start=as.vector(1), 
+                    gene_start=as.vector(1),
                     gene_end=as.vector(1),
-                    gChr=as.vector(1), GeneSnpList=list(1:100),
-                    useLRT = 0, useASE = 1)
+                    gChr=as.vector(1), GeneSnpList=list(),
+                    useLRT = 0, useASE = 1, max_iter = 400, eps = 5e-5)
+
+R_trecase_mtest(data.matrix(dat$total), data.matrix(dat$hapA),
+                    data.matrix(dat$hapB), data.matrix(ZZ), data.matrix(XX),
+                    RHO, data.matrix(dat$tau1), data.matrix(dat$tau2),
+                    SNP_pos=as.vector(1:100), sChr=as.vector(rep(1,100)),
+                    gene_start=as.vector(1),
+                    gene_end=as.vector(1),
+                    gChr=as.vector(1), GeneSnpList= list(),
+                    useLRT = 0, useASE = 1, max_iter = 400, eps = 5e-5)
+
 
 Y  = data.matrix(cbind(dat$total, dat$total))
 Y1 = data.matrix(cbind(dat$hapA, dat$hapA))
@@ -454,11 +465,15 @@ SNPloc = data.frame(snp = paste0("SNP", 1:100), chr = c(rep(1, 40), rep(2, 60)),
                     pos = c(1:30*100, 31:100*100 + 1e8), stringsAsFactors = F)
 head(SNPloc)
 
-
 trecaseT(Y, Y1, Y2, Z, XX, RHO, CNV1, CNV2,
            SNPloc, geneloc, GeneSnpList = list(),
            file_trec = "trecT.txt", file_trecase = "trecaseT.txt", 
            useLRT = FALSE, transTestP = 0.01, cis_window = 100000, useASE = 1L, 
-           min_ASE_total = 8L, min_nASE = 5L, min_nASE_het = 5L, eps = 0.00001, 
-           max_iter = 4000L, show = FALSE)
+           min_ASE_total = 8L, min_nASE = 5L, min_nASE_het = 5L, eps = 5e-5, 
+           max_iter = 400L, show = FALSE)
 
+res = R.trecaseT(Y, Y1, Y2, Z, XX, RHO, CNV1, CNV2, 
+                  SNPloc, geneloc, GeneSnpList = list(1:30, 41:100),
+                  useLRT = FALSE, transTestP = 0, cis_window = 100000, useASE = 1L, 
+                  min_ASE_total = 8L, min_nASE = 5L, min_nASE_het = 5L, eps = 5e-5, 
+                  max_iter = 4000L, show = FALSE)

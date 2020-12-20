@@ -3,7 +3,7 @@ trecaseT <-
            SNPloc, geneloc, GeneSnpList = list(),
            file_trec = "trecT.txt", file_trecase = "trecaseT.txt", 
            useLRT = FALSE, transTestP = 0.01, cis_window = 100000, useASE = 1L, 
-           min_ASE_total = 8L, min_nASE = 5L, min_nASE_het = 5L, eps = 0.00001, 
+           min_ASE_total = 8L, min_nASE = 5L, min_nASE_het = 5L, eps = 5e-5, 
            max_iter = 4000L, show = FALSE)
   {
     ## Y: matrix of total read count. Each row is a sample, and each column is a

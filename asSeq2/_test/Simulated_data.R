@@ -79,7 +79,7 @@ betas=c(5, 0.15, -0.5, 0.2)
 p <- length(betas)
 X =data.matrix(cbind(1,matrix(runif(N*(p-1)),N,(p-1) )))
 
-cl = makeCluster(6, outfile="")
+cl = makeCluster(4, outfile="")
 registerDoParallel(cl)
 nw <- getDoParWorkers() 
 nw

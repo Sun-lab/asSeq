@@ -303,7 +303,7 @@ TReC_test = function(y,z, X, RHO, tau1, tau2, maxiter =500, tol = 1e-7){
               loglik.eta = - res1.eta1$loglik,
               loglik.gamma = - res1.gamma1$loglik,
               KAPPA = res1$KAPPA, ETA = res1$ETA, GAMMA = res1$GAMMA,
-              phi = res1$phi, betas = res1$betas
+               betas = res1$betas, phi = res1$phi
               #,iters = c(res1$iters, res1.eta1$iters, res1.gamma1$iters)
   ))
 }
@@ -1320,9 +1320,9 @@ ASE_sfit = function(para, H0, z_AS, RHO_AS, A, D, THETA, tauB, tau,
                              A=A, D=D, THETA=THETA, tauB=tauB, tau=tau)
   para_cur = keg_lbfgs$par
 
-  if(any(c(keg_lbfgs$convergence,theta_lbfgs$convergence ) != 0))
-    message(sprintf('keg and theta error code: %s, %s',
-                    keg_lbfgs$convergence, theta_lbfgs$convergence))
+  # if(any(c(keg_lbfgs$convergence,theta_lbfgs$convergence ) != 0))
+  #   message(sprintf('keg and theta error code: %s, %s',
+  #                   keg_lbfgs$convergence, theta_lbfgs$convergence))
 
   # update parameters
   while(iter < maxiter & (min(abs(para_cur- para)) > tol |
@@ -1513,9 +1513,9 @@ TReCASE_sep_sfit = function(KEG_EaseGase=rep(0,5), y,z,z_AS, X, RHO, RHO_AS,
                                      THETA=THETA_cur, tauB=tauB, tau=tau)
   KEG_EaseGase_cur = keg_lbfgs$par
 
-  if(any(c(keg_lbfgs$convergence,theta_lbfgs$convergence ) != 0))
-    message(sprintf('keg and theta error code: %s, %s',
-                    keg_lbfgs$convergence, theta_lbfgs$convergence))
+  # if(any(c(keg_lbfgs$convergence,theta_lbfgs$convergence ) != 0))
+  #   message(sprintf('keg and theta error code: %s, %s',
+  #                   keg_lbfgs$convergence, theta_lbfgs$convergence))
 
   # update parameters
   while(iter < maxiter & (min(abs(KEG_EaseGase_cur- KEG_EaseGase)) > tol |
@@ -1565,3 +1565,351 @@ TReCASE_sep_sfit = function(KEG_EaseGase=rep(0,5), y,z,z_AS, X, RHO, RHO_AS,
               loglik =-keg_lbfgs$value, iters = iter,
               conv = c(keg_lbfgs$convergence,theta_lbfgs$convergence)))
 }
+
+
+# ----------------------------------------------------------------------
+# R wrapper for gene-snp pair (09.26.2020)
+# ----------------------------------------------------------------------
+
+
+R_treacse_mtest <- function(Y, Y1, Y2, Z, XX, RHO, CNV1, CNV2, SNP_pos, gene_pos,
+                            GeneSnpList, useLRT=F,
+                            transTestP = 0.01, cis_window = 1e5, useASE = T,
+                            min_ASE_total=8, min_nASE = 5, min_nASE_het = 5, 
+                            eps = 5e-5, max_iter = 400, show = F){
+  resA = NULL
+  if(!useASE){
+    Score_res = rep(NA,2)
+  }
+  if(length(GeneSnpList)>0){
+    ## if the list for each gene and its correspoding snps exists
+    for(gg in 1:length(GeneSnpList)){
+      if(is.null(GeneSnpList[gg])) 
+        next
+      
+      ## get gene expression and remove snp with NA values
+      ## gg = 1
+      y  = Y[, gg]
+
+      
+      ## loop through correspoding snps
+      for(ss in GeneSnpList[[gg]]){
+        
+        ## ss = 1
+        ## for each sample get allele-specific value and exclue NA values
+        z  = Z[, ss]
+        
+        sam2kpTrec = which(!is.na(z))
+        y       = y[sam2kpTrec]
+        z       = z[sam2kpTrec]
+        z[z==2] = 1
+        z[z==3] = 2
+        RHOss   = RHO[sam2kpTrec]
+        tau1    = tau1[sam2kpTrec]
+        tau2    = tau2[sam2kpTrec]
+        Xs      =  data.matrix(XX[sam2kpTrec,])
+        h1 = h0 = 0
+        
+        if(useASE){ 
+          # remove NA
+          y1 = Y1[, gg]
+          y2 = Y2[, gg]
+          ni = y1 + y2
+          tau1 = CNV1[, gg]
+          tau2 = CNV2[, gg]
+          tau  = tau1 + tau2
+          sam2kpAS  = which(ni >= min_ASE_total & which(!is.na(tau)))
+          sam2kpAS = intersect(sam2kpAS, sam2kpTrec)
+          z_AS    = Z[sam2kpAS, gg]
+          h1      = sum(z == 1 | z == 2)
+          h0      = length(z_AS)
+          
+          y1      = y1[sam2kpAS]
+          y2      = y2[sam2kpAS]
+          ni      = y1+y2
+          tau     = tau[sam2kpAS]
+          RHO_AS  = RHO[sam2kpAS]
+          tauB    = CNV1[sam2kpAS, gg]
+          tauB[which(z_AS %in% c(0,1))] = (tau - tauB)[which(z_AS %in% c(0,1))]
+          ni0     = y1
+          ni0[which(z_AS %in% c(0,1))]  = y2[which(z_AS %in% c(0,1))]
+          
+          
+        }
+        ## begin trecase
+        if(useASE & h1 >= min_nASE_het & h0 >= min_nASE){
+          trecase_res = try(TReCASE_test(y, z, z_AS, Xs, RHOss, RHO_AS, 
+                                         tau1, tau2, ni0, ni, tauB, tau))
+          
+          if(class(trecase_res) %in% "try-error"){
+            res = c(snp =SNP_pos[ss], gene=gene_pos[gg], 
+                    nAS = h0, test = "TReCASE",
+                    rep(NA, 14))
+            
+          }else{
+            res= c(snp =SNP_pos[ss], gene=gene_pos[gg], 
+                   nAS = h0, test = "TReCASE",
+                   unlist(trecase_res))
+            
+            ## ct_score/ct_exp/lrt
+            para = log(c(trecase_res$KAPPA, trecase_res$ETA, trecase_res$GAMMA))
+            BETA = trecase_res$betas
+            if(!useLRT){
+              Score_res = try(CisTrans_ScoreObs(para, y, z, z_AS, Xs, BETA, 
+                                                trecase_res$phi, RHOss, RHO_AS,
+                                                tau1, tau2, ni0, ni, tauB, tau, 
+                                                trecase_res$THETA, Power = F))
+              if(class(Score_res) %in% "try-error"){
+                Score_res = try(CisTrans_Score(para, y, z, z_AS, Xs, BETA, 
+                                                  trecase_res$phi, RHOss, RHO_AS,
+                                                  tau1, tau2, ni0, ni, tauB, tau, 
+                                                  trecase_res$THETA, Power = F))
+              }
+              
+            }
+            
+            if( useLRT | class(Score_res) %in% "try-error"){
+              ##LRT
+              trec_ase_sep_res = TReCASE_sep_sfit(KEG_EaseGase=rep(0,5), y,z,
+                                                  z_AS, X, RHO, RHO_AS,
+                                                  tau1, tau2, ni0, ni, tauB, tau, 
+                                                  maxiter=max_iter, tol = eps)
+              Score_res = CisTrans_lrt(trecase_res, trec_ase_sep_res)
+            }
+            res = c(res, Score_res)
+            
+          }
+          
+
+        }
+        
+        ## if ctpval < 0.1 trec 
+        if(Score_res["p.score"] < transTestP | !useASE | 
+           h1 < min_nASE_het | h0 < min_nASE){
+          trec_res = try(TReC_test(y, z, Xs, RHOss, tau1, tau2))
+          
+          if(class(trec_res) %in% "try-error"){
+            res = c(snp =SNP_pos[ss], gene=gene_pos[gg], 
+                    nAS = h0, test = "TReC",
+                    rep(NA, 12 + ncol(Xs)))
+          }else{
+            res = c(snp =SNP_pos[ss], gene=gene_pos[gg], 
+                    nAS = h0, test = "TReC",
+                    unlist(trec_res), THETA = NA, Score_res)
+          }
+        }
+        
+        resA = rbind(resA, res)  
+      }
+      
+      
+    }
+  }
+  
+  return(resA)
+  
+}
+
+
+
+
+R.trecaseT <-
+  function(Y, Y1 = NULL, Y2 = NULL, Z, XX, RHO, CNV1, CNV2,
+           SNPloc, geneloc, GeneSnpList = list(),
+           useLRT = FALSE, transTestP = 0.01, cis_window = 100000, useASE = 1L, 
+           min_ASE_total = 8L, min_nASE = 5L, min_nASE_het = 5L, eps = 5e-5, 
+           max_iter = 4000L, show = FALSE){
+    ## Y: matrix of total read count. Each row is a sample, and each column is a
+    ##    gene
+    ## Y1, Y2: matrix of allele-specific read count. Each row is a sample, and 
+    ##    each column is a gene 
+    ## Z: matrix of genotype data. Each row is a sample, and each column is a SNP
+    ## XX: covariates needs to be adjusted in Negtive Bionomial Regression
+    ## SNPloc/geneloc: data.frame of SNP location information, the column names 
+    ##    have to be c("snp", "chr", "pos") / c("gene", "chr", "start","end")
+    ## file_trec/file_trecase: output file name of trec/trecase 
+    ## cis_window:
+    ## useASE:
+    ## min_ASE_total:
+    ## min_nASE:
+    ## eps:
+    ## max_iter:
+    ## show:
+    
+    minVar = 1e-8
+    
+    ## ----------------------------
+    ## check the NAs 
+    ## ----------------------------
+    
+    if(any(is.na(Y))){
+      stop("NA values in Y\n")
+    }
+    
+    if(any(is.na(XX))){
+      stop("NA values in X\n")
+    }
+    if(any(is.na(RHO))){
+      stop("NA values in RHO\n")
+    }
+    if(any(is.na(Z))){
+      Z[is.na(Z)] = -9
+      warning("NA values in Z\n")
+    }
+    if(any(is.na(CNV1))){
+      CNV1[is.na(CNV1)] = -9
+      warning("NA values in CNV1\n")
+    }
+    if(any(is.na(CNV2))){
+      CNV2[is.na(CNV2)] = -9
+      warning("NA values in CNV2\n")
+    }
+    
+    ## ----------------------------
+    ## change the format X, Y, and Z
+    ## ----------------------------
+    
+    Y    = data.matrix(Y)
+    Z    = data.matrix(Z)
+    XX   = data.matrix(XX)
+    CNV1 = data.matrix(CNV1)
+    CNV2 = data.matrix(CNV2)
+    
+    nGene = ncol(Y)
+    nSam  = nrow(Y)
+    
+    ## ----------------------------
+    ## make sure the dims consistant
+    ## ----------------------------
+    
+    if(nrow(Z) != nSam)
+      stop("Z and Y have different sample size")
+    
+    if(nrow(CNV1) != nSam | nrow(CNV2) != nSam)
+      stop("CNV and Y have different sample size")
+    
+    if(ncol(CNV1) != nGene | ncol(CNV2) != nGene)
+      stop("CNV and Y have different number of genes")
+    
+    if(length(RHO) != nSam)
+      stop("the length of RHO doesn't match sample size")
+    
+    ## ----------------------------
+    ## check the variance 
+    ## ----------------------------
+    varY = apply(Y, 2, var)
+    wVar = which(varY < minVar)
+    
+    if(length(wVar) > 0){
+      stpStr = sprintf("%d columns in Y have tiny variances", length(wVar))
+      stpStr = sprintf("%s: %s", stpStr, paste(wVar[1:min(10, length(wVar))], collapse=", "))
+      
+      if(length(wVar) > 10){ stpStr = sprintf("%s ...", stpStr) }
+      stop(stpStr, "\n")
+    }
+    
+    # add intercept if there isn't
+    if(any(abs(XX[,1]-1) > 1e-8)){
+      XX = model.matrix( ~ XX)  
+    }
+    
+    # check the variance of XX    
+    varX  = apply(XX, 2, var)
+    wVarX = which(varX < minVar)
+    if(any(wVarX > 1)){
+      stop("XX has tiny variance")
+    }
+    
+    varZ = apply(Z, 2, var)
+    wVar = which(varZ < minVar)
+    
+    if(length(wVar) > 0){
+      stpStr = sprintf("%d columns in Z have tiny variances", length(wVar))
+      stpStr = sprintf("%s: %s", stpStr, paste(wVar[1:min(10, length(wVar))], collapse=", "))
+      
+      if(length(wVar) > 10){ stpStr = sprintf("%s ...", stpStr) }
+      stop(stpStr, "\n")
+    }
+    
+    if(! all(as.numeric(Z) %in% c(0,1,2,3, -9))){
+      stop("Z must take values 0, 1, 2, 3 or NA\n")
+    }
+    
+    ## ----------------------------
+    ## check the SNP and gene location 
+    ## ----------------------------
+    
+    if(nrow(geneloc) != nGene)
+      stop("number of Gene in GeneInfo doesn't match that in Y")
+    if(nrow(SNPloc) != ncol(Z))
+      stop("number of SNP in GeneInfo doesn't match that in Z")
+    
+    if(!all(colnames(SNPloc) == c("snp", "chr", "pos"))){
+      stop("colnames of SNPloc has to be c('snp', chr, 'pos')")
+    }
+    
+    if(!all(colnames(geneloc) == c("gene", "chr", "start", 'end'))){
+      stop("colnames of geneloc has to be c('gene', chr, 'start','end')")
+    }
+    
+    # geneloc has to be sorted by chromosome
+    geneloc$chr = gsub("chr", "", geneloc$chr)
+    geneloc$chr[which(geneloc$chr == "X")] = 23
+    geneloc$chr[which(geneloc$chr == "Y")] = 24
+    
+    geneloc$chr   = as.integer(as.character(geneloc$chr))
+    geneloc$start = as.integer(as.character(geneloc$star))
+    geneloc$end   = as.integer(as.character(geneloc$end))
+    
+    SNPloc$chr = gsub("chr", "", SNPloc$chr)
+    SNPloc$chr[which(SNPloc$chr == "X")] = 23
+    SNPloc$chr[which(SNPloc$chr == "Y")] = 24
+    SNPloc$chr = as.integer(as.character(SNPloc$chr))
+    SNPloc$pos = as.integer(as.character(SNPloc$pos))
+    
+    if(any(sort(geneloc$chr) != geneloc$chr)){
+      stop("geneloc has to be sorted by chromosome\n") 
+    }
+    
+    if(useASE){
+      
+      ## ----------------------------
+      ## make sure the dims consistant
+      ## ----------------------------
+      
+      if(is.null(Y1) | is.null(Y2)){
+        stop("Y1 or Y2 cannot be found\n")
+      }
+      if(any(is.na(Y1))){
+        stop("NA values in Y1\n")
+      }
+      
+      if(any(is.na(Y2))){
+        stop("NA values in Y2\n")
+      }
+      Y1 = data.matrix(Y1)
+      Y2 = data.matrix(Y2)
+      
+      # check dimensions of Y, Y1, Y2
+      if(ncol(Y2) != nGene | nrow(Y2) != nSam |
+         ncol(Y1) != nGene | nrow(Y1) != nSam)
+        stop("dimensions of Y, Y1 and Y2 do not match\n")
+    }else{
+      Y2 = Y1 = Y
+    }
+    
+    if(length(GeneSnpList) != 0 & length(GeneSnpList) !=  nGene){
+      stop("dimensions of GeneSnpList does not correct\n")
+    }
+    
+    resD = R_treacse_mtest(Y=Y, Y1=Y1, Y2=Y2, Z=Z, XX=XX, RHO=RHO, 
+                        CNV1=CNV1, CNV2=CNV2, SNP_pos= 1:nrow(SNPloc), 
+                        gene_pos = 1:nrow(geneloc),
+                        GeneSnpList=GeneSnpList, 
+                        useLRT = useLRT, transTestP = transTestP, 
+                        cis_window = cis_window, useASE = useASE, 
+                        min_ASE_total = min_ASE_total, min_nASE = min_nASE, 
+                        min_nASE_het = min_nASE_het, eps = eps, 
+                        max_iter = max_iter, show = show) 
+    return(resD)
+  }

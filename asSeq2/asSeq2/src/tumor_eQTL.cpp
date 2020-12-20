@@ -2627,8 +2627,8 @@ void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
                          const double& cis_window=1e5,
                          const bool& useASE = 1, const int& min_ASE_total=8,
                          const int& min_nASE= 5, const int& min_nASE_het=5,
-                         const double& eps=1e-5,
-                         const arma::uword& max_iter=4000L,
+                         const double& eps=5e-5,
+                         const arma::uword& max_iter=400L,
                          const bool& show=false){
   arma::uword gg, ii, xi, h1, h0, z0;
   arma::uword ssBegin = 0, ss = 0;
