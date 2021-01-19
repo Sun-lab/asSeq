@@ -2,8 +2,12 @@ setwd("/fh/fast/sun_w/licai/_tumor_eQTL/GitHub/asSeq/asSeq2/_test/")
 source("./tumor_eQTL.R")
 library(Rcpp)
 sourceCpp("../asSeq2/src/tumor_eQTL.cpp")
-# Rcpp::compileAttributes("asSeq2")
+# Rcpp::compileAttributes("../asSeq2")
+# system("R CMD build ../asSeq2")
+# install.packages("/fh/fast/sun_w/licai/_tumor_eQTL/GitHub/asSeq/asSeq2/asSeq2_0.99.1.tar.gz",
+#                 lib = "/home/lhuang2/R/x86_64-pc-linux-gnu-library/4.0")
 load("_test_func_tumorEQTL.Rdata")
+# load("/fh/fast/sun_w/licai/_tumor_eQTL/_simulation_asSeq2/simu1_GAMMA1_ETA0.5.Rdata")
 
 N
 dat[1:5,]

@@ -2696,8 +2696,10 @@ void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
     
     for(gg=0; gg<GeneSnpList.length(); gg++){
       
-      Rprintf("gene %d \n", gg+1);
-      
+      if(gg % 100 == 0){
+        Rprintf("Begin analysis for Gene %d \n", gg+1);
+      }
+
       if(GeneSnpList[gg]==R_NilValue){
         continue;
       }
@@ -2735,19 +2737,19 @@ void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
         
         for(ii=0;ii<nSam;ii++){
           
-          if(zz2.at(ii) != -9 & _tau1.at(ii) != -9 | _tau2.at(ii) != -9){
+          if(zz2.at(ii) != -9 & _tau1.at(ii) != -9 & _tau2.at(ii) != -9){
             z.at(z0)    = zz2.at(ii);
             X.row(z0)   = XX.row(ii);
             y.at(z0)    = _y.at(ii);
             tau1.at(z0) = _tau1.at(ii);
             tau2.at(z0) = _tau2.at(ii);
             RHO1.at(z0) = RHO.at(ii);
-            if(zz2.at(ii)==2){
-              z.at(z0) = 1;
-            }else if(zz2.at(ii)==3){
-              z.at(z0) = 2;
-            }
-            
+            // if(zz2.at(ii)==2){
+            //   z.at(z0) = 1;
+            // }else if(zz2.at(ii)==3){
+            //   z.at(z0) = 2;
+            // }
+            // 
             if(useASE){
               if(y1.at(ii) + y2.at(ii) >= min_ASE_total){
                 
@@ -2963,7 +2965,10 @@ void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
   }else{
       for(gg=0; gg<Y.n_cols; gg++){
 
-        Rprintf("gene %d \n", gg+1);
+        if(gg % 100 == 0){
+          Rprintf("Begin analysis for Gene %d \n", gg+1);
+        }
+        
 
         _y    = Y.col(gg);
         _tau1 = CNV1.col(gg);
@@ -3004,18 +3009,18 @@ void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
 
           for(ii=0;ii<nSam;ii++){
 
-            if(zz2.at(ii) != -9 & _tau1.at(ii) != -9 | _tau2.at(ii) != -9){
+            if(zz2.at(ii) != -9 & _tau1.at(ii) != -9 & _tau2.at(ii) != -9){
               z.at(z0)    = zz2.at(ii);
               X.row(z0)   = XX.row(ii);
               y.at(z0)    = _y.at(ii);
               tau1.at(z0) = _tau1.at(ii);
               tau2.at(z0) = _tau2.at(ii);
               RHO1.at(z0) = RHO.at(ii);
-              if(zz2.at(ii)==2){
-                z.at(z0) = 1;
-              }else if(zz2.at(ii)==3){
-                z.at(z0) = 2;
-              }
+              // if(zz2.at(ii)==2){
+              //   z.at(z0) = 1;
+              // }else if(zz2.at(ii)==3){
+              //   z.at(z0) = 2;
+              // }
 
               if(useASE){
                 if(y1.at(ii) + y2.at(ii) >= min_ASE_total){

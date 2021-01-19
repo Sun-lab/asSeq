@@ -502,7 +502,7 @@ update_theta <- function(para, H0, z_AS, RHO_AS, A,D, THETA, tauB, tau){
                     tauB=tauB, tau=tau)
   lbfgs = optim(par = THETA , fn = loglikBB_THETA, gr = lASE.dTHETA,
                 A=A,D=D, pis = pis,
-                lower = 1e-8, upper = 50,method = "L-BFGS-B")
+                lower = 1e-8, upper = 1e5,method = "L-BFGS-B")
 }
 
 # tried uniroot
@@ -1589,8 +1589,9 @@ R_treacse_mtest <- function(Y, Y1, Y2, Z, XX, RHO, CNV1, CNV2, SNP_pos, gene_pos
       
       ## get gene expression and remove snp with NA values
       ## gg = 1
-      y  = Y[, gg]
-
+      yy  = Y[, gg]
+      Tau1 = CNV1[,gg]
+      Tau2 = CNV2[,gg]
       
       ## loop through correspoding snps
       for(ss in GeneSnpList[[gg]]){
@@ -1599,14 +1600,14 @@ R_treacse_mtest <- function(Y, Y1, Y2, Z, XX, RHO, CNV1, CNV2, SNP_pos, gene_pos
         ## for each sample get allele-specific value and exclue NA values
         z  = Z[, ss]
         
-        sam2kpTrec = which(!is.na(z))
-        y       = y[sam2kpTrec]
+        sam2kpTrec = which(!is.na(z) & !is.na(Tau1) & !is.na(Tau2))
+        y       = yy[sam2kpTrec]
         z       = z[sam2kpTrec]
-        z[z==2] = 1
-        z[z==3] = 2
+        # z[z==2] = 1
+        # z[z==3] = 2
         RHOss   = RHO[sam2kpTrec]
-        tau1    = tau1[sam2kpTrec]
-        tau2    = tau2[sam2kpTrec]
+        tau1    = Tau1[sam2kpTrec]
+        tau2    = Tau2[sam2kpTrec]
         Xs      =  data.matrix(XX[sam2kpTrec,])
         h1 = h0 = 0
         
@@ -1615,21 +1616,19 @@ R_treacse_mtest <- function(Y, Y1, Y2, Z, XX, RHO, CNV1, CNV2, SNP_pos, gene_pos
           y1 = Y1[, gg]
           y2 = Y2[, gg]
           ni = y1 + y2
-          tau1 = CNV1[, gg]
-          tau2 = CNV2[, gg]
-          tau  = tau1 + tau2
-          sam2kpAS  = which(ni >= min_ASE_total & which(!is.na(tau)))
-          sam2kpAS = intersect(sam2kpAS, sam2kpTrec)
-          z_AS    = Z[sam2kpAS, gg]
+          tau  = Tau1 + Tau2
+          sam2kpAS  = which(ni >= min_ASE_total, !is.na(z) & 
+                              !is.na(Tau1) & !is.na(Tau2))
+          z_AS    = Z[sam2kpAS, ss]
           h1      = sum(z == 1 | z == 2)
           h0      = length(z_AS)
           
           y1      = y1[sam2kpAS]
           y2      = y2[sam2kpAS]
-          ni      = y1+y2
+          ni      = ni[sam2kpAS]
           tau     = tau[sam2kpAS]
           RHO_AS  = RHO[sam2kpAS]
-          tauB    = CNV1[sam2kpAS, gg]
+          tauB    = Tau1[sam2kpAS]
           tauB[which(z_AS %in% c(0,1))] = (tau - tauB)[which(z_AS %in% c(0,1))]
           ni0     = y1
           ni0[which(z_AS %in% c(0,1))]  = y2[which(z_AS %in% c(0,1))]
@@ -1639,7 +1638,8 @@ R_treacse_mtest <- function(Y, Y1, Y2, Z, XX, RHO, CNV1, CNV2, SNP_pos, gene_pos
         ## begin trecase
         if(useASE & h1 >= min_nASE_het & h0 >= min_nASE){
           trecase_res = try(TReCASE_test(y, z, z_AS, Xs, RHOss, RHO_AS, 
-                                         tau1, tau2, ni0, ni, tauB, tau))
+                                         tau1, tau2, ni0, ni, tauB, tau,
+                                         maxiter=max_iter, tol = eps))
           
           if(class(trecase_res) %in% "try-error"){
             res = c(snp =SNP_pos[ss], gene=gene_pos[gg], 
@@ -1671,7 +1671,7 @@ R_treacse_mtest <- function(Y, Y1, Y2, Z, XX, RHO, CNV1, CNV2, SNP_pos, gene_pos
             if( useLRT | class(Score_res) %in% "try-error"){
               ##LRT
               trec_ase_sep_res = TReCASE_sep_sfit(KEG_EaseGase=rep(0,5), y,z,
-                                                  z_AS, X, RHO, RHO_AS,
+                                                  z_AS, X, RHOss, RHO_AS,
                                                   tau1, tau2, ni0, ni, tauB, tau, 
                                                   maxiter=max_iter, tol = eps)
               Score_res = CisTrans_lrt(trecase_res, trec_ase_sep_res)

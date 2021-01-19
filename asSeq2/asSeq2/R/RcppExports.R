@@ -293,7 +293,7 @@ RcppT_CisTrans_Score <- function(para, y, z, z_AS, RHO, RHO_AS, X, BETA, phi, ta
     .Call(`_asSeq2_RcppT_CisTrans_Score`, para, y, z, z_AS, RHO, RHO_AS, X, BETA, phi, tau1, tau2, lgy1, ni0, ni, log_theta, tauB, tau, lbc)
 }
 
-RcppT_trecase_mtest <- function(Y, Y1, Y2, Z, XX, RHO, CNV1, CNV2, SNP_pos, sChr, gene_start, gene_end, gChr, GeneSnpList, file_trec = "trecT.txt", file_trecase = "trecaseT.txt", useLRT = FALSE, transTestP = 0.01, cis_window = 1e5, useASE = 1L, min_ASE_total = 8L, min_nASE = 5L, min_nASE_het = 5L, eps = 1e-5, max_iter = 4000L, show = FALSE) {
+RcppT_trecase_mtest <- function(Y, Y1, Y2, Z, XX, RHO, CNV1, CNV2, SNP_pos, sChr, gene_start, gene_end, gChr, GeneSnpList, file_trec = "trecT.txt", file_trecase = "trecaseT.txt", useLRT = FALSE, transTestP = 0.01, cis_window = 1e5, useASE = 1L, min_ASE_total = 8L, min_nASE = 5L, min_nASE_het = 5L, eps = 5e-5, max_iter = 400L, show = FALSE) {
     invisible(.Call(`_asSeq2_RcppT_trecase_mtest`, Y, Y1, Y2, Z, XX, RHO, CNV1, CNV2, SNP_pos, sChr, gene_start, gene_end, gChr, GeneSnpList, file_trec, file_trecase, useLRT, transTestP, cis_window, useASE, min_ASE_total, min_nASE, min_nASE_het, eps, max_iter, show))
 }
 
