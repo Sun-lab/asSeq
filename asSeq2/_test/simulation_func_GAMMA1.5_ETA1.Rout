@@ -1,0 +1,273 @@
+
+R version 3.6.2 (2019-12-12) -- "Dark and Stormy Night"
+Copyright (C) 2019 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> # setwd("/fh/fast/sun_w/licai/_tumor_eQTL/_simulation_asSeq2/")
+> library(MASS)
+> 
+> args = commandArgs(TRUE)
+> # args = c("1.5", "1")
+> GAMMA = as.numeric(args[1])
+> ETA = as.numeric(args[2])
+> GAMMA
+[1] 1.5
+> ETA
+[1] 1
+> KAPPA = 1.5
+> useASE = 1
+> 
+> # source("simulation_function_tumor_eqtl.R")
+> 
+> set.seed(2020)
+> NN = 500
+> numSNPs = 1
+> 
+> BETA    = c(5,0.15,-0.5,0.25)
+> PHI     = 0.1
+> MAF     = 0.2
+> XX      = data.frame(cbind(1,matrix(runif(NN*3),NN,3)), stringsAsFactors = F) 
+> names(XX) = paste0("x",1:4)
+> RHO     = runif(NN, 0.3, 0.9)
+> 
+> PSI = THETA = 100 # over-dispersion = 0.01
+> 
+> prob_phased = 0.1
+> corrSNPs    = 0
+> eQTL_index  = 1
+> prob_tau    = c(0.14, 0.68, 0.17, 0.01)
+> 
+> nSims  = 22
+> 
+> ## ---------------------------------------------------------------------
+> ## Simulation
+> ## ---------------------------------------------------------------------
+> 
+> compute_offset2 <- function(z, RHO, KAPPA, ETA, GAMMA, tau1, tau2){
++   n = length(z)
++   offsets = vector('numeric', n)
++   indAA = which(z == 0)
++   offsets[indAA] = log(2*(1-RHO[indAA]) +
++                          (tau1[indAA]+tau2[indAA])*RHO[indAA]*KAPPA)
++   
++   indAB = which(z == 1)
++   offsets[indAB] = log((1-RHO[indAB]) + tau1[indAB]*RHO[indAB]*KAPPA +
++                          (1-RHO[indAB])*ETA + tau2[indAB]*RHO[indAB]*KAPPA*GAMMA)
++   
++   indBA = which(z == 2)
++   offsets[indBA] = log((1-RHO[indBA]) + tau2[indBA]*RHO[indBA]*KAPPA +
++                          (1-RHO[indBA])*ETA + tau1[indBA]*RHO[indBA]*KAPPA*GAMMA)
++   
++   indBB = which(z == 3)
++   offsets[indBB] = log(2*(1-RHO[indBB])*ETA +
++                          (tau1[indBB]+tau2[indBB])*RHO[indBB]*KAPPA*GAMMA)
++   
++   return(offsets)
++ }
+> 
+> compute_pi <- function(z_AS, RHO_AS, KAPPA, ETA, GAMMA, tauB, tau){
++   pis = vector('numeric', length(z_AS))
++   indhomo = which(z_AS %in% c(0,3))
++   pis[indhomo] = (RHO_AS[indhomo]*tauB[indhomo]*KAPPA + 1 -
++                     RHO_AS[indhomo])/(RHO_AS[indhomo]*tau[indhomo]*KAPPA
++                                       + 2*(1 - RHO_AS[indhomo]))
++   indhet = which(z_AS %in% c(1,2))
++   tmp1 = RHO_AS[indhet]*tauB[indhet]*GAMMA*KAPPA + (1 - RHO_AS[indhet])*ETA
++   pis[indhet] = tmp1/(RHO_AS[indhet]*(tau[indhet]-tauB[indhet])*KAPPA +
++                         (1 - RHO_AS[indhet]) + tmp1)
++   return(pis)
++ }
+> 
+> 
+> Data_generate <- function(rep, N, betas, XX, phi, KAPPA, ETA, GAMMA, THETA, RHO,
++                           prob_phased=0.1, MAF=0.2)
++ {
++   # simulated data 
++   set.seed(2020+rep)
++   # RHO         = runif(N, 0.3, 0.9)
++   geno_probs  = c((1-MAF)^2,MAF*(1-MAF),MAF*(1-MAF),MAF^2)
++   dat         = data.frame(RHO)
++   ZZ          = sample(0:3,N,replace = TRUE,prob = geno_probs)
++   prob_tau    = c(0.14, 0.68, 0.17, 0.01)
++   tau1        = sample(0:3,N,replace = TRUE,prob_tau)
++   tau2        = sample(0:3,N,replace = TRUE,prob_tau)
++   tauB        = tau2
++   ind0 = which(ZZ %in% c(2,3))
++   tauB[ind0]  = tau1[ind0] 
++   tau         = tau1 + tau2
++   # cbind(tauB, tau1, tau2, dat$z)[1:30,]
++   
++   
++   offsets = compute_offset2(ZZ, RHO, KAPPA, ETA, GAMMA, tau1, tau2)
++   mus     = exp(as.matrix(XX)%*%betas+offsets)
++   pis     = compute_pi(ZZ, RHO, KAPPA, ETA, GAMMA, tauB, tau)
++   for(ii in seq(N)){
++     dat$total[ii]  = rnbinom(n = 1,mu =mus[ii],size = 1/phi)
++     dat$total_phased[ii] = rbinom(n = 1,size = dat$total[ii],prob = prob_phased)
++     dat$hapB[ii] = emdbook::rbetabinom(n = 1, prob = pis[ii],
++                                        size = dat$total_phased[ii],theta = 1/THETA)
++     dat$hapA[ii] = dat$total_phased[ii] - dat$hapB[ii]
++   }
++   
++   # final data
++   dat$hap1 = dat$hapA
++   ind1 = which(ZZ %in% c(2,3))
++   dat$hap1[ind1] = dat$total_phased[ind1] - dat$hapA[ind1]
++   dat$hap2 = dat$total_phased -  dat$hap1
++   
++   dat$tau1 = tau1
++   dat$tau2 = tau2
++   
++   return(list(dat,ZZ))
++   
++ }
+> 
+> func1 <- function(repi){
++   set.seed(2020 + repi)
++   gene_name = paste0("G", repi) 
++   # gen_gene_RC_SNPs_cnv(gene_name,XX,numSNPs,RHO, BETA,PHI,ETA,KAPPA,GAMMA,
++   #                      PSI,MAF,tau1,tau2,prob_phased,corrSNPs,eQTL_index)
++   Data_generate(repi, NN, BETA, XX, PHI, KAPPA, ETA, GAMMA, THETA, RHO,
++                 prob_phased=0.05, MAF=0.2)
++ }
+> 
+> dataSim_raw = lapply(1:nSims, func1) 
+> dataGene    = sapply(dataSim_raw, "[", 1)
+> 
+> cnm = colnames(dataGene[[1]])
+> cnm
+[1] "RHO"          "total"        "total_phased" "hapB"         "hapA"        
+[6] "hap1"         "hap2"         "tau1"         "tau2"        
+> 
+> Y  = data.matrix(sapply(dataGene, "[[", which(cnm == "total")))
+> Y1 = data.matrix(sapply(dataGene, "[[", which(cnm == "hap1")))
+> Y2 = data.matrix(sapply(dataGene, "[[", which(cnm == "hap2")))
+> Z  = data.matrix(sapply(dataSim_raw, "[[", 2))
+> XX = data.matrix(XX)
+> CNV1 = data.matrix(sapply(dataGene, "[[", which(cnm == "tau1")))
+> CNV2 = data.matrix(sapply(dataGene, "[[", which(cnm == "tau2")))
+> # RHO = data.matrix(sapply(dataGene, "[[", which(cnm == "RHO")))
+> 
+> geneloc = data.frame(gene = paste0('gene', 1:nSims), chr = 1:nSims, start = c(1),
++                      end = c(1e3)+1000, stringsAsFactors = F)
+> head(geneloc)
+   gene chr start  end
+1 gene1   1     1 2000
+2 gene2   2     1 2000
+3 gene3   3     1 2000
+4 gene4   4     1 2000
+5 gene5   5     1 2000
+6 gene6   6     1 2000
+> 
+> SNPloc = data.frame(snp = paste0("SNP", 1:nSims), chr = 1:nSims,
++                     pos = 1:nSims, stringsAsFactors = F)
+> head(SNPloc)
+   snp chr pos
+1 SNP1   1   1
+2 SNP2   2   2
+3 SNP3   3   3
+4 SNP4   4   4
+5 SNP5   5   5
+6 SNP6   6   6
+> 
+> 
+> res_all = NULL
+> library(asSeq2, lib = "/home/lhuang2/R/x86_64-pc-linux-gnu-library/4.0")
+Warning message:
+package ‘asSeq2’ was built under R version 4.0.0 
+> 
+> file_trecase_all = sprintf("simu1_trecase_GAMMA%s_ETA%s.txt",GAMMA,ETA)
+> file_trec_all    = sprintf("simu1_trec_GAMMA%s_ETA%s.txt",GAMMA,ETA)
+> 
+> 
+> if(useASE == 1){
++   file_name = file_trecase_all
++ }else{
++   file_name = file_trec_all
++ }
+> 
+> time1 = Sys.time()
+> trecaseT(Y, Y1, Y2, Z, XX, RHO, CNV1, CNV2,
++          SNPloc, geneloc, GeneSnpList = split(1:nSims, seq(nSims)),
++          file_trec = file_trec_all, file_trecase = file_name,
++          useLRT = T, transTestP = 0, cis_window = 100000, useASE = useASE,
++          min_ASE_total = 8L, min_nASE = 5L, min_nASE_het = 5L, eps = 5e-5,
++          max_iter = 200L, show = FALSE)
+> 
+> time2 = Sys.time()
+> time2 - time1
+Time difference of 1.838184 mins
+> 
+> res_all = read.table(file_name, sep = "\t", header = T, stringsAsFactors = FALSE)
+> 
+> 
+> summary(res_all)
+   GeneRowID      MarkerRowID    TReCASE_kappa    TReCASE_eta   
+ Min.   : 1.00   Min.   : 1.00   Min.   :1.340   Min.   :0.705  
+ 1st Qu.: 6.25   1st Qu.: 6.25   1st Qu.:1.435   1st Qu.:0.935  
+ Median :11.50   Median :11.50   Median :1.550   Median :0.999  
+ Mean   :11.50   Mean   :11.50   Mean   :1.552   Mean   :1.018  
+ 3rd Qu.:16.75   3rd Qu.:16.75   3rd Qu.:1.637   3rd Qu.:1.117  
+ Max.   :22.00   Max.   :22.00   Max.   :1.860   Max.   :1.510  
+ TReCASE_gamma   TReCASE_LL.full  TReCASE_pEta     TReCASE_pGamma     
+ Min.   :1.260   Min.   :-3490   Min.   :0.01713   Min.   :0.000e+00  
+ 1st Qu.:1.405   1st Qu.:-3460   1st Qu.:0.35656   1st Qu.:2.000e-09  
+ Median :1.510   Median :-3450   Median :0.52321   Median :1.050e-07  
+ Mean   :1.488   Mean   :-3447   Mean   :0.55144   Mean   :3.289e-04  
+ 3rd Qu.:1.575   3rd Qu.:-3430   3rd Qu.:0.82401   3rd Qu.:1.814e-05  
+ Max.   :1.670   Max.   :-3380   Max.   :0.95166   Max.   :5.694e-03  
+ TReCASE_beta0   TReCASE_beta1    TReCASE_beta2     TReCASE_beta3   
+ Min.   :4.830   Min.   :0.0118   Min.   :-0.6370   Min.   :0.1170  
+ 1st Qu.:4.970   1st Qu.:0.1143   1st Qu.:-0.5292   1st Qu.:0.2055  
+ Median :4.995   Median :0.1400   Median :-0.5015   Median :0.2325  
+ Mean   :4.999   Mean   :0.1377   Mean   :-0.5118   Mean   :0.2358  
+ 3rd Qu.:5.040   3rd Qu.:0.1795   3rd Qu.:-0.4808   3rd Qu.:0.2727  
+ Max.   :5.140   Max.   :0.2130   Max.   :-0.4520   Max.   :0.3640  
+  TReCASE_phi      TReCASE_theta       Converge CisTrans_Chisq  
+ Min.   :0.09110   Min.   : 59.10   Min.   :1   Min.   :0.0900  
+ 1st Qu.:0.09550   1st Qu.: 80.55   1st Qu.:1   1st Qu.:0.3825  
+ Median :0.09735   Median : 96.40   Median :1   Median :1.6950  
+ Mean   :0.09852   Mean   :121.24   Mean   :1   Mean   :1.8891  
+ 3rd Qu.:0.10138   3rd Qu.:149.00   3rd Qu.:1   3rd Qu.:2.8325  
+ Max.   :0.11200   Max.   :244.00   Max.   :1   Max.   :7.2400  
+ CisTrans_Pvalue        nSam          nHet      
+ Min.   :0.02682   Min.   :500   Min.   :451.0  
+ 1st Qu.:0.24376   1st Qu.:500   1st Qu.:460.5  
+ Median :0.42894   Median :500   Median :465.0  
+ Mean   :0.51302   Mean   :500   Mean   :464.8  
+ 3rd Qu.:0.82766   3rd Qu.:500   3rd Qu.:467.8  
+ Max.   :0.95684   Max.   :500   Max.   :477.0  
+> mean(res_all$TReCASE_pGamma<0.05)
+[1] 1
+> mean(res_all$TReCASE_pEta<0.05)
+[1] 0.04545455
+> mean(res_all$TReC_pGamma<0.05)
+[1] NaN
+> mean(res_all$TReC_pEta<0.05)
+[1] NaN
+> mean(res_all$CisTrans_Pvalue<0.05, na.rm = T)
+[1] 0.04545455
+> 
+> table(res_all$Converge)
+
+ 1 
+22 
+> 
+> q("no")
+> proc.time()
+   user  system elapsed 
+115.264   0.294 112.052 

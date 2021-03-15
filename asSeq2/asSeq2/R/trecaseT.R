@@ -15,13 +15,20 @@ trecaseT <-
     ## SNPloc/geneloc: data.frame of SNP location information, the column names 
     ##    have to be c("snp", "chr", "pos") / c("gene", "chr", "start","end")
     ## file_trec/file_trecase: output file name of trec/trecase 
-    ## cis_window:
-    ## useASE:
-    ## min_ASE_total:
-    ## min_nASE:
-    ## eps:
-    ## max_iter:
-    ## show:
+    ## cis_window: Value determining local eQTL. A SNP is considered local to a 
+    ##    gene if and only if it is located within the gene body or within 
+    ##    cis_window bp from either the start or end of the gene.
+    ## useASE: Indicator of whether or not to use ASE data for any gene 
+    ##    (1=Use ASE,0=TReC only). Default is set to 1.
+    ## min_ASE_total: The minimum number of Allele Specific reads a subject must 
+    ##    have to be included in the ASE analysis. Default is 8.
+    ## min_nASE: The minimum number of subjects that must exceed the 
+    ##    min_ASE_Total threshold in order for ASE data to be included. Default is 5.
+    ## eps: Specifies whether TReCASE model has converged. Default of 5e-5.
+    ## max_iter: Maximum number of iterations for TReC or TReCASE model fits. 
+    ##    Default value of 400.
+    ## show: If show=0, do not output tracing information. if show = 1, output
+    ##    tracing information.
     
     minVar = 1e-8
     
