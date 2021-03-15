@@ -1,7 +1,8 @@
 setwd("/fh/fast/sun_w/licai/_tumor_eQTL/GitHub/asSeq/asSeq2/_test/")
 source("./tumor_eQTL.R")
 library(Rcpp)
-sourceCpp("../asSeq2/src/tumor_eQTL.cpp")
+library(asSeq2, lib = "/home/lhuang2/R/x86_64-pc-linux-gnu-library/4.0")
+# sourceCpp("../asSeq2/src/tumor_eQTL.cpp")
 # Rcpp::compileAttributes("../asSeq2")
 # system("R CMD build ../asSeq2")
 # install.packages("/fh/fast/sun_w/licai/_tumor_eQTL/GitHub/asSeq/asSeq2/asSeq2_0.99.1.tar.gz",
@@ -474,10 +475,10 @@ trecaseT(Y, Y1, Y2, Z, XX, RHO, CNV1, CNV2,
            file_trec = "trecT.txt", file_trecase = "trecaseT.txt", 
            useLRT = FALSE, transTestP = 0.01, cis_window = 100000, useASE = 1L, 
            min_ASE_total = 8L, min_nASE = 5L, min_nASE_het = 5L, eps = 5e-5, 
-           max_iter = 400L, show = FALSE)
+           max_iter = 200L, show = FALSE)
 
 res = R.trecaseT(Y, Y1, Y2, Z, XX, RHO, CNV1, CNV2, 
                   SNPloc, geneloc, GeneSnpList = list(1:30, 41:100),
-                  useLRT = FALSE, transTestP = 0, cis_window = 100000, useASE = 1L, 
+                  useLRT = FALSE, transTestP = 0.01, cis_window = 100000, useASE = 1L, 
                   min_ASE_total = 8L, min_nASE = 5L, min_nASE_het = 5L, eps = 5e-5, 
-                  max_iter = 4000L, show = FALSE)
+                  max_iter = 200L, show = FALSE)

@@ -18,9 +18,9 @@ using namespace Rcpp;
 
 // [[Rcpp::export]]
 void RcppT_compute_offset(const arma::vec& z, const arma::vec& RHO,
-                    double& KAPPA, double& ETA, double& GAMMA,
-                    const arma::vec& tau1, const arma::vec& tau2,
-                    arma::vec& offsets){
+                          double& KAPPA, double& ETA, double& GAMMA,
+                          const arma::vec& tau1, const arma::vec& tau2,
+                          arma::vec& offsets){
   arma::uword ii;
   for(ii = 0; ii<RHO.size(); ii++){
     if(z.at(ii) == 0){
@@ -53,8 +53,8 @@ void RcppT_compute_expXbeta(const arma::mat& X, const arma::vec& BETA,
  */
 // [[Rcpp::export]]
 double RcppT_reg_LL(const arma::vec& y, const arma::mat& X,
-                   const arma::vec& offsets, const arma::vec& PARAMS,
-                   const arma::vec& lgy1, arma::vec& mu){
+                    const arma::vec& offsets, const arma::vec& PARAMS,
+                    const arma::vec& lgy1, arma::vec& mu){
   // duplicate function
   arma::uword ii;
   //double mu;
@@ -81,7 +81,7 @@ double RcppT_reg_LL(const arma::vec& y, const arma::mat& X,
 
 // [[Rcpp::export]]
 arma::vec RcppT_reg_grad(const arma::vec& y, const arma::mat& X,
-                        const arma::vec& mu, const arma::vec& PARAMS){
+                         const arma::vec& mu, const arma::vec& PARAMS){
   arma::uword ii;
   arma::uword pp = X.n_cols;
   arma::vec BETA = PARAMS.subvec(0,pp-1);
@@ -108,10 +108,10 @@ arma::vec RcppT_reg_grad(const arma::vec& y, const arma::mat& X,
 
 // [[Rcpp::export]]
 Rcpp::List RcppT_reg_BFGS(const arma::vec& y, const arma::mat& X,
-                         const arma::vec& offsets, const arma::vec& params0,
-                         const arma::vec& lgy1,
-                         const arma::uword& max_iter,
-                         const double& eps, const bool& show){
+                          const arma::vec& offsets, const arma::vec& params0,
+                          const arma::vec& lgy1,
+                          const arma::uword& max_iter,
+                          const double& eps, const bool& show){
   
   arma::uword num_params = params0.n_elem;
   arma::uword iter = 0;
@@ -252,12 +252,12 @@ double RcppT_loglikNB_KEG(const arma::vec& para, const int& H0,
 
 // [[Rcpp::export]]
 arma::vec RcppT_grad_NB(const arma::vec& para, const int& H0,
-                       const arma::vec& y, const arma::vec& z,
-                       const arma::vec& RHO, const double& phi,
-                       const arma::vec& tau1, const arma::vec& tau2,
-                       const arma::vec& expXbeta, 
-                       const arma::vec& offsets, const arma::vec& mu){
-
+                        const arma::vec& y, const arma::vec& z,
+                        const arma::vec& RHO, const double& phi,
+                        const arma::vec& tau1, const arma::vec& tau2,
+                        const arma::vec& expXbeta, 
+                        const arma::vec& offsets, const arma::vec& mu){
+  
   double dltrec_dmu = 0, dmu_dkappa = 0, dmu_deta = 0, dmu_dgamma = 0;
   arma::uword ii;
   arma::vec grad = arma::zeros<arma::vec>(para.size());
@@ -344,7 +344,7 @@ arma::vec RcppT_grad_NB(const arma::vec& para, const int& H0,
     
     for(ii =0; ii<z.size(); ii++){
       dltrec_dmu = y.at(ii)/mu.at(ii) - (1 + phi * y.at(ii))/(1 + phi * mu.at(ii));
-
+      
       if(z.at(ii) == 0){
         
         dmu_dkappa = (tau1.at(ii) + tau2.at(ii))*expXbeta.at(ii)*RHO.at(ii);
@@ -354,12 +354,12 @@ arma::vec RcppT_grad_NB(const arma::vec& para, const int& H0,
         
         dmu_dkappa = (tau1.at(ii) + tau2.at(ii)*GAMMA)*expXbeta.at(ii)*RHO.at(ii);
         dmu_deta   = (1-RHO.at(ii))*expXbeta.at(ii);
-
+        
       }else if(z.at(ii) == 2){
         
         dmu_dkappa = (tau1.at(ii)*GAMMA + tau2.at(ii))*expXbeta.at(ii)*RHO.at(ii);
         dmu_deta   = (1-RHO.at(ii))*expXbeta.at(ii);
-
+        
       }else{
         dmu_dkappa = (tau1.at(ii)+tau2.at(ii))*GAMMA*expXbeta.at(ii)*RHO.at(ii);
         dmu_deta   = 2*(1-RHO.at(ii))*expXbeta.at(ii);
@@ -367,7 +367,7 @@ arma::vec RcppT_grad_NB(const arma::vec& para, const int& H0,
       
       grad.at(0) += dltrec_dmu*dmu_dkappa;
       grad.at(1) += dltrec_dmu*dmu_deta;
-
+      
     }
     grad.at(0) *= KAPPA;
     grad.at(1) *= ETA;
@@ -378,13 +378,13 @@ arma::vec RcppT_grad_NB(const arma::vec& para, const int& H0,
 
 // [[Rcpp::export]]
 Rcpp::List RcppT_trec_KEG_BFGS(const arma::vec& para0, const int& H0, 
-                              const arma::vec& y, const arma::vec& z,
-                              const arma::vec& RHO, const arma::mat& X,
-                              const arma::vec& BETA, const double& phi,
-                              const arma::vec& tau1, const arma::vec& tau2,
-                              const arma::vec& lgy1,
-                              const arma::uword& max_iter = 4e3,
-                              const double& eps = 1e-7,const bool& show = true){
+                               const arma::vec& y, const arma::vec& z,
+                               const arma::vec& RHO, const arma::mat& X,
+                               const arma::vec& BETA, const double& phi,
+                               const arma::vec& tau1, const arma::vec& tau2,
+                               const arma::vec& lgy1,
+                               const arma::uword& max_iter = 4e3,
+                               const double& eps = 1e-7,const bool& show = true){
   
   arma::uword num_params = para0.size();
   arma::uword iter = 0;
@@ -416,8 +416,8 @@ Rcpp::List RcppT_trec_KEG_BFGS(const arma::vec& para0, const int& H0,
     //calculate direction p_k
     uu = 0;
     old_LL = fnscale * RcppT_loglikNB_KEG(xk, H0, y, z, phi, RHO, 
-                                           tau1, tau2, lgy1, expXbeta,
-                                           offsets, mu);
+                                          tau1, tau2, lgy1, expXbeta,
+                                          offsets, mu);
     gr_k   = fnscale * RcppT_grad_NB(xk, H0, y, z, RHO, phi,
                                      tau1, tau2, expXbeta, offsets, mu) ;
     p_k    = -1.0 * inv_Bk * gr_k;
@@ -428,8 +428,8 @@ Rcpp::List RcppT_trec_KEG_BFGS(const arma::vec& para0, const int& H0,
       tmp_alpha = inv_norm_p_k / std::pow(4, jj);
       new_xk    = xk + tmp_alpha * p_k;
       new_LL    = fnscale * RcppT_loglikNB_KEG(new_xk, H0, y, z, phi, RHO, 
-                                                tau1, tau2, lgy1, expXbeta,
-                                                offsets, mu);
+                                               tau1, tau2, lgy1, expXbeta,
+                                               offsets, mu);
       if(new_LL < old_LL){ //minimizing
         s_k = tmp_alpha * p_k;
         y_k = fnscale * RcppT_grad_NB(new_xk, H0, y, z, RHO, phi,
@@ -543,7 +543,7 @@ Rcpp::List RcppT_trec_sfit(const int& H0, const arma::vec& para0,
     
     //update KEG
     new_keg_fit = RcppT_trec_KEG_BFGS(curr_para, H0, y, z, RHO, X, BETA, phi,
-                                       tau1, tau2, lgy1, max_iter, eps, false);
+                                      tau1, tau2, lgy1, max_iter, eps, false);
     new_para    = Rcpp::as<arma::vec>(new_keg_fit["PAR"]);
     new_LL      = as<double>(new_keg_fit["LL"]);
     
@@ -626,8 +626,8 @@ Rcpp::List RcppT_trec(const arma::vec& y, const arma::vec& z,
   p_eta = R::pchisq(2*(as<double>(sfit0["LL"])-as<double>(sfit1["LL"])),
                     1, 0, 0);
   p_gamma = R::pchisq(2*(as<double>(sfit0["LL"])-as<double>(sfit2["LL"])),
-                    1, 0, 0);
-
+                      1, 0, 0);
+  
   return Rcpp::List::create(
     Rcpp::Named("p_eta", p_eta),
     Rcpp::Named("p_gamma", p_gamma),
@@ -638,7 +638,7 @@ Rcpp::List RcppT_trec(const arma::vec& y, const arma::vec& z,
     Rcpp::Named("LL_gamma", sfit2["LL"]),
     Rcpp::Named("converge", converge)
   );
-    
+  
 }
 
 
@@ -648,12 +648,12 @@ Rcpp::List RcppT_trec(const arma::vec& y, const arma::vec& z,
 
 // [[Rcpp::export]]
 void RcppT_compite_pi(const arma::vec& z_AS, const arma::vec& RHO_AS, 
-                     const double& KAPPA, const double& ETA, const double& GAMMA,
-                     const arma::vec& tauB, const arma::vec& tau, 
-                     arma::vec& pis){
+                      const double& KAPPA, const double& ETA, const double& GAMMA,
+                      const arma::vec& tauB, const arma::vec& tau, 
+                      arma::vec& pis){
   arma::uword ii;
   double tmp1, tmp2; 
-
+  
   for(ii=0;ii<z_AS.n_elem;ii++){
     if(z_AS.at(ii) == 0 | z_AS.at(ii) == 3){
       tmp1 = RHO_AS.at(ii)*tauB.at(ii)*KAPPA + 1 - RHO_AS.at(ii);
@@ -671,11 +671,11 @@ void RcppT_compite_pi(const arma::vec& z_AS, const arma::vec& RHO_AS,
 
 // [[Rcpp::export]]
 double RcppT_loglikBB_KEG(const arma::vec& para, const int& H0,
-                        const arma::vec& z_AS, const arma::vec& RHO_AS, 
-                        const arma::vec& ni, const arma::vec& ni0,
-                        const double& log_theta, const arma::vec& lbc, 
-                        const arma::vec& tauB, const arma::vec& tau, 
-                        arma::vec& pis){
+                          const arma::vec& z_AS, const arma::vec& RHO_AS, 
+                          const arma::vec& ni, const arma::vec& ni0,
+                          const double& log_theta, const arma::vec& lbc, 
+                          const arma::vec& tauB, const arma::vec& tau, 
+                          arma::vec& pis){
   //update KEG
   arma::uword ii;
   double loglik = 0.0;
@@ -706,9 +706,9 @@ double RcppT_loglikBB_KEG(const arma::vec& para, const int& H0,
     
     //printR_obj(loglik);
     loglik += lbc.at(ii) + lgamma(aa + ni0.at(ii)) +
-        lgamma(bb + ni.at(ii) - ni0.at(ii)) + lgvab ;
-        //- lgamma(vtheta + ni.at(ii));
-
+      lgamma(bb + ni.at(ii) - ni0.at(ii)) + lgvab ;
+    //- lgamma(vtheta + ni.at(ii));
+    
   }
   
   return loglik;
@@ -836,7 +836,7 @@ arma::vec RcppT_grad_BB_KEG(const arma::vec& para, const int& H0,
           (1 - RHO_AS.at(ii)))/pow(tmp1, 2.0);
         dpi_dkappa = tmp2 - tmp3;
         dpi_deta   = 0;
-
+        
       }else{
         tmp1 = RHO_AS.at(ii)*tauB.at(ii)*GAMMA*KAPPA + (1 - RHO_AS.at(ii))*ETA;
         tmp2 = RHO_AS.at(ii)*(tau.at(ii) - tauB.at(ii))*KAPPA +
@@ -850,11 +850,11 @@ arma::vec RcppT_grad_BB_KEG(const arma::vec& para, const int& H0,
       
       grad.at(0) += dlASE_dpi*dpi_dkappa;
       grad.at(1) += dlASE_dpi*dpi_deta;
-
+      
     }
     grad.at(0) *= KAPPA * vtheta;
     grad.at(1) *= ETA * vtheta;
-
+    
   }
   
   return grad;
@@ -863,13 +863,13 @@ arma::vec RcppT_grad_BB_KEG(const arma::vec& para, const int& H0,
 
 // [[Rcpp::export]]
 double RcppT_loglikBB_THETA(const arma::vec& ni, const arma::vec& ni0, 
-                           const double& log_theta, const arma::vec& pis,
-                          const arma::vec& lbc){
+                            const double& log_theta, const arma::vec& pis,
+                            const arma::vec& lbc){
   
   arma::uword ii;
   double loglik = 0.0;
   double vtheta = std::exp(-log_theta);
-
+  
   for(ii=0;ii<ni.n_elem;ii++){
     
     double aa = pis.at(ii)*vtheta;
@@ -878,9 +878,9 @@ double RcppT_loglikBB_THETA(const arma::vec& ni, const arma::vec& ni0,
     double lgvab = - lgamma(aa) - lgamma(bb) + lgvt;
     
     loglik += lbc.at(ii) + lgamma(aa + ni0.at(ii)) +
-        lgamma(bb + ni.at(ii) - ni0.at(ii)) + lgvab -
-        lgamma(vtheta + ni.at(ii));
-
+      lgamma(bb + ni.at(ii) - ni0.at(ii)) + lgvab -
+      lgamma(vtheta + ni.at(ii));
+    
   }
   
   return loglik;
@@ -888,7 +888,7 @@ double RcppT_loglikBB_THETA(const arma::vec& ni, const arma::vec& ni0,
 
 // [[Rcpp::export]]
 double RcppT_grad_BB_THETA(const arma::vec& ni, const arma::vec& ni0,
-                              const double& log_theta, const arma::vec& pis){
+                           const double& log_theta, const arma::vec& pis){
   // only update theta
   arma::uword ii;
   double grad   = 0.0;
@@ -903,12 +903,12 @@ double RcppT_grad_BB_THETA(const arma::vec& ni, const arma::vec& ni0,
     dibb    = R::digamma(bb);
     diaa_ni0 = R::digamma(aa + ni0.at(ii));
     dibb_ni1 = R::digamma(bb + ni.at(ii) - ni0.at(ii));
-      
+    
     //dlase_dtheta
     grad += - pis.at(ii)*(diaa_ni0 - diaa) -
-        (1.0 - pis.at(ii)) * (dibb_ni1 - dibb) -
-        (divt - R::digamma(vtheta + ni.at(ii)));
-
+      (1.0 - pis.at(ii)) * (dibb_ni1 - dibb) -
+      (divt - R::digamma(vtheta + ni.at(ii)));
+    
   }
   grad *= vtheta;
   return grad; 
@@ -917,10 +917,10 @@ double RcppT_grad_BB_THETA(const arma::vec& ni, const arma::vec& ni0,
 
 // [[Rcpp::export]]
 Rcpp::List RcppT_ase_theta_BFGS(const double& lg_theta,
-                               const arma::vec& ni, const arma::vec& ni0,
-                               const arma::vec& pis, const arma::vec& lbc,
-                               const arma::uword& max_iter = 4e3,
-                               const double& eps = 1e-7, const bool& show = true){
+                                const arma::vec& ni, const arma::vec& ni0,
+                                const arma::vec& pis, const arma::vec& lbc,
+                                const arma::uword& max_iter = 4e3,
+                                const double& eps = 1e-7, const bool& show = true){
   
   arma::uword num_params = 1;
   arma::uword iter = 0;
@@ -962,12 +962,12 @@ Rcpp::List RcppT_ase_theta_BFGS(const double& lg_theta,
       tmp_alpha = inv_norm_p_k / std::pow(4, jj);
       new_xk    = xk + tmp_alpha * p_k;
       new_LL    = fnscale * RcppT_loglikBB_THETA(ni, ni0,
-                                          new_xk.at(0), pis, lbc);
+                                                 new_xk.at(0), pis, lbc);
       
       if(new_LL < old_LL){ //minimizing
         s_k = tmp_alpha * p_k;
         y_k = fnscale * RcppT_grad_BB_THETA(ni, ni0,
-                                         new_xk.at(0), pis) - gr_k;
+                                            new_xk.at(0), pis) - gr_k;
         ys  = arma::dot(y_k, s_k);
         
         if(ys > 0.0){
@@ -1081,8 +1081,8 @@ Rcpp::List RcppT_ase_KEG_BFGS(const arma::vec& para0, const int& H0,
       if(new_LL < old_LL){ //minimizing
         s_k = tmp_alpha * p_k;
         y_k = fnscale * RcppT_grad_BB_KEG(new_xk, H0, z_AS, RHO_AS, ni, ni0, 
-                                               log_theta, lbc, tauB, 
-                                               tau, pis) - gr_k;
+                                          log_theta, lbc, tauB, 
+                                          tau, pis) - gr_k;
         ys  = arma::dot(y_k, s_k);
         
         if(ys > 0.0){
@@ -1114,8 +1114,8 @@ Rcpp::List RcppT_ase_KEG_BFGS(const arma::vec& para0, const int& H0,
       if(std::abs(curr_LL - old_LL) < eps &&
          Rcpp_norm(curr_xk - xk) < eps){
         gr_k = RcppT_grad_BB_KEG(xk, H0, z_AS, RHO_AS, ni, ni0,
-                                      log_theta, lbc, tauB, 
-                                      tau, pis);
+                                 log_theta, lbc, tauB, 
+                                 tau, pis);
         if(Rcpp_norm(gr_k) < 0.01){
           converge = 1;
           break;
@@ -1175,7 +1175,7 @@ Rcpp::List RcppT_ase_sfit(const int& H0, const arma::vec& para0,
     
     new_theta_fit = RcppT_ase_theta_BFGS(curr_theta, ni, ni0, pis, lbc);
     new_theta     =  as<double>(new_theta_fit["PAR"]);
-   
+    
     if(show){
       Rprintf("ASE: Theta updated after %d iter \n",
               as<int>(new_keg_fit["iter"]));
@@ -1244,7 +1244,7 @@ Rcpp::List RcppT_ase(const arma::vec& z_AS,const arma::vec& RHO_AS,
   int converge = 0;
   
   sfit0 = RcppT_ase_sfit(0, para0, z_AS, RHO_AS,  ni0, ni, tauB, tau, lbc, 
-                             max_iter, eps, show); 
+                         max_iter, eps, show); 
   sfit1 = RcppT_ase_sfit(1, para0.subvec(0,1), z_AS, RHO_AS,  ni0, ni, 
                          tauB, tau, lbc, max_iter, eps, show); 
   sfit2 = RcppT_ase_sfit(2, para0.subvec(0,1),  z_AS, RHO_AS,  ni0, ni, 
@@ -1253,7 +1253,7 @@ Rcpp::List RcppT_ase(const arma::vec& z_AS,const arma::vec& RHO_AS,
   para0.subvec(0,1) = as<arma::vec>(sfit1["PAR"]);
   para0.at(2) = as<arma::vec>(sfit1["PAR"]).at(2); 
   sfit3 = RcppT_ase_sfit(0, para0, z_AS, RHO_AS,  ni0, ni, 
-                        tauB, tau, lbc, max_iter, eps, show); 
+                         tauB, tau, lbc, max_iter, eps, show); 
   
   if(as<double>(sfit0["LL"]) < as<double>(sfit3["LL"]) && sfit3["converge"] ){
     sfit0 = sfit3;  
@@ -1262,7 +1262,7 @@ Rcpp::List RcppT_ase(const arma::vec& z_AS,const arma::vec& RHO_AS,
   converge = sfit0["converge"] && sfit1["converge"] && sfit2["converge"];
   
   Rcpp::NumericVector PAR = as<Rcpp::NumericVector>(sfit0["PAR"]);
-
+  
   p_eta = R::pchisq(2*(as<double>(sfit0["LL"])-as<double>(sfit1["LL"])),
                     1, 0, 0);
   p_gamma = R::pchisq(2*(as<double>(sfit0["LL"])-as<double>(sfit2["LL"])),
@@ -1288,21 +1288,21 @@ Rcpp::List RcppT_ase(const arma::vec& z_AS,const arma::vec& RHO_AS,
 
 // [[Rcpp::export]]
 double RcppT_TReCASE_LL_KEG(const arma::vec& para, const int& H0,
-                        const arma::vec& y, const arma::vec& z,
-                        const arma::vec& z_AS, const double& phi,
-                        const arma::vec& RHO, const arma::vec& RHO_AS,
-                        const arma::vec& tau1,const arma::vec& tau2,
-                        const arma::vec& ni0, const arma::vec& ni,
-                        const double& log_theta, const arma::vec& tauB,
-                        const arma::vec& tau, const arma::vec& lgy1,
-                        const arma::vec& expXbeta,const arma::vec& lbc,
-                        arma::vec& offsets, 
-                        arma::vec& pis, arma::vec& mu){
+                            const arma::vec& y, const arma::vec& z,
+                            const arma::vec& z_AS, const double& phi,
+                            const arma::vec& RHO, const arma::vec& RHO_AS,
+                            const arma::vec& tau1,const arma::vec& tau2,
+                            const arma::vec& ni0, const arma::vec& ni,
+                            const double& log_theta, const arma::vec& tauB,
+                            const arma::vec& tau, const arma::vec& lgy1,
+                            const arma::vec& expXbeta,const arma::vec& lbc,
+                            arma::vec& offsets, 
+                            arma::vec& pis, arma::vec& mu){
   double LL_NB, LL_BB;
   LL_NB = RcppT_loglikNB_KEG(para, H0, y, z, phi, RHO, tau1,
                              tau2, lgy1, expXbeta, offsets, mu);
   LL_BB = RcppT_loglikBB_KEG(para, H0, z_AS, RHO_AS, ni, ni0, log_theta,
-                            lbc, tauB, tau, pis);
+                             lbc, tauB, tau, pis);
   return LL_NB + LL_BB;
 }
 
@@ -1321,16 +1321,16 @@ double RcppT_TReCASE_LL(const arma::vec& y, const double& phi,
 
 // [[Rcpp::export]]
 arma::vec RcppT_TReCASE_grad_KEG(const arma::vec& para, const int& H0,
-                              const arma::vec& y, const arma::vec& z,
-                              const arma::vec& z_AS, const double& phi,
-                              const arma::vec& RHO, const arma::vec& RHO_AS,
-                              const arma::vec& tau1,const arma::vec& tau2,
-                              const arma::vec& ni0, const arma::vec& ni,
-                              const double& log_theta, const arma::vec& tauB,
-                              const arma::vec& tau, const arma::vec& lgy1,
-                              const arma::vec& expXbeta,const arma::vec& lbc,
-                              const arma::vec& offsets, 
-                              const arma::vec& pis, const arma::vec& mu){
+                                 const arma::vec& y, const arma::vec& z,
+                                 const arma::vec& z_AS, const double& phi,
+                                 const arma::vec& RHO, const arma::vec& RHO_AS,
+                                 const arma::vec& tau1,const arma::vec& tau2,
+                                 const arma::vec& ni0, const arma::vec& ni,
+                                 const double& log_theta, const arma::vec& tauB,
+                                 const arma::vec& tau, const arma::vec& lgy1,
+                                 const arma::vec& expXbeta,const arma::vec& lbc,
+                                 const arma::vec& offsets, 
+                                 const arma::vec& pis, const arma::vec& mu){
   arma::vec grad_NB = arma::zeros<arma::vec>(para.n_elem);
   arma::vec grad_BB = arma::zeros<arma::vec>(para.n_elem);
   grad_NB = RcppT_grad_NB(para, H0, y, z, RHO, phi, tau1, tau2, expXbeta, 
@@ -1344,18 +1344,18 @@ arma::vec RcppT_TReCASE_grad_KEG(const arma::vec& para, const int& H0,
 
 // [[Rcpp::export]]
 Rcpp::List RcppT_trecase_KEG_BFGS(const arma::vec& para0, const int& H0, 
-                               const arma::vec& y, const arma::vec& z, 
-                               const arma::vec& z_AS,
-                               const arma::vec& RHO, const arma::vec& RHO_AS,
-                               const arma::mat& X, const arma::vec& BETA, 
-                               const double& phi,
-                               const arma::vec& tau1, const arma::vec& tau2,
-                               const arma::vec& lgy1,  
-                               const arma::vec& ni0, const arma::vec& ni,
-                               const double& log_theta, const arma::vec& tauB,
-                               const arma::vec& tau, const arma::vec& lbc,
-                               const arma::uword& max_iter = 4e3,
-                               const double& eps = 1e-7,const bool& show = true){
+                                  const arma::vec& y, const arma::vec& z, 
+                                  const arma::vec& z_AS,
+                                  const arma::vec& RHO, const arma::vec& RHO_AS,
+                                  const arma::mat& X, const arma::vec& BETA, 
+                                  const double& phi,
+                                  const arma::vec& tau1, const arma::vec& tau2,
+                                  const arma::vec& lgy1,  
+                                  const arma::vec& ni0, const arma::vec& ni,
+                                  const double& log_theta, const arma::vec& tauB,
+                                  const arma::vec& tau, const arma::vec& lbc,
+                                  const arma::uword& max_iter = 4e3,
+                                  const double& eps = 1e-7,const bool& show = true){
   
   arma::uword num_params = para0.size();
   arma::uword iter = 0;
@@ -1515,7 +1515,7 @@ Rcpp::List RcppT_trecase_sfit(const int& H0, const arma::vec& para0,
     }
     //update THETA
     RcppT_compite_pi(z_AS, RHO_AS, KAPPA, ETA, GAMMA, tauB, tau, pis);
-  
+    
     new_theta_fit = RcppT_ase_theta_BFGS(curr_theta, ni, ni0, pis, lbc);
     new_theta     =  as<double>(new_theta_fit["PAR"]);
     
@@ -1594,23 +1594,23 @@ Rcpp::List RcppT_trecase(const arma::vec& y, const arma::vec& z,
                          const arma::vec& tau1, const arma::vec& tau2,
                          const arma::vec& lgy1, const arma::vec& ni0, 
                          const arma::vec& ni, const arma::vec& tauB, 
-                        const arma::vec& tau, const arma::vec& lbc, 
-                        const arma::uword& max_iter = 4e3,
-                        const double& eps = 1e-7, const bool& show = false){
+                         const arma::vec& tau, const arma::vec& lbc, 
+                         const arma::uword& max_iter = 4e3,
+                         const double& eps = 1e-7, const bool& show = false){
   Rcpp::List sfit0, sfit1, sfit2, sfit3;
   double p_eta, p_gamma;
   arma::vec para0 = arma::zeros<arma::vec>(3);
   int converge = 0;
   
   sfit0 = RcppT_trecase_sfit(0, para0, y, z, z_AS, RHO, RHO_AS, X, tau1, tau2, 
-                          lgy1, ni0, ni, tauB, tau, lbc, 
-                          max_iter, eps, show); 
+                             lgy1, ni0, ni, tauB, tau, lbc, 
+                             max_iter, eps, show); 
   sfit1 = RcppT_trecase_sfit(1, para0.subvec(0,1), y, z, z_AS, RHO, RHO_AS, X, tau1, 
-                          tau2, lgy1, ni0, ni, tauB, tau, lbc, 
-                          max_iter, eps, show); 
+                             tau2, lgy1, ni0, ni, tauB, tau, lbc, 
+                             max_iter, eps, show); 
   sfit2 = RcppT_trecase_sfit(2, para0.subvec(0,1), y, z, z_AS, RHO, RHO_AS, X, tau1, 
-                          tau2, lgy1, ni0, ni, tauB, tau, lbc, 
-                          max_iter, eps, show); 
+                             tau2, lgy1, ni0, ni, tauB, tau, lbc, 
+                             max_iter, eps, show); 
   
   para0.subvec(0,1) = as<arma::vec>(sfit1["PAR"]);
   para0.at(2) = as<arma::vec>(sfit1["PAR"]).at(2); 
@@ -1626,7 +1626,7 @@ Rcpp::List RcppT_trecase(const arma::vec& y, const arma::vec& z,
   
   Rcpp::NumericVector PAR = as<Rcpp::NumericVector>(sfit0["PAR"]);
   Rcpp::NumericVector reg_par = as<Rcpp::NumericVector>(sfit0["reg_par"]);
-
+  
   p_eta = R::pchisq(2*(as<double>(sfit0["LL"])-as<double>(sfit1["LL"])),
                     1, 0, 0);
   p_gamma = R::pchisq(2*(as<double>(sfit0["LL"])-as<double>(sfit2["LL"])),
@@ -1680,16 +1680,16 @@ double RcppT_TReC_ASE_LL_KEG(const arma::vec& KEG_EaseGase,
 
 // [[Rcpp::export]]
 arma::vec RcppT_TReC_ASE_grad_KEG(const arma::vec& KEG_EaseGase, 
-                                 const arma::vec& y, const arma::vec& z,
-                                 const arma::vec& z_AS, const double& phi,
-                                 const arma::vec& RHO, const arma::vec& RHO_AS,
-                                 const arma::vec& tau1,const arma::vec& tau2,
-                                 const arma::vec& ni0, const arma::vec& ni,
-                                 const double& log_theta, const arma::vec& tauB,
-                                 const arma::vec& tau, const arma::vec& lgy1,
-                                 const arma::vec& expXbeta,const arma::vec& lbc,
-                                 const arma::vec& offsets, 
-                                 const arma::vec& pis, const arma::vec& mu){
+                                  const arma::vec& y, const arma::vec& z,
+                                  const arma::vec& z_AS, const double& phi,
+                                  const arma::vec& RHO, const arma::vec& RHO_AS,
+                                  const arma::vec& tau1,const arma::vec& tau2,
+                                  const arma::vec& ni0, const arma::vec& ni,
+                                  const double& log_theta, const arma::vec& tauB,
+                                  const arma::vec& tau, const arma::vec& lgy1,
+                                  const arma::vec& expXbeta,const arma::vec& lbc,
+                                  const arma::vec& offsets, 
+                                  const arma::vec& pis, const arma::vec& mu){
   arma::vec grad_NB = arma::zeros<arma::vec>(3);
   arma::vec grad_BB = arma::zeros<arma::vec>(3);
   arma::vec paraBB = arma::zeros<arma::vec>(3);
@@ -1705,7 +1705,7 @@ arma::vec RcppT_TReC_ASE_grad_KEG(const arma::vec& KEG_EaseGase,
   grad.at(0) = grad_NB.at(0) + grad_BB.at(0);
   grad.subvec(1,2) = grad_NB.subvec(1,2);
   grad.subvec(3,4) = grad_BB.subvec(1,2);
-    
+  
   return grad;
   
 }
@@ -1713,18 +1713,18 @@ arma::vec RcppT_TReC_ASE_grad_KEG(const arma::vec& KEG_EaseGase,
 
 // [[Rcpp::export]]
 Rcpp::List RcppT_trec_ase_KEG_BFGS(const arma::vec& para0, 
-                                  const arma::vec& y, const arma::vec& z, 
-                                  const arma::vec& z_AS,
-                                  const arma::vec& RHO, const arma::vec& RHO_AS,
-                                  const arma::mat& X, const arma::vec& BETA, 
-                                  const double& phi,
-                                  const arma::vec& tau1, const arma::vec& tau2,
-                                  const arma::vec& lgy1,  
-                                  const arma::vec& ni0, const arma::vec& ni,
-                                  const double& log_theta, const arma::vec& tauB,
-                                  const arma::vec& tau, const arma::vec& lbc,
-                                  const arma::uword& max_iter = 4e3,
-                                  const double& eps = 1e-7,const bool& show = true){
+                                   const arma::vec& y, const arma::vec& z, 
+                                   const arma::vec& z_AS,
+                                   const arma::vec& RHO, const arma::vec& RHO_AS,
+                                   const arma::mat& X, const arma::vec& BETA, 
+                                   const double& phi,
+                                   const arma::vec& tau1, const arma::vec& tau2,
+                                   const arma::vec& lgy1,  
+                                   const arma::vec& ni0, const arma::vec& ni,
+                                   const double& log_theta, const arma::vec& tauB,
+                                   const arma::vec& tau, const arma::vec& lbc,
+                                   const arma::uword& max_iter = 4e3,
+                                   const double& eps = 1e-7,const bool& show = true){
   
   arma::uword num_params = para0.size();
   arma::uword iter = 0;
@@ -1757,13 +1757,13 @@ Rcpp::List RcppT_trec_ase_KEG_BFGS(const arma::vec& para0,
     //calculate direction p_k
     uu = 0;
     old_LL = fnscale * RcppT_TReC_ASE_LL_KEG(xk,y, z, z_AS, phi, RHO, RHO_AS, 
-                                            tau1, tau2, ni0, ni, log_theta, tauB, 
-                                            tau, lgy1, expXbeta, lbc, offsets, 
-                                            pis, mu);
+                                             tau1, tau2, ni0, ni, log_theta, tauB, 
+                                             tau, lgy1, expXbeta, lbc, offsets, 
+                                             pis, mu);
     gr_k   = fnscale * RcppT_TReC_ASE_grad_KEG(xk, y, z, z_AS, phi, RHO, 
-                                              RHO_AS, tau1, tau2, ni0, ni, 
-                                              log_theta, tauB, tau, lgy1, expXbeta, 
-                                              lbc, offsets, pis, mu);
+                                               RHO_AS, tau1, tau2, ni0, ni, 
+                                               log_theta, tauB, tau, lgy1, expXbeta, 
+                                               lbc, offsets, pis, mu);
     p_k    = -1.0 * inv_Bk * gr_k;
     inv_norm_p_k =  1.0 / std::max(1.0, Rcpp_norm(p_k));
     
@@ -1772,17 +1772,17 @@ Rcpp::List RcppT_trec_ase_KEG_BFGS(const arma::vec& para0,
       tmp_alpha = inv_norm_p_k / std::pow(4, jj);
       new_xk    = xk + tmp_alpha * p_k;
       new_LL    = fnscale * RcppT_TReC_ASE_LL_KEG(new_xk, y, z, z_AS, phi,
-                                                 RHO, RHO_AS, tau1, tau2, 
-                                                 ni0, ni, log_theta, tauB, 
-                                                 tau, lgy1, expXbeta, lbc,
-                                                 offsets, pis, mu);
+                                                  RHO, RHO_AS, tau1, tau2, 
+                                                  ni0, ni, log_theta, tauB, 
+                                                  tau, lgy1, expXbeta, lbc,
+                                                  offsets, pis, mu);
       if(new_LL < old_LL){ //minimizing
         s_k = tmp_alpha * p_k;
         y_k = fnscale * RcppT_TReC_ASE_grad_KEG(new_xk, y, z, z_AS, phi, RHO, 
-                                               RHO_AS, tau1, tau2, ni0, ni, 
-                                               log_theta, tauB, tau, lgy1,
-                                               expXbeta, lbc, offsets, pis,
-                                               mu) - gr_k;
+                                                RHO_AS, tau1, tau2, ni0, ni, 
+                                                log_theta, tauB, tau, lgy1,
+                                                expXbeta, lbc, offsets, pis,
+                                                mu) - gr_k;
         ys  = arma::dot(y_k, s_k);
         
         if(ys > 0.0){
@@ -1814,8 +1814,8 @@ Rcpp::List RcppT_trec_ase_KEG_BFGS(const arma::vec& para0,
       if(std::abs(curr_LL - old_LL) < eps &&
          Rcpp_norm(curr_xk - xk) < eps){
         gr_k = RcppT_TReC_ASE_grad_KEG(xk, y, z, z_AS, phi, RHO, RHO_AS, 
-                                      tau1, tau2, ni0, ni, log_theta, tauB, tau, 
-                                      lgy1, expXbeta, lbc, offsets, pis, mu);
+                                       tau1, tau2, ni0, ni, log_theta, tauB, tau, 
+                                       lgy1, expXbeta, lbc, offsets, pis, mu);
         if(Rcpp_norm(gr_k) < 0.01){
           converge = 1;
           break;
@@ -1869,7 +1869,7 @@ Rcpp::List RcppT_trec_ase(const arma::vec& para0,
   
   while(iter < max_iter){
     
-
+    
     KAPPA = exp(new_para.at(0));
     ETA   = exp(new_para.at(1));
     GAMMA = exp(new_para.at(2));
@@ -1899,9 +1899,9 @@ Rcpp::List RcppT_trec_ase(const arma::vec& para0,
     
     //update KEG
     new_keg_fit = RcppT_trec_ase_KEG_BFGS(curr_para, y, z, z_AS, RHO, 
-                                         RHO_AS, X, BETA, phi, tau1, 
-                                         tau2, lgy1, ni0, ni, new_theta, 
-                                         tauB, tau, lbc, max_iter, eps, false);
+                                          RHO_AS, X, BETA, phi, tau1, 
+                                          tau2, lgy1, ni0, ni, new_theta, 
+                                          tauB, tau, lbc, max_iter, eps, false);
     new_para    = Rcpp::as<arma::vec>(new_keg_fit["PAR"]);
     new_LL      = as<double>(new_keg_fit["LL"]);
     
@@ -1957,16 +1957,16 @@ Rcpp::List RcppT_trec_ase(const arma::vec& para0,
 
 // [[Rcpp::export]]
 Rcpp::List RcppT_CisTrans_ScoreObs(const arma::vec& para, const arma::vec& y,
-                       const arma::vec& z, const arma::vec& z_AS,
-                       const arma::vec& RHO, const arma::vec& RHO_AS,
-                       const arma::mat& X, const arma::vec& BETA,
-                       const double& phi,
-                       const arma::vec& tau1, const arma::vec& tau2,
-                       const arma::vec& lgy1,
-                       const arma::vec& ni0, const arma::vec& ni,
-                       const double& log_theta, const arma::vec& tauB,
-                       const arma::vec& tau, const arma::vec& lbc){
-
+                                   const arma::vec& z, const arma::vec& z_AS,
+                                   const arma::vec& RHO, const arma::vec& RHO_AS,
+                                   const arma::mat& X, const arma::vec& BETA,
+                                   const double& phi,
+                                   const arma::vec& tau1, const arma::vec& tau2,
+                                   const arma::vec& lgy1,
+                                   const arma::vec& ni0, const arma::vec& ni,
+                                   const double& log_theta, const arma::vec& tauB,
+                                   const arma::vec& tau, const arma::vec& lbc){
+  
   double KAPPA, ETA, GAMMA;
   arma::uword ii;
   arma::uword n= RHO.n_elem;
@@ -1990,8 +1990,8 @@ Rcpp::List RcppT_CisTrans_ScoreObs(const arma::vec& para, const arma::vec& y,
   double    Ipp = 0.0; // phi
   
   double dltrec_dmu, d2ltrec_dmu, phi_mu_1, phi_y_1,
-    dmu_dkappa, dmu_deta, dmu_dgamma, d2mu_dkappa_dgamma;
-
+  dmu_dkappa, dmu_deta, dmu_dgamma, d2mu_dkappa_dgamma;
+  
   //ASE
   double vtheta = 1/exp(log_theta);
   double divtheta = R::digamma(vtheta);
@@ -2005,9 +2005,9 @@ Rcpp::List RcppT_CisTrans_ScoreObs(const arma::vec& para, const arma::vec& y,
   arma::mat Iet = arma::zeros<arma::mat>(3, 1);  //theta*KEG
   
   double dlASE_dpi, d2lASE_dpi, tmp1, tmp2, tmp3, tmp4, tmp_kappa, 
-    dpi_dkappa, dpi_deta, dpi_dgamma,
-    d2pi_dkappa, d2pi_deta, d2pi_dgamma,
-    d2pi_dkappa_eta, d2pi_dkappa_gamma, d2pi_deta_gamma; 
+  dpi_dkappa, dpi_deta, dpi_dgamma,
+  d2pi_dkappa, d2pi_deta, d2pi_dgamma,
+  d2pi_dkappa_eta, d2pi_dkappa_gamma, d2pi_deta_gamma; 
   
   double W, dW_dTHETA, dlASE_dTHETA, d2lASE_dTHETA_dpi, pval;
   KAPPA = exp(para.at(0));
@@ -2021,9 +2021,9 @@ Rcpp::List RcppT_CisTrans_ScoreObs(const arma::vec& para, const arma::vec& y,
   arma::mat Score = arma::zeros<arma::mat>(1, 1);
   
   /*
-  * Information matrix (TReC)
-  */
-
+   * Information matrix (TReC)
+   */
+  
   RcppT_compute_offset(z, RHO, KAPPA, ETA, GAMMA, tau1, tau2, offsets);
   RcppT_compute_expXbeta(X, BETA, expXbeta);
   mu = exp(offsets) % expXbeta;
@@ -2042,15 +2042,15 @@ Rcpp::List RcppT_CisTrans_ScoreObs(const arma::vec& para, const arma::vec& y,
       d2mu_dkappa_dgamma = 0;
       
     }else if(z.at(ii) == 1){
-
+      
       dmu_dkappa = (tau1.at(ii) + tau2.at(ii)*GAMMA)*expXbeta.at(ii)*RHO.at(ii);
       dmu_deta   = (1-RHO.at(ii))*expXbeta.at(ii);
       dmu_dgamma = tau2.at(ii)*RHO.at(ii)*KAPPA*expXbeta.at(ii);
-  
+      
       d2mu_dkappa_dgamma = tau2.at(ii)*RHO.at(ii)*expXbeta.at(ii);
-  
+      
     }else if(z.at(ii) == 2){
-
+      
       dmu_dkappa = (tau1.at(ii)*GAMMA + tau2.at(ii))*expXbeta.at(ii)*RHO.at(ii);
       dmu_deta   = (1-RHO.at(ii))*expXbeta.at(ii);
       dmu_dgamma = tau1.at(ii)*RHO.at(ii)*KAPPA*expXbeta.at(ii);
@@ -2082,7 +2082,7 @@ Rcpp::List RcppT_CisTrans_ScoreObs(const arma::vec& para, const arma::vec& y,
       pow(vphi, 4.0)*(R::trigamma(y.at(ii)+vphi)-trvphi) +
       pow(vphi, 2.0)*(2.0*mu.at(ii)/phi_mu_1 - y.at(ii)) +
       (vphi+y.at(ii))*pow(mu.at(ii),2.0)/pow(phi_mu_1,2.0);
-      
+    
     Ibb -= (mu.at(ii)/phi_mu_1 + 
       phi*mu.at(ii)*(y.at(ii)-mu.at(ii))/pow(phi_mu_1,2.0))*
       X.row(ii).t()*X.row(ii);
@@ -2094,7 +2094,7 @@ Rcpp::List RcppT_CisTrans_ScoreObs(const arma::vec& para, const arma::vec& y,
     
     Ibp -= ((y.at(ii)-mu.at(ii))*mu.at(ii)/pow(phi_mu_1,2.0))*X.row(ii).t();
   }
-
+  
   // printR_obj(Iee);
   // printR_obj(Ipp);
   // printR_obj(Ibb);
@@ -2223,7 +2223,7 @@ Rcpp::List RcppT_CisTrans_ScoreObs(const arma::vec& para, const arma::vec& y,
   /*
    * Final information matrix
    */
-
+  
   arma::uword np = beta_npara -1;
   M1.submat(0,0,np,np)             = Ibb;
   M1.submat(0,np+1,np,np+3)        = Ibe;
@@ -2241,7 +2241,7 @@ Rcpp::List RcppT_CisTrans_ScoreObs(const arma::vec& para, const arma::vec& y,
   M2.row(5+np)    = Iat.t();
   // printR_obj(M1);
   // printR_obj(M2);
-
+  
   M1 = -M1;
   M2 = -M2;
   Iaa = -Iaa;
@@ -2275,7 +2275,7 @@ Rcpp::List RcppT_CisTrans_ScoreObs(const arma::vec& para, const arma::vec& y,
 
 // [[Rcpp::export]]
 void RcppT_ASE_ExpFunc(const double& ni, const double& pis_i, 
-                 const double& vtheta, arma::vec& Expvec){
+                       const double& vtheta, arma::vec& Expvec){
   //   Expvec[0] = Expected value of digamma(vTHETA*pi+A)
   //   Expvec[1] = Expected value of digamma(vTHETA*(1.0-pi)+D-A)
   //   Expvec[2] = Expected value of trigamma(vTHETA*pi+A)
@@ -2369,8 +2369,8 @@ Rcpp::List RcppT_CisTrans_Score(const arma::vec& para, const arma::vec& y,
   arma::mat Score = arma::zeros<arma::mat>(1, 1);
   
   /*
-  * Information matrix (TReC)
-  */
+   * Information matrix (TReC)
+   */
   
   RcppT_compute_offset(z, RHO, KAPPA, ETA, GAMMA, tau1, tau2, offsets);
   RcppT_compute_expXbeta(X, BETA, expXbeta);
@@ -2443,10 +2443,10 @@ Rcpp::List RcppT_CisTrans_Score(const arma::vec& para, const arma::vec& y,
   // printR_obj(Ibb);
   // printR_obj(Ibp);
   // printR_obj(Ibe);
-
+  
   /*
-  * Information matrix (ASE)
-  */
+   * Information matrix (ASE)
+   */
   
   RcppT_compite_pi(z_AS, RHO_AS, KAPPA, ETA, GAMMA, tauB, tau, pis);
   
@@ -2463,7 +2463,7 @@ Rcpp::List RcppT_CisTrans_Score(const arma::vec& para, const arma::vec& y,
     // double tribb_ni1 = R::trigamma(bb + ni.at(ii) - ni0.at(ii));
     Expvec.zeros();
     RcppT_ASE_ExpFunc(ni.at(ii), pis.at(ii), vtheta, Expvec);
-
+    
     dlASE_dpi  = vtheta*(diaa_ni0 - dibb_ni1 - diaa + dibb);
     d2lASE_dpi = pow(vtheta, 2.0)*(Expvec.at(2) + Expvec.at(3) - 
       triaa - tribb);
@@ -2538,7 +2538,7 @@ Rcpp::List RcppT_CisTrans_Score(const arma::vec& para, const arma::vec& y,
     Iet.at(1,0) += d2lASE_dTHETA_dpi*dpi_deta;
     Iet.at(2,0) += d2lASE_dTHETA_dpi*dpi_dgamma;
   }
-
+  
   Iae.at(1,1) = Iae.at(0,2);
   Iaa = Iae.submat(0,1,1,2);
   
@@ -2553,10 +2553,10 @@ Rcpp::List RcppT_CisTrans_Score(const arma::vec& para, const arma::vec& y,
   Iee.at(2,1) = Iee.at(1,2);
   
   Iat = Iet.submat(1,0,2,0);
-
+  
   /*
-  * Final information matrix
-  */
+   * Final information matrix
+   */
   
   arma::uword np = beta_npara -1;
   M1.submat(0,0,np,np)             = Ibb;
@@ -2568,7 +2568,7 @@ Rcpp::List RcppT_CisTrans_Score(const arma::vec& para, const arma::vec& y,
   M1.at((np+4),(np+4))             = Itt;
   M2.rows(np+1,np+3) = Iae.t();
   M2.row(4+np)       = Iat.t();
-
+  
   
   M1 = -M1;
   M2 = -M2;
@@ -2699,7 +2699,7 @@ void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
       if(gg % 100 == 0){
         Rprintf("Begin analysis for Gene %d \n", gg+1);
       }
-
+      
       if(GeneSnpList[gg]==R_NilValue){
         continue;
       }
@@ -2833,7 +2833,6 @@ void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
                                                 log_theta,
                                                 tauB.subvec(0, h0-1), tau.subvec(0, h0-1), 
                                                 lbc.subvec(0, h0-1));
-
                 
               }
               CisTrans_Chisq = as<double>(CT_score["Score"]);
@@ -2873,7 +2872,7 @@ void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
               if(CisTrans_Pval < transTestP){
                 ctcode = -2.0;
               }
-              }
+            }
           }else{
             CisTrans_Chisq  = -5.0;
             CisTrans_Pval  = R_NaN;
@@ -2894,7 +2893,7 @@ void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
           converge = res_trec["converge"];
           // Rprintf("trec converge %d\n",converge);
           if(useASE){
-
+            
             // fprintf(f2, "GeneRowID\tMarkerRowID\tTReCASE_kappa\tTReCASE_eta\tTReCASE_gamma\t");
             fprintf(f2, "%d\t%d\t%.2e\t%.2e\t%.2e\t",
                     gg+1,ss+1,exp(PAR.at(0)),
@@ -2913,7 +2912,7 @@ void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
             fprintf(f2, "%d\t%.2f\t", converge, CisTrans_Chisq);
             // fprintf(f2, "CisTrans_Pvalue\tnSam\tnHetn");
             fprintf(f2, "%.4e\t%d\t%d\n",CisTrans_Pval, z0, h0);
-              
+            
           }else{
             // fprintf(f1, "GeneRowID\tMarkerRowID\tTReC_kappa\tTReC_eta\tTReC_gamma\t");
             fprintf(f1, "%d\t%d\t%.2e\t%.2e\t%.2e\t",
@@ -2963,34 +2962,37 @@ void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
     }
     
   }else{
-      for(gg=0; gg<Y.n_cols; gg++){
-
-        if(gg % 100 == 0){
-          Rprintf("Begin analysis for Gene %d \n", gg+1);
+    for(gg=0; gg<Y.n_cols; gg++){
+      
+      if(gg % 100 == 0){
+        Rprintf("Begin analysis for Gene %d \n", gg+1);
+      }
+      
+      _y    = Y.col(gg);
+      _tau1 = CNV1.col(gg);
+      _tau2 = CNV2.col(gg);
+      if(useASE){
+        y1 = Y1.col(gg);
+        y2 = Y2.col(gg);
+      }
+      
+      //loop through the matrix to exclude NA value
+      //organize tau1 tau2 tauB tau
+      
+      for(ss = ssBegin; ss < Z.n_cols; ss++){
+        
+        if(gChr.at(gg) != sChr.at(ss)){
+          ssBegin = ss;
+          break;
         }
         
-
-        _y    = Y.col(gg);
-        _tau1 = CNV1.col(gg);
-        _tau2 = CNV2.col(gg);
-        if(useASE){
-          y1 = Y1.col(gg);
-          y2 = Y2.col(gg);
+        if(ss % 5000 == 0 & show){
+          Rprintf("Begin analysis for SNP %d  \n", ss+1);
         }
-
-        //loop through the matrix to exclude NA value
-        //organize tau1 tau2 tauB tau
-
-        for(ss = ssBegin; ss < Z.n_cols; ss++){
-
-            if(gChr.at(gg) != sChr.at(ss)){
-                ssBegin = ss;
-                break;
-            }
-
-            if(ss % 5000 == 0 & show){
-                 Rprintf("Begin analysis for SNP %d  \n", ss+1);
-            }
+        
+        if(SNP_pos.at(ss) > gene_start.at(gg) - cis_window &&
+           SNP_pos.at(ss) < gene_end.at(gg)   + cis_window){
+          
           arma::vec zz2 = Z.col(ss);
           h1 = 0, h0 = 0, z0 = 0;
           X.zeros();
@@ -3006,9 +3008,9 @@ void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
           RHO1.zeros();
           RHO_AS.zeros();
           lbc.zeros();
-
+          
           for(ii=0;ii<nSam;ii++){
-
+            
             if(zz2.at(ii) != -9 & _tau1.at(ii) != -9 & _tau2.at(ii) != -9){
               z.at(z0)    = zz2.at(ii);
               X.row(z0)   = XX.row(ii);
@@ -3021,15 +3023,15 @@ void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
               // }else if(zz2.at(ii)==3){
               //   z.at(z0) = 2;
               // }
-
+              
               if(useASE){
                 if(y1.at(ii) + y2.at(ii) >= min_ASE_total){
-
+                  
                   z_AS.at(h0) = zz2.at(ii);
                   ni.at(h0)   = y1.at(ii) + y2.at(ii);
                   tau.at(h0)  = _tau1.at(ii) + _tau2.at(ii);
                   RHO_AS.at(h0) = RHO.at(ii);
-
+                  
                   if(zz2.at(ii)==1){
                     ni0.at(h0) = y2.at(ii);
                     tauB.at(h0) = _tau2.at(ii);
@@ -3053,7 +3055,7 @@ void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
             }
           }
           arma::vec lgy1 = Rcpp_lgy_add_1(y.subvec(0, z0-1)); //lgamma(y + 1)
-
+          
           // begin tracase
           if(useASE & h1 >= min_nASE_het & h0 >= min_nASE){
             res_trecase = RcppT_trecase(y.subvec(0, z0-1), z.subvec(0, z0-1),
@@ -3074,7 +3076,7 @@ void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
             // Rprintf("phi %.2f\n",phi);
             // Rprintf("log_theta %.2f\n",log_theta);
             // Rprintf("trecase converge %d\n",converge);
-
+            
             if(converge){
               if(!useLRT){
                 // Rprintf("OBS");
@@ -3091,7 +3093,7 @@ void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
                                                    lbc.subvec(0, h0-1));
                 CisTrans_Chisq = as<double>(CT_score["Score"]);
                 CisTrans_Pval = as<double>(CT_score["pval"]);
-
+                
                 if(CisTrans_Chisq < 0.0){
                   // Rprintf("EXP");
                   CT_score = RcppT_CisTrans_Score(PAR, y.subvec(0, z0-1),
@@ -3105,8 +3107,8 @@ void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
                                                   log_theta,
                                                   tauB.subvec(0, h0-1), tau.subvec(0, h0-1),
                                                   lbc.subvec(0, h0-1));
-
-
+                  
+                  
                 }
                 CisTrans_Chisq = as<double>(CT_score["Score"]);
                 CisTrans_Pval = as<double>(CT_score["pval"]);
@@ -3116,9 +3118,9 @@ void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
                 }
                 // Rprintf("pval %.8f\n",CisTrans_Pval);
                 // Rprintf("ct code %.2f\n",ctcode);
-
+                
               }
-
+              
               if(useLRT | CisTrans_Chisq < 0){
                 // Rprintf("lrt\n");
                 arma::vec para0 = arma::zeros<arma::vec>(5);
@@ -3139,24 +3141,24 @@ void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
                   CisTrans_Pval =  1.0;
                   ctcode = -3.0;
                 }
-
+                
                 // Rprintf("lrt pval %.8f\n",CisTrans_Pval);
-
+                
                 if(CisTrans_Pval < transTestP){
                   ctcode = -2.0;
                 }
-                }
+              }
             }else{
               CisTrans_Chisq  = -5.0;
               CisTrans_Pval  = R_NaN;
             }
-
+            
           }
-
+          
           if(useASE == 0 | ctcode < 0.0 |
              h1 < min_nASE_het | h0 < min_nASE | !converge){
             // Rprintf("trec\n");
-
+            
             res_trec = RcppT_trec(y.subvec(0, z0-1), z.subvec(0, z0-1),
                                   RHO1.subvec(0, z0-1), X.rows(0, z0-1),
                                   tau1.subvec(0, z0-1), tau2.subvec(0, z0-1), lgy1,
@@ -3166,7 +3168,7 @@ void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
             converge = res_trec["converge"];
             // Rprintf("trec converge %d\n",converge);
             if(useASE){
-
+              
               // fprintf(f2, "GeneRowID\tMarkerRowID\tTReCASE_kappa\tTReCASE_eta\tTReCASE_gamma\t");
               fprintf(f2, "%d\t%d\t%.2e\t%.2e\t%.2e\t",
                       gg+1,ss+1,exp(PAR.at(0)),
@@ -3185,7 +3187,7 @@ void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
               fprintf(f2, "%d\t%.2f\t", converge, CisTrans_Chisq);
               // fprintf(f2, "CisTrans_Pvalue\tnSam\tnHetn");
               fprintf(f2, "%.4e\t%d\t%d\n",CisTrans_Pval, z0, h0);
-
+              
             }else{
               // fprintf(f1, "GeneRowID\tMarkerRowID\tTReC_kappa\tTReC_eta\tTReC_gamma\t");
               fprintf(f1, "%d\t%d\t%.2e\t%.2e\t%.2e\t",
@@ -3201,10 +3203,10 @@ void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
               }
               fprintf(f1, "%.2e\t%d\n", exp(reg_par.at(xi)), z0);
             }
-
-
+            
+            
           }else{
-
+            
             // fprintf(f2, "GeneRowID\tMarkerRowID\tTReCASE_kappa\tTReCASE_eta\tTReCASE_gamma\t");
             fprintf(f2, "%d\t%d\t%.2e\t%.2e\t%.2e\t",
                     gg+1,ss+1,exp(PAR.at(0)),
@@ -3226,14 +3228,14 @@ void RcppT_trecase_mtest(const arma::mat& Y, const arma::mat& Y1,
                     CisTrans_Chisq);
             // fprintf(f2, "CisTrans_Pvalue\tnSam\tnHetn");
             fprintf(f2, "%.4e\t%d\t%d\n",CisTrans_Pval, z0, h0);
-
+            
           }
-
-
-
+          
+          
         }
       }
-
+    }
+    
   }
   if(useASE){
     fclose(f2);
