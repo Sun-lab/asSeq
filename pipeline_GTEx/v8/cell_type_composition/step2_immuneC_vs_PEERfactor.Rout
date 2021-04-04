@@ -1,0 +1,227 @@
+
+R version 3.6.2 (2019-12-12) -- "Dark and Stormy Night"
+Copyright (C) 2019 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> rm(list = ls())
+> setwd("/fh/fast/sun_w/licai/_tumor_eQTL/GitHub/asSeq/pipeline_GTEx/v8/cell_type_composition/")
+> 
+> # -----------------------------------------------------------------
+> # Read in immune cell composition data
+> # -----------------------------------------------------------------
+> library(reshape2)
+> library(ggplot2)
+> 
+> imc = read.table("data/CIBERSORTx_Results.txt", header = T, sep="\t", 
++                  as.is = T, check.names = F)
+> imc[1:5,1:5]
+     Mixture B cells naive B cells memory Plasma cells  T cells CD8
+1 GTEX-111YS   0.012008125     0.02072274  0.000000000 0.0001056006
+2 GTEX-1122O   0.062850782     0.00000000  0.001885945 0.0000000000
+3 GTEX-1128S   0.006442679     0.16200138  0.032615362 0.0796988991
+4 GTEX-113IC   0.000000000     0.11989938  0.016627170 0.1826029490
+5 GTEX-113JC   0.000000000     0.06931992  0.004232266 0.0274981349
+> dim(imc)
+[1] 670  26
+> colnames(imc)
+ [1] "Mixture"                      "B cells naive"               
+ [3] "B cells memory"               "Plasma cells"                
+ [5] "T cells CD8"                  "T cells CD4 naive"           
+ [7] "T cells CD4 memory resting"   "T cells CD4 memory activated"
+ [9] "T cells follicular helper"    "T cells regulatory (Tregs)"  
+[11] "T cells gamma delta"          "NK cells resting"            
+[13] "NK cells activated"           "Monocytes"                   
+[15] "Macrophages M0"               "Macrophages M1"              
+[17] "Macrophages M2"               "Dendritic cells resting"     
+[19] "Dendritic cells activated"    "Mast cells resting"          
+[21] "Mast cells activated"         "Eosinophils"                 
+[23] "Neutrophils"                  "P-value"                     
+[25] "Correlation"                  "RMSE"                        
+> 
+> rownames(imc) = imc$Mixture
+> imc = imc[, -c(1, 24:26)]
+> dim(imc)
+[1] 670  22
+> 
+> # ----------------------------------------------------------------------
+> # correlation test between Immune cell compositon and peer factor
+> # ----------------------------------------------------------------------
+> 
+> Covariates = read.table("data/Whole_Blood.v8.covariates.txt", header = T, 
++                         sep ='\t', as.is = T, check.names = F)
+> dim(Covariates)
+[1]  68 671
+> Covariates[1:3,1:2]
+   ID GTEX-111YS
+1 PC1     0.0154
+2 PC2    -0.0093
+3 PC3     0.0107
+> 
+> rownames(Covariates) = Covariates$ID
+> Covariates = Covariates[, -1]
+> 
+> #colnames(Covariates)
+> peerf = grep('InferredCov', rownames(Covariates))
+> Covariates = Covariates[peerf, ]
+> rownames(Covariates)
+ [1] "InferredCov1"  "InferredCov2"  "InferredCov3"  "InferredCov4" 
+ [5] "InferredCov5"  "InferredCov6"  "InferredCov7"  "InferredCov8" 
+ [9] "InferredCov9"  "InferredCov10" "InferredCov11" "InferredCov12"
+[13] "InferredCov13" "InferredCov14" "InferredCov15" "InferredCov16"
+[17] "InferredCov17" "InferredCov18" "InferredCov19" "InferredCov20"
+[21] "InferredCov21" "InferredCov22" "InferredCov23" "InferredCov24"
+[25] "InferredCov25" "InferredCov26" "InferredCov27" "InferredCov28"
+[29] "InferredCov29" "InferredCov30" "InferredCov31" "InferredCov32"
+[33] "InferredCov33" "InferredCov34" "InferredCov35" "InferredCov36"
+[37] "InferredCov37" "InferredCov38" "InferredCov39" "InferredCov40"
+[41] "InferredCov41" "InferredCov42" "InferredCov43" "InferredCov44"
+[45] "InferredCov45" "InferredCov46" "InferredCov47" "InferredCov48"
+[49] "InferredCov49" "InferredCov50" "InferredCov51" "InferredCov52"
+[53] "InferredCov53" "InferredCov54" "InferredCov55" "InferredCov56"
+[57] "InferredCov57" "InferredCov58" "InferredCov59" "InferredCov60"
+> 
+> # match samples 
+> table(rownames(imc)  == colnames(Covariates))
+
+TRUE 
+ 670 
+> 
+> refic = which.max(apply(imc, 2, median))
+> refic
+Neutrophils 
+         22 
+> 
+> ref = imc[, refic]
+> log_imc = log((imc[,-refic] + 10^-6)/(ref + 10^-6)) 
+> log_imc[1:5,]
+           B cells naive B cells memory Plasma cells T cells CD8
+GTEX-111YS     -3.613311     -3.0676975   -13.006733  -8.3376433
+GTEX-1122O     -2.229773    -13.2783072    -5.735593 -13.2783072
+GTEX-1128S     -2.741225      0.4832862    -1.119511  -0.2260565
+GTEX-113IC    -12.372744     -0.6783280    -2.653891  -0.2576696
+GTEX-113JC    -12.540755     -1.3942534    -4.190026  -2.3188457
+           T cells CD4 naive T cells CD4 memory resting
+GTEX-111YS         -1.531429                 -13.006733
+GTEX-1122O        -13.278307                  -3.952537
+GTEX-1128S        -11.512080                  -2.403457
+GTEX-113IC        -12.372744                  -2.223016
+GTEX-113JC        -12.540755                  -2.003725
+           T cells CD4 memory activated T cells follicular helper
+GTEX-111YS                  -13.0067329                 -13.00673
+GTEX-1122O                   -3.8183920                 -13.27831
+GTEX-1128S                   -0.9220166                 -11.51208
+GTEX-113IC                   -1.8383813                 -12.37274
+GTEX-113JC                   -1.6789471                 -12.54076
+           T cells regulatory (Tregs) T cells gamma delta NK cells resting
+GTEX-111YS                 -3.0009665           -2.498077       -2.6064498
+GTEX-1122O                 -3.1536866           -2.807510       -2.4588430
+GTEX-1128S                 -0.5609707          -11.512080        0.3504399
+GTEX-113IC                 -1.5798788           -1.410024       -2.2968330
+GTEX-113JC                 -2.0911935           -2.464141       -1.4157225
+           NK cells activated    Monocytes Macrophages M0 Macrophages M1
+GTEX-111YS          -13.00673 -0.895649955     -1.2534209      -3.886245
+GTEX-1122O          -13.27831 -2.125253704     -1.8417288      -3.923364
+GTEX-1128S          -11.51208  0.004965945      0.7430491      -4.790863
+GTEX-113IC          -12.37274 -0.269129244    -12.3727445     -12.372744
+GTEX-113JC          -12.54076 -0.725357741     -0.3099104     -12.540755
+           Macrophages M2 Dendritic cells resting Dendritic cells activated
+GTEX-111YS      -3.570496              -13.006733                -13.006733
+GTEX-1122O      -4.073906              -13.278307                -13.278307
+GTEX-1128S     -11.512080              -11.512080                -11.512080
+GTEX-113IC     -12.372744               -4.114108                -12.372744
+GTEX-113JC     -12.540755              -12.540755                 -5.241002
+           Mast cells resting Mast cells activated Eosinophils
+GTEX-111YS         -13.006733           -4.9727469  -13.006733
+GTEX-1122O         -13.278307           -2.8829127  -13.278307
+GTEX-1128S         -11.512080           -0.5033504  -11.512080
+GTEX-113IC          -2.349309          -12.3727445   -1.672067
+GTEX-113JC         -12.540755           -1.5114611  -12.540755
+> log_imc = data.frame(log_imc)
+> 
+> fit1 = lm(t(Covariates)[,1] ~ ., data = log_imc)
+> summary(fit1)
+
+Call:
+lm(formula = t(Covariates)[, 1] ~ ., data = log_imc)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.038056 -0.006506  0.000207  0.006430  0.037631 
+
+Coefficients:
+                               Estimate Std. Error t value Pr(>|t|)    
+(Intercept)                   4.604e-02  5.365e-03   8.582  < 2e-16 ***
+B.cells.naive                -1.975e-04  1.080e-04  -1.829 0.067848 .  
+B.cells.memory                1.420e-03  3.226e-04   4.402 1.26e-05 ***
+Plasma.cells                  1.375e-03  2.082e-04   6.605 8.27e-11 ***
+T.cells.CD8                   1.778e-03  1.297e-04  13.702  < 2e-16 ***
+T.cells.CD4.naive            -1.354e-03  1.517e-04  -8.923  < 2e-16 ***
+T.cells.CD4.memory.resting    7.845e-05  1.128e-04   0.695 0.487061    
+T.cells.CD4.memory.activated  1.887e-03  2.724e-04   6.925 1.05e-11 ***
+T.cells.follicular.helper     3.318e-04  2.520e-04   1.316 0.188480    
+T.cells.regulatory..Tregs.    8.223e-04  1.270e-04   6.476 1.86e-10 ***
+T.cells.gamma.delta          -7.446e-05  1.241e-04  -0.600 0.548593    
+NK.cells.resting              8.541e-04  2.074e-04   4.119 4.31e-05 ***
+NK.cells.activated            9.179e-04  2.382e-04   3.854 0.000128 ***
+Monocytes                     8.250e-05  2.070e-04   0.399 0.690337    
+Macrophages.M0               -3.295e-04  1.720e-04  -1.915 0.055893 .  
+Macrophages.M1               -3.642e-04  2.184e-04  -1.668 0.095817 .  
+Macrophages.M2                1.535e-04  1.305e-04   1.176 0.240029    
+Dendritic.cells.resting       3.396e-04  2.544e-04   1.335 0.182381    
+Dendritic.cells.activated     3.254e-04  1.111e-04   2.929 0.003523 ** 
+Mast.cells.resting            7.825e-07  1.912e-04   0.004 0.996736    
+Mast.cells.activated          8.644e-04  1.774e-04   4.872 1.39e-06 ***
+Eosinophils                   7.480e-04  1.209e-04   6.184 1.10e-09 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.01146 on 648 degrees of freedom
+Multiple R-squared:  0.8801,	Adjusted R-squared:  0.8762 
+F-statistic: 226.5 on 21 and 648 DF,  p-value: < 2.2e-16
+
+> 
+> df1 = data.frame(fitted=fitted(fit1), peer1=t(Covariates)[,1])
+> dim(df1)
+[1] 670   2
+> df1[1:2,]
+                fitted       peer1
+GTEX-111YS -0.05603242 -0.03227512
+GTEX-1122O -0.03450399 -0.04936429
+> 
+> saveRDS(df1, file="data/peer1_fitted_values.rds")
+> 
+> 
+> df1 = readRDS("data/peer1_fitted_values.rds")
+> dim(df1)
+[1] 670   2
+> df1[1:2,]
+                fitted       peer1
+GTEX-111YS -0.05603242 -0.03227512
+GTEX-1122O -0.03450399 -0.04936429
+> 
+> pdf("./figures/PEERfactor1.vs.Fitted_whole_blood.pdf", width = 3, height = 3)
+> par(mar=c(5,4,1,1), bty="n")
+> plot(df1$fitted, df1$peer1, xlab = 'Fitted values',
++      ylab = "PEER factor 1", main = '', pch = 19, cex=0.5)
+> dev.off()
+null device 
+          1 
+> 
+> q("no")
+> proc.time()
+   user  system elapsed 
+  0.738   0.160   1.381 

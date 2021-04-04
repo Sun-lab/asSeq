@@ -1,0 +1,210 @@
+
+R version 3.6.2 (2019-12-12) -- "Dark and Stormy Night"
+Copyright (C) 2019 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> rm(list = ls())
+> setwd("/fh/fast/sun_w/licai/_tumor_eQTL/GitHub/asSeq/pipeline_GTEx/v8/cell_type_composition/")
+> 
+> calculate_TPM = function(count, gene_length) {
++   if (nrow(count) != length(gene_length)) {
++     stop("Number of rows of the count matrix does not match gene lengths!")
++   }
++   TPM = count / gene_length
++   t(t(TPM)*1e6/colSums(TPM))
++ }
+> 
+> # -----------------------------------------------------------------
+> # Read in total read count
+> # -----------------------------------------------------------------
+> TReC = read.table("data/Tcnt_prepr_long.txt", as.is = T, header = T, 
++                   check.names = F)
+> TReC[1:5, 1:5]
+  GTEX-111YS GTEX-1122O GTEX-1128S GTEX-113IC GTEX-113JC
+1         40         60         98        224         33
+2          2          4         10         10          1
+3         18         25         11          3          2
+4         70        148         74         13         21
+5       2857       2787       4290        463        702
+> dim(TReC)
+[1] 17730   670
+> 
+> Info = read.table("data/geneInfo_prepr_long.txt", as.is = T, header = T, 
++                   check.names = F )
+> Info[1:5,]
+                   Name  chr  start    end width strand  leno
+27149 ENSG00000227232.5 chr1  14410  29553 15144      - 15144
+53699 ENSG00000278267.1 chr1  17369  17436    68      -    68
+34478 ENSG00000238009.6 chr1  89295 129223 39929      - 39929
+31566 ENSG00000233750.3 chr1 131025 134836  3812      +  3812
+49265 ENSG00000268903.1 chr1 135141 135895   755      -   755
+> dim(Info)
+[1] 17730     7
+> 
+> rownames(TReC) = Info$Name
+> 
+> # -----------------------------------------------------------------
+> # gene name and length information 
+> # -----------------------------------------------------------------
+> 
+> geneInfo = read.table("../Reference/gencode.v26.GRCh38.genes_gene_level_anno.txt",
++                       header = T, as.is = T, sep="\t")
+> head(geneInfo)
+              geneId   chr strand     start       end ensembl_gene_id
+1 ENSG00000000003.14  chrX      - 100627109 100639991 ENSG00000000003
+2  ENSG00000000005.5  chrX      + 100584802 100599885 ENSG00000000005
+3 ENSG00000000419.12 chr20      -  50934867  50958555 ENSG00000000419
+4 ENSG00000000457.13  chr1      - 169849631 169894267 ENSG00000000457
+5 ENSG00000000460.16  chr1      + 169662007 169854080 ENSG00000000460
+6 ENSG00000000938.12  chr1      -  27612064  27635277 ENSG00000000938
+  hgnc_symbol
+1      TSPAN6
+2        TNMD
+3        DPM1
+4       SCYL3
+5    C1orf112
+6         FGR
+                                                                                     description
+1                                              tetraspanin 6 [Source:HGNC Symbol;Acc:HGNC:11858]
+2                                                tenomodulin [Source:HGNC Symbol;Acc:HGNC:17757]
+3 dolichyl-phosphate mannosyltransferase subunit 1, catalytic [Source:HGNC Symbol;Acc:HGNC:3005]
+4                                   SCY1 like pseudokinase 3 [Source:HGNC Symbol;Acc:HGNC:19285]
+5                        chromosome 1 open reading frame 112 [Source:HGNC Symbol;Acc:HGNC:25565]
+6              FGR proto-oncogene, Src family tyrosine kinase [Source:HGNC Symbol;Acc:HGNC:3697]
+> 
+> geneLength = readRDS("../Reference/gene_exonic_length.v26.GRCh38.rds")
+> geneLength[1:5]
+$ENSG00000000003.14
+[1] 4535
+
+$ENSG00000000005.5
+[1] 1610
+
+$ENSG00000000419.12
+[1] 1207
+
+$ENSG00000000457.13
+[1] 5586
+
+$ENSG00000000460.16
+[1] 4579
+
+> length(geneLength)
+[1] 56200
+> geneLength = unlist(geneLength)
+> 
+> table(rownames(TReC) %in% names(geneLength))
+
+ TRUE 
+17730 
+> 
+> gene_length = geneLength[rownames(TReC)]
+> gene_length[1:5]
+ENSG00000227232.5 ENSG00000278267.1 ENSG00000238009.6 ENSG00000233750.3 
+             1328                68              2057              3462 
+ENSG00000268903.1 
+              755 
+> 
+> # -----------------------------------------------------------------
+> # Transform count data to TPM data 
+> # -----------------------------------------------------------------
+> table(rownames(TReC) == names(gene_length))
+
+ TRUE 
+17730 
+> 
+> TPM = calculate_TPM(TReC, gene_length)
+> TPM[1:5,1:5]
+                  GTEX-111YS GTEX-1122O  GTEX-1128S  GTEX-113IC  GTEX-113JC
+ENSG00000227232.5   4.597783   7.146982  11.1472942  27.9008238   5.9738426
+ENSG00000278267.1   4.489600   9.305091  22.2142957  24.3252980   3.5353222
+ENSG00000238009.6   1.335749   1.922539   0.8077926   0.2412426   0.2337403
+ENSG00000233750.3   3.086438   6.762452   3.2288370   0.6211312   1.4582438
+ENSG00000268903.1 577.630160 583.928348 858.3250774 101.4381038 223.5260110
+> dim(TPM)
+[1] 17730   670
+> 
+> 
+> table(rownames(TPM) %in%  geneInfo$geneId) 
+
+FALSE  TRUE 
+ 8533  9197 
+> 
+> # -----------------------------------------------------------------
+> # hgnc_symbol
+> # -----------------------------------------------------------------
+> 
+> hgnc = geneInfo$hgnc_symbol[match(rownames(TPM), geneInfo$geneId)]
+> sum(duplicated(hgnc))
+[1] 9169
+> sum(is.na(hgnc) | hgnc == "")
+[1] 9171
+> 
+> gene2rm = which(is.na(hgnc) | hgnc == "")
+> length(gene2rm)
+[1] 9171
+> sum(duplicated(hgnc[-gene2rm]))
+[1] 0
+> 
+> TPM = TPM[-gene2rm, ]
+> rownames(TPM) = hgnc[-gene2rm]
+> dim(TPM)
+[1] 8559  670
+> TPM[1:5,1:5]
+         GTEX-111YS GTEX-1122O GTEX-1128S GTEX-113IC GTEX-113JC
+WASH7P     4.597783   7.146982   11.14729   27.90082   5.973843
+MTND1P23  12.720533   9.355118   14.61844   21.78814  16.156042
+MTND2P28  88.458882  81.063029   57.44225   55.13734 139.083095
+MTCO1P12  24.251251  24.043485   35.84232   62.79741  38.689165
+MTATP6P1 579.767407 421.165441  634.01142  579.20300 779.220690
+> 
+> 
+> 
+> # -----------------------------------------------------------------
+> # reference data
+> # -----------------------------------------------------------------
+> 
+> file = "/fh/fast/sun_w/licai/cell_type_association_summary/act/TCGA_COAD/data/LM22.txt"
+> 
+> LM22 = read.table(file, header = T, sep = "\t", as.is = T)
+> LM22[1:5,1:5]
+  Gene.symbol B.cells.naive B.cells.memory Plasma.cells T.cells.CD8
+1       ABCB4     555.71345       10.74423     7.225819     4.31128
+2       ABCB9      15.60354       22.09479   653.392328    24.22372
+3       ACAP1     215.30595      321.62102    38.616872  1055.61338
+4        ACHE      15.11795       16.64885    22.123737    13.42829
+5        ACP5     605.89738     1935.20148  1120.104684   306.31252
+> 
+> table(LM22$Gene.symbol %in% rownames(TPM))
+
+FALSE  TRUE 
+  303   244 
+> table(LM22$Gene.symbol %in% geneInfo$hgnc_symbol)
+
+FALSE  TRUE 
+  268   279 
+> 
+> TPM = cbind(Gene.symbol = rownames(TPM), TPM)
+> TPM = TPM[which(rownames(TPM) %in% LM22$Gene.symbol), ]
+> write.table(TPM, file = "data/TPM.txt", quote = FALSE,
++             row.names = F, sep="\t")
+> 
+> 
+> q(save = "no")
+> proc.time()
+   user  system elapsed 
+ 15.640   0.675  16.395 
