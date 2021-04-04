@@ -221,7 +221,16 @@ GTEX-1122O -0.03450399 -0.04936429
 null device 
           1 
 > 
+> 
+> pdf("./figures/PEERfactor1.vs.Neutrophils.pdf", width = 3, height = 3)
+> par(mar=c(5,4,1,1), bty="n")
+> plot(ref, df1$peer1, xlab = 'Neutrophils',
++      ylab = "PEER factor 1", main = '', pch = 19, cex=0.5)
+> dev.off()
+null device 
+          1 
+> 
 > q("no")
 > proc.time()
    user  system elapsed 
-  0.738   0.160   1.381 
+  1.078   0.327   2.351 

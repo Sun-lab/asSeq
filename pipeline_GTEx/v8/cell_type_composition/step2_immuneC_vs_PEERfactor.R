@@ -65,4 +65,11 @@ plot(df1$fitted, df1$peer1, xlab = 'Fitted values',
      ylab = "PEER factor 1", main = '', pch = 19, cex=0.5)
 dev.off()
 
+
+pdf("./figures/PEERfactor1.vs.Neutrophils.pdf", width = 3, height = 3)
+par(mar=c(5,4,1,1), bty="n")
+plot(ref, df1$peer1, xlab = 'Neutrophils',
+     ylab = "PEER factor 1", main = '', pch = 19, cex=0.5)
+dev.off()
+
 q("no")
