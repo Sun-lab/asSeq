@@ -1,0 +1,183 @@
+
+R version 4.0.3 (2020-10-10) -- "Bunny-Wunnies Freak Out"
+Copyright (C) 2020 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> 
+> library(ggplot2)
+> library(ggrepel)
+> 
+> theme_set(theme_classic())
+> 
+> # -------------------------------------------------------------------------------------
+> # set up colors
+> # -------------------------------------------------------------------------------------
+> 
+> tiscol = c(
++ rgb(170, 170, 255, maxColorValue = 255),#MS , #AAAAFF - light blue
++ rgb(255,0,187, maxColorValue = 255), #Whole Blood - rgb() - #FF00BB - dark pink
++ rgb(119, 119, 255, maxColorValue = 255),#SSELl - rgb() - #7777FF - light blue
++ rgb(255, 0, 0, maxColorValue = 255),#Ar. Tib -   - #FF0000
++ rgb(255, 102, 0, maxColorValue = 255),#Ad. Sub  -     - #FF6600
++ rgb(0,102,0, maxColorValue = 255),#Thyroid - rgb() - #006600 - dark green
++ rgb(255, 215, 0, maxColorValue = 255), #NT- - #FFD700 - light yellow
++ rgb(0, 0, 255, maxColorValue = 255),#SNSES - rgb() - #0000FF - dark blue
++ rgb(153, 255, 0, maxColorValue = 255), #Lung - #99FF00 - light green
++ rgb(85, 34, 0, maxColorValue = 255),#EMuc -  - #552200 - dark orange
++ rgb(170, 238, 255, maxColorValue = 255),#CCf      -  - #AAEEFF
++ rgb(255, 170, 0, maxColorValue = 255),#Ad. Visc -     - #FFAA00
++ rgb(136, 153, 136, maxColorValue = 255),#EMus -  - #889988 - light green
++ rgb(51,204,204, maxColorValue = 255),#Brst.MT  -  - #33CCCC
++ rgb(255, 85, 85, maxColorValue = 255),#Ar. Aort -     - #FF5555
++ rgb(102, 0, 153, maxColorValue = 255),#HLV - #660099 - dark violet
++ rgb(153, 0, 255, maxColorValue = 255),#HAA -  - #9900FF - dark violet
++ rgb(204, 153, 85, maxColorValue = 255),#CT       -  - #CC9955
++ rgb(136, 115, 85, maxColorValue = 255),#EGJ -  - #887355 - dark orange
++ rgb(255, 221, 153, maxColorValue = 255),#Stomach - rgb() - #FFDD99 - light orange
++ rgb(170,170,170, maxColorValue = 255), #Testis - rgb() - #AAAAAA - light red
++ rgb(153, 85, 34, maxColorValue = 255),#Panc - rgb() - #995522 - dark orange
++ rgb(255, 170, 153, maxColorValue = 255),#Ar. Coro - 	- #FFAA99
++ rgb(238, 238, 0, maxColorValue = 255),#Br       -     - #EEEE00
++ rgb(238, 238, 0, maxColorValue = 255),#Br       -     - #EEEE00
++ rgb(238, 238, 0, maxColorValue = 255),#Br       -     - #EEEE00
++ rgb(238, 238, 0, maxColorValue = 255),#Br       -     - #EEEE00
++ rgb(238, 238, 0, maxColorValue = 255)#Br       -     - #EEEE00
++ )
+> tiss = c(
++ "Muscle_Skeletal",
++ "Whole_Blood",
++ "Skin_Sun_Exposed_Lower_leg",
++ "Artery_Tibial",
++ "Adipose_Subcutaneous",
++ "Thyroid",
++ "Nerve_Tibial",
++ "Skin_Not_Sun_Exposed_Suprapubic",
++ "Lung",
++ "Esophagus_Mucosa",
++ "Cells_Cultured_fibroblasts",
++ "Adipose_Visceral_Omentum",
++ "Esophagus_Muscularis",
++ "Breast_Mammary_Tissue",
++ "Artery_Aorta",
++ "Heart_Left_Ventricle",
++ "Heart_Atrial_Appendage",
++ "Colon_Transverse",
++ "Esophagus_Gastroesophageal_Junction",
++ "Stomach",
++ "Testis",
++ "Pancreas",
++ "Artery_Coronary",
++ "Brain_Cortex",
++ "Brain_Nucleus_accumbens_basal_ganglia",
++ "Brain_Caudate_basal_ganglia",
++ "Brain_Cerebellar_Hemisphere","Brain_Frontal_Cortex_BA9"
++ )
+> 
+> abbs = c("MS", "WB", "SSELl", "AT", "AS", "Th", "NT", "SNSES", "L", "EMuc", "CCf", 
++ "AVO", "EMus", "BMT", "AA", "HLV", "HAA", "CT", "EGJ", "S", "Te", "P", "AC", "BC",
++ "BNabg", "BCbg", "BCH", "BFC")
+> 
+> nsam = c(704, 670, 603, 581, 579, 573, 532, 514, 513, 495, 482, 467, 463, 396,
++ 386, 385, 371, 366, 329, 323, 321, 303, 212, 205, 202, 194, 175, 175)
+> 
+> tiscol = tiscol[order(tiss)]
+> 
+> # -------------------------------------------------------------------------------------
+> # plot for one variable of dynamic eQTL
+> # -------------------------------------------------------------------------------------
+> 
+> plot_n_dyn_eQTL <- function(dv){
++   # dv = "age"
++   
++   dat = read.csv(sprintf("dyn_cand/summary_significant_%s.csv", dv))
++   dim(dat)
++   dat[1:2,]
++   
++   setequal(dat$X, tiss)
++   
++   ti = dv
++   if(dv != "age"){ti = toupper(dv) }
++   
++   g1 = ggplot(dat, aes(x=S0.10+1, y=L0.10, color=X)) +
++     geom_point() + scale_color_manual(values=tiscol) + 
++     theme(legend.title=element_blank()) + 
++     labs(x = "# of dyn_eQTLs from short model", title = ti, 
++          y = "# of dyn_eQTLs from long model") + 
++     scale_x_continuous(trans='log10', breaks=c(1, 11, 21, 101), 
++                        labels=c("0", "10", "20", "100"))
++   
++   pdf(sprintf("n_dyn_eGenes_%s_with_legend.pdf", dv), width=10, height=3.3)
++   print(g1)
++   dev.off()
++   
++   dat$tissue = rep("", nrow(dat))
++   if(dv == "tp53"){
++     w2label    = which(dat$S0.10 > 200)
++   }else{
++     w2label    = which(dat$S0.10 > 100)
++   }
++   dat$tissue[w2label] = dat$X[w2label]
++   
++   g2 = g1 + theme(legend.position = "none") + 
++     geom_text_repel(aes(label = tissue), data = dat, size = 3.5, force=2)
++   
++   pdf(sprintf("n_dyn_eGenes_%s.pdf", dv), width=2.8, height=2.8)
++   print(g2)
++   dev.off()
++ }
+> 
+> plot_n_dyn_eQTL("age")
+null device 
+          1 
+> plot_n_dyn_eQTL("ctcf")
+null device 
+          1 
+> plot_n_dyn_eQTL("tp53")
+null device 
+          1 
+> 
+> 
+> sessionInfo()
+R version 4.0.3 (2020-10-10)
+Platform: x86_64-apple-darwin17.0 (64-bit)
+Running under: macOS Big Sur 10.16
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.dylib
+LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] ggrepel_0.9.0 ggplot2_3.3.3
+
+loaded via a namespace (and not attached):
+ [1] Rcpp_1.0.5       digest_0.6.27    withr_2.3.0      dplyr_1.0.2     
+ [5] crayon_1.3.4     grid_4.0.3       R6_2.5.0         lifecycle_0.2.0 
+ [9] gtable_0.3.0     magrittr_2.0.1   scales_1.1.1     pillar_1.4.7    
+[13] rlang_0.4.10     farver_2.0.3     generics_0.1.0   vctrs_0.3.6     
+[17] ellipsis_0.3.1   labeling_0.4.2   glue_1.4.2       purrr_0.3.4     
+[21] munsell_0.5.0    compiler_4.0.3   pkgconfig_2.0.3  colorspace_2.0-0
+[25] tidyselect_1.1.0 tibble_3.0.4    
+> q(save="no")
+> proc.time()
+   user  system elapsed 
+  1.701   0.147   1.932 
