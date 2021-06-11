@@ -1,17 +1,15 @@
-* Checking whether found allelic imbalance depends on the age, TP53 or CTCF expression
+#  Detect dynamic eQTL using ASE
 
-models: 
+Check whether found allelic imbalance depends on the age, TP53 or CTCF expression
 
-long - model including PEER factors
+## Models: 
 
-short - model excluding PEER factors
+long - model including PEER factors and PCs
 
-conditions: age, TP53 and CTCF
-
-quasi - taking the minimum SNP from the appropriate model testing whether allele-specific imbalance changes depending on the condition of interest using quasi-binomial glm model
+short - model that only include the variable of interest, including  age, or the gene expression of TP53 or CTCF
 
 
-* ASE counts 
+##  ASE counts 
 
 We converted original hap1 and hap2 counts in the following fashion:
 
