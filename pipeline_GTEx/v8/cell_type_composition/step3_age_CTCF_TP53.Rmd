@@ -51,8 +51,8 @@ names(edat) = gsub(".", "-", names(edat), fixed=TRUE)
 dim(edat)
 edat[1:2,1:3]
 
-n10 = rowSums(edat > 10)/ncol(edat)
-n20 = rowSums(edat > 20)/ncol(edat)
+n10 = rowSums(edat >= 10)/ncol(edat)
+n20 = rowSums(edat >= 20)/ncol(edat)
 table(n10 > 0.20)
 table(n10 > 0.25)
 table(n20 > 0.20)
