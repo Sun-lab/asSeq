@@ -58,7 +58,7 @@ table(n10 > 0.25)
 table(n20 > 0.20)
 table(n20 > 0.25)
 
-edat = edat[which(n10 > 0.25),]
+edat = edat[which(n10 > 0.20),]
 dim(edat)
 
 rd  = apply(edat, 2, quantile, prob=0.75)
