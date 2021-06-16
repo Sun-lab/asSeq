@@ -2,6 +2,7 @@
 title: "Explore the association between age, CTCF, and TP53 and other variables"
 output:
   html_document:
+      keep_md: true
   df_print: paged
 ---
 
@@ -131,6 +132,9 @@ table(xdat$age)
 
 
 # Read in the data used in dynamic eQTL analysis to double check
+
+The very minor difference of gene expression is due to trimming of outlier values identified by large cook's distance.
+
 ```{r fig.height=4, fig.width=4}
 par(mar=c(5,4,1,1), bty="n")
 
@@ -146,16 +150,20 @@ table(dat_dyn$SUBJID == xdat$SUBJID)
 
 cor(dat_dyn$tp53, log10(TP53))
 plot(dat_dyn$tp53, log10(TP53), cex=0.5)
+abline(0,1)
 
 cor(dat_dyn$ctcf, log10(CTCF))
 plot(dat_dyn$ctcf, log10(CTCF), cex=0.5)
+abline(0,1)
 
 table(xdat$age,dat_dyn$age)
+
+TP53 = dat_dyn$tp53
+CTCF = dat_dyn$ctcf
 ```
 
 # check associations for age
-```{r fig.height=3, fig.width=4}
-
+```{r fig.height=3, fig.width=3}
 par(mar=c(5,4,1,1), bty="n")
 boxplot(imc$Neutrophils ~ xdat$age, ylab="Neutrophils", xlab="Age")
 ```
