@@ -1,5 +1,5 @@
-require(deSeq2)
-require(MatrixEQTL)
+#require(deSeq2)
+#require(MatrixEQTL)
 
 get_blocks = function(x, split="\\|", blocks=c(1)){
   paste(unlist(strsplit(x, split=split))[blocks], collapse="-")
@@ -113,7 +113,7 @@ nOrMoreInCell <- function(modelMatrix, n) {
 getPermP = function(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=100, nsub=NA, write.res=F, max.adj=10){ 
   #num.grid = 100; slice=2000; n.perm=1000; ini.perm=100; nsub = NA
 
-  require(MatrixEQTL)
+#  require(MatrixEQTL)
   useModel=modelLINEAR
   errorCovariance = numeric();
   if(is.na(nsub))nsub=ncol(permEst$geneM);nsub

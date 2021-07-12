@@ -5,7 +5,7 @@ Version: 0.99.501
 Date: 2018-11-20
 Author: Wei Sun, Vasyl Zhabotynsky and Chong Jin
 Maintainer: Wei Sun <weisun@email.unc.edu>
-Imports: zlibbioc, MatrixEQTL, DESeq2
+Imports: zlibbioc, MatrixEQTL, DESeq2, SummarizedExperiment, S4Vectors
 Description: allele specific study of RNA-seq data.  
 License: GPL (>= 2)
 LazyLoad: yes

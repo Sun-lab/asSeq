@@ -131,7 +131,7 @@ function(Y1, Y2, Z, output.tag, p.cut, min.AS.reads=5, min.AS.sample=5,
       stop(sprintf("mPos must be a numeric vector of length %d\n", nZ))
     }
   }else{
-    warning("ASE mapping requires haplotyp information, which may be inaccruate for non-local eQTL\n")
+    warning("ASE mapping requires haplotype information, which may be inaccruate for non-local eQTL\n")
   }
   
   dims = numeric(6)
