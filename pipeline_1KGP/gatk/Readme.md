@@ -1,1 +1,0 @@
-Put picard (used version 2.8.2) and GenomeAnalysisTK (3.7.0) jar files here

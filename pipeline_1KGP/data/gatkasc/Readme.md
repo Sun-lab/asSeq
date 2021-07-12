@@ -1,1 +1,0 @@
-an output from GATK ASEReadCounter will be stored here sample by sample

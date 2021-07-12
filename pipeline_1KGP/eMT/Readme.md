@@ -1,1 +1,0 @@
-Put eigenMT script in this folder

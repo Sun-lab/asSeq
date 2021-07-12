@@ -1,1 +1,0 @@
-original VCF file obtained after imputing SNPs converted to TReCASE format

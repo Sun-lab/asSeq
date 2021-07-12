@@ -1,1 +1,0 @@
-an example for running MatrixEQTL based on the total read counts from asSeq pipeline

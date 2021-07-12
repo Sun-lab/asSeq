@@ -1,3 +1,0 @@
-GeneRowID	MarkerRowID	TReC_b	TReC_Chisq	TReC_Pvalue	TReC_beta0	TReC_beta1	TReC_beta2	TReC_beta3	TReC_beta4	TReC_phi	ASE_b	ASE_theta	ASE_Chisq	ASE_Pvalue	Joint_b	Joint_Chisq	Joint_Pvalue	Joint_beta0	Joint_beta1	Joint_beta2	Joint_beta3	Joint_beta4	Joint_phi	Joint_theta	Converge	CisTrans_Chisq	CisTrans_Pvalue	p.final
-1	1	-1.32e-01	2.51e+01	5.3690e-07	-7.76e+00	2.27e+00	-1.87e+00	-9.62e-01	1.05e+00	2.07e-02	-4.72e-02	1.26e-03	1.55e+01	8.2498e-05	-6.17e-02	3.17e+01	1.8206e-08	-7.76e+00	2.27e+00	-1.88e+00	-9.02e-01	1.05e+00	2.12e-02	1.31e-03	1	8.95e+00	2.7752e-03	1.8206e-08
-1	2	-1.42e-01	2.12e+00	1.4501e-01	-7.53e+00	2.25e+00	-1.88e+00	-7.99e-01	1.03e+00	2.24e-02	1.51e-02	1.61e-03	1.75e-01	6.7544e-01	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	4	NA	NA	1.4501e-01

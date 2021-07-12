@@ -1,1 +1,0 @@
-SNP information in VCF format with SNP level allele specific counts attached
