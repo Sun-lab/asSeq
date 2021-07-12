@@ -2,6 +2,11 @@
 useDynLib(asSeq)
 
 import(zlibbioc)
+import(MatrixEQTL)
+
+importFrom("stats", "glm", "lm", "na.omit", "pchisq", "qbinom", "qf",
+             "qnorm", "qt", "rnorm", "sd", "var")
+importFrom("utils", "write.csv")
 
 # ------------------------------------------
 # Export directives.  

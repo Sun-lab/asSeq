@@ -20,11 +20,11 @@ redboot = function(ppi,target.min.ps=NULL,target.perm.ps, genenm, mQTL.fit,
   \item{target.perm.ps}{A grid of target permutation p-values (requires a good
      guess of effective number of SNPs}
   \item{genenm}{gene name}
-  \item{mQTL.fit - MatrixEQTL results extended with effective number of tests guess}
-  \item{expr.mat - MatrixEQTL style gene expression of the target gene}
-  \item{min.SNP - MatrixEQTL style minimum SNP information for the target gene}
-  \item{nsam - number of samples used in the analysis}
-  \item{use.norm - instead of residuals from the fit use errors simulated 
+  \item{mQTL.fit}{MatrixEQTL results extended with effective number of tests guess}
+  \item{expr.mat}{MatrixEQTL style gene expression of the target gene}
+  \item{min.SNP}{MatrixEQTL style minimum SNP information for the target gene}
+  \item{nsam}{number of samples used in the analysis}
+  \item{use.norm}{instead of residuals from the fit use errors simulated 
   from normal distribution (by default FALSE)}
 }
   
@@ -35,7 +35,7 @@ redboot = function(ppi,target.min.ps=NULL,target.perm.ps, genenm, mQTL.fit,
   with target minimum p-values. 
   Fitting linear model versus minimum SNP we obtain effect size estimate X, 
   which is adjusted according to the target minimum p-value.
-}}
+}
 \value{
  The function returns a vector with a reduced effect size bootstrap
 }

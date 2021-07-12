@@ -22,10 +22,8 @@ getPermP(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=100,
     \item outpf - output file name for the results,
     \item pvOutputThreshold pvalue cutoff for trans tests (default 1e-300),
     \item pvOutputThreshold.csv - pvalue cutoff for cis tests (defualt 1),
-    \item cisDist - distance to inform MatrixEQTL which SNPs are cis 
-    (default 1e9 since it is more efficient to preprocess SNPs to submit only
-    cis SNPs to the procedure)
-    \effNumGuess - initial guess of effective number of SNPs 
+    \item cisDist - distance to inform MatrixEQTL which SNPs are cis (default 1e9 since it is more efficient to preprocess SNPs to submit only cis SNPs to the procedure)
+    \item effNumGuess - initial guess of effective number of SNPs 
     (can be obtained from some fast external tool such as eigenMT 
     or we found using 1/4 of the SNPs as a guess). Procedure starts with the 
     initial guess and adjusts it depending on the observed results in first 100 permutations.
@@ -72,7 +70,7 @@ getPermP(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=100,
    \item{summ - eigenMT style object for the minimum SNP, which in addition to 
    typical MatrixEQTL object contains effective number of SNPs we get after adjusting inital guess.
    This is still not the final number of effective tests, that can be computed comparing estimated
-   permutation p-value   eigenMT$pred.permGLM or eigenMT$pred.permLM}
+   permutation p-value eigenMT$pred.permGLM or eigenMT$pred.permLM}
    \item{tim - time it took to run estimation}
    \item{vals - a matrix with corresponding minimum p-values and permutation p-values 
    for the adjusted bootstraps, can be used for diagnostic showing that relationship 
