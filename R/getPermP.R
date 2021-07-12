@@ -413,11 +413,10 @@ getPermP = function(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=1
     updNtests = sprintf("%s_updtests.csv", rownames(permEst$geneM)[1])
     filout1 = sprintf("%s_boot_pval.csv", rownames(permEst$geneM)[1])
     filout2 = sprintf("%s_short_boot_pval.csv", rownames(permEst$geneM)[1])
-    filout3 = sprintf("%s_time.csv", perm.dir, rownames(permEst$geneM)[1])
+    filout3 = sprintf("%s_time.csv", rownames(permEst$geneM)[1])
   }
   if(write.res)
    write.csv(eigenMT, updNtests, quote=F, row.names=F)
-  #perm.dir
   permm2 = rbind(permm, pvalb[,2])
   #ords$pvals,
   #ords$betas,
