@@ -692,7 +692,7 @@ void trecase (int* dims, double* Y, double* X, double* Z, double* z1,
       if(*cis_only){
         if(eChr[i] != mChr[j]) continue;
         
-        pos_diff = fabs(ePos[i] - mPos[j]);
+        pos_diff = abs(ePos[i] - mPos[j]);
         
         if(pos_diff > *cis_distance) continue;
       }
@@ -1695,7 +1695,7 @@ void trecase_max1 (int* dims, double* Y, double* X, double* Z,
       if(*cis_only){
         if(eChr[i] != mChr[j]) continue;
         
-        pos_diff = fabs(ePos[i] - mPos[j]);
+        pos_diff = abs(ePos[i] - mPos[j]);
         
         if(pos_diff > *cis_distance) continue;
       }

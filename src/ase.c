@@ -562,7 +562,7 @@ void ase (int* dims, double* Y1, double* Y2, double* Z, char** output,
       if(*cis_only){
         if(eChr[i] != mChr[j]) continue;
         
-        pos_diff = fabs(ePos[i] - mPos[j]);
+        pos_diff = abs(ePos[i] - mPos[j]);
         
         if(pos_diff > *cis_distance) continue;
       }
