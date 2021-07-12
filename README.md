@@ -15,6 +15,13 @@ https://github.com/Sun-lab/asSeq_pipelines
     install_github("Sun-lab/asSeq")
  ```
 
+There are many warning messages, and most of them are due to the codes we copied from bamtools. None of the warning message should affect the accuracy of our methods or the success of installation. Though since we have included many c/c++ codes, compiling and installation depend on the compiler and handle of temporary files for each machine/operating system. For example, in a Mac environment, the package installation in Rstudio may fail because of permission issues. In such situations, download the source package (e.g., asSeq_0.99.501.tar.gz) and run the following command in terminal should work
+
+ ```
+R CMD install asSeq_0.99.501.tar.gz
+ ```
+
+
 
 ## Reference
 
