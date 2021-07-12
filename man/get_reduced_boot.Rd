@@ -10,7 +10,7 @@
   with target minimum p-values.
 }
 \usage{
-redboot = function(ppi,target.min.ps=NULL,target.perm.ps, genenm, mQTL.fit, 
+get_reduced_boot(ppi, target.min.ps=NULL, target.perm.ps, genenm, mQTL.fit, 
                    expr.mat, min.SNP, covars, nsam, use.norm=F)
 }
 \arguments{
@@ -23,6 +23,7 @@ redboot = function(ppi,target.min.ps=NULL,target.perm.ps, genenm, mQTL.fit,
   \item{mQTL.fit}{MatrixEQTL results extended with effective number of tests guess}
   \item{expr.mat}{MatrixEQTL style gene expression of the target gene}
   \item{min.SNP}{MatrixEQTL style minimum SNP information for the target gene}
+  \item{covars}{MatrixEQTL style covariates in TReC part of the model needed to produce a parametric bootstrap}
   \item{nsam}{number of samples used in the analysis}
   \item{use.norm}{instead of residuals from the fit use errors simulated 
   from normal distribution (by default FALSE)}

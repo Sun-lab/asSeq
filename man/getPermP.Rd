@@ -9,7 +9,7 @@
 }
 \usage{
 getPermP(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=100, 
-                  nsub=NA, write.res=F)
+                  nsub=NA, write.res=F, max.adj=10)
 }
 \arguments{
   \item{permEst}{A list containing gene-relevant inforomation in MatrixEQTL compatible format.
@@ -36,15 +36,18 @@ getPermP(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=100,
   }
   
   \item{num.grid}{target number of grid points for permutation p-value estimation 
-  (default 100) 
+  (default 100). The program attempts initial grid of num.grid points, choses appropriate results and if needed goes on to produce additional points until it gets above the target value or until maximum number of attempts (max.adj) is reached. 
   }
   
   \item{slice}{Technical MatrixEQTL parameter for number of genes/snps per slice 
   (default 2000 as not too mermory intensive)
   }
 
+  \item{n.perm}{Total number of permutations to be used to estimate permutation p-value.
+  }
+  
   \item{ini.perm}{First N permutations used to evaluate appropriateness of the 
-  initial number of effective number of SNPs and populating the grid.
+  initial estimate of effective number of SNPs and populating the grid.
   }
   
   \item{nsub}{If you want to run permutations on a subset of samples 
@@ -55,6 +58,9 @@ getPermP(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=100,
     informs whether the results should be written to the hard drive as opposed to just returning an object
   }
   
+  \item{max.adj}{
+    maximum number of attempts to create the target grid for permutation p-value estimation (default 10)
+  }
 }
 \details{
   Estimating permutation p-value for a given gene. The procedure is setup to 

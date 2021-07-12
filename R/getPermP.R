@@ -1,3 +1,4 @@
+require(deSeq2)
 require(MatrixEQTL)
 
 get_blocks = function(x, split="\\|", blocks=c(1)){

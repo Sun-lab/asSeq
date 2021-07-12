@@ -7,8 +7,8 @@
   and only one of the two haplotypes specified in file snpList.
 }
 \usage{
-extractAsReads(input, snpList, outputTag = NULL, flag2kp = 0, flag2rm = 3844, 
-	prop.cut = 0.5, min.avgQ = 10, min.snpQ = 10, phred = 33, skip = 0)
+quantifyAsReads(input, snpList, outputTag=NULL, flag2kp=0, flag2rm=3844, 
+         prop.cut=.5, min.avgQ=10, min.snpQ=10, phred=33, skip=0)
 }
 \arguments{
   \item{input}{ input file name, this should be file with BAM format, 
