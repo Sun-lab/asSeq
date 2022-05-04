@@ -1,13 +1,16 @@
 Package: asSeq
 Type: Package
-Title: allele specific sequencing study
+Title: Allele Specific Sequencing Study
 Version: 0.99.501
 Date: 2018-11-20
-Author: Wei Sun, Vasyl Zhabotynsky and Chong Jin
+Author: Wei Sun, Vasyl Zhabotynsky, Chong Jin, and Paul Little
 Maintainer: Wei Sun <weisun@email.unc.edu>
-Imports: zlibbioc, MatrixEQTL, DESeq2, SummarizedExperiment, S4Vectors
 Description: allele specific study of RNA-seq data.  
-License: GPL (>= 2)
+Encoding: UTF-8
+Imports: zlibbioc, MatrixEQTL, DESeq2, 
+	SummarizedExperiment, S4Vectors
+License: GPL (>= 3)
 LazyLoad: yes
 Packaged: 2020-06-18 16:06:11 UTC; zhabotyn
 NeedsCompilation: yes
+RoxygenNote: 7.1.2
