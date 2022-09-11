@@ -386,12 +386,13 @@ getPermP = function(permEst, num.grid = 100, slice=2000, n.perm=1000, ini.perm=1
   
   eigenMT$TESTSupd = eigenMTp$TESTS
 
+  xval = -log10(eigenMT$p.value)
+
   pred.perm = 10^-(lmi3$coef[1] +lmi3$coef[2]*xval)
   pred.perm[pred.perm>1] = 1
   pred.perm
   eigenMT$pred.permLM = pred.perm
 
-  xval = -log10(eigenMT$p.value)
   pred.perm = logiti(glmi3$coef[1]+glmi3$coef[2]*xval)
   pred.perm
   eigenMT$pred.permGLM = pred.perm
