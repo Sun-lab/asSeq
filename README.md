@@ -33,8 +33,14 @@ The success of compiling of the c/c++ codes and installation may depend on the c
 ```Shell
 R CMD install asSeq_0.99.501.tar.gz
 ```
+## geoP
+
+geoP is a method that exploits a geometric interpretation of permuation p-values to estimate permutation p-values without acutal permutations. It has been implemented in function `getPermP.R`. 
+
 
 ## References
+
+[Sun, W.](https://github.com/sunway1999) and Wright, AF. (2010). "A geometric interpretation of the permutation p-value and its application in eQTL studies." *The Annals of Applied Statistics* : 1014-1033. [[PDF](https://projecteuclid.org/journalArticle/Download?urlId=10.1214%2F09-AOAS298)]
 
 [Sun, W.](https://github.com/sunway1999) (2012). A statistical framework for eQTL mapping using RNA-seq data. *Biometrics*, 68(1), 1-11. [[HTML](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3218220/), [PDF](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3218220/pdf/nihms-307768.pdf)]
 
